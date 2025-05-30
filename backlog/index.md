@@ -16,7 +16,7 @@ This file provides an overview of all current backlog items organized by categor
 
 ### Proposed
 
-- [Rework Exercise 7 with Time Conversion Insights](documentation/2025-05-30_exercise7-rework.md)
+- [Create Gradient Flow Dynamics Exercise (Exercise 6.5 or 7a)](documentation/2025-05-30_gradient-flow-exercise.md)
 
 
 ## Infrastructure
@@ -79,6 +79,8 @@ This file provides an overview of all current backlog items organized by categor
 - [Add Time Conversion Mechanism to Exercise 6](documentation/2025-05-30_time-conversion-addition.md)
 
 - [Improve Exercise 2 Hints (Parts iii and iv)](documentation/2025-05-30_exercise2-hints.md)
+
+- [Rework Exercise 7 with Time Conversion Insights](documentation/2025-05-30_exercise7-rework.md)
 
 - [Fix Exercise Logical Dependency Order (6 before 5)](infrastructure/2025-05-30_exercise-reordering.md)
 

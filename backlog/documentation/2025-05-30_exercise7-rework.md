@@ -1,7 +1,7 @@
 ---
 id: "2025-05-30_exercise7-rework"
 title: "Rework Exercise 7 with Time Conversion Insights"
-status: "Proposed"
+status: "Completed"
 priority: "High"
 created: "2025-05-30"
 last_updated: "2025-05-30"
@@ -82,3 +82,13 @@ This could be the missing piece that properly connects information-theoretic opt
 
 ### 2025-05-30
 Task created. This revision could fundamentally change our understanding of how information optimization connects to physical action principles through geometry. 
+
+**COMPLETED (CORRECTED)**: Successfully reworked Exercise 7 with the correct perspective on time conversion:
+- **Entropy conservation is fundamental**: S + I = constant in entropy time τ (optimization dynamics)
+- **Energy conservation is emergent**: Arises when entropy conservation is viewed in geometric time t
+- Updated action principle: Start with ∫[S - I]dτ, transform to geometric time dt = √|G(θ)|dτ
+- Corrected all three task parts to show energy conservation emergence rather than assuming it
+- Updated hints to emphasize coordinate transformation from entropy-based to energy-based dynamics
+- Key insight: EPI operates in emergent time t while fundamental optimization operates in τ
+- Demonstrates that physical time t is natural for energy conservation precisely because it emerges from entropy geometry
+- **Critical correction**: Avoided circular reasoning by deriving rather than assuming energy conservation 
