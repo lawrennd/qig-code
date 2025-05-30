@@ -1,7 +1,7 @@
 ---
 id: "2025-05-30_exercise2-hints"
 title: "Improve Exercise 2 Hints (Parts iii and iv)"
-status: "Proposed"
+status: "Completed"
 priority: "High"
 created: "2025-05-30"
 last_updated: "2025-05-30"
@@ -28,13 +28,13 @@ Exercise 2 addresses profound concepts about quantum origin points and gauge sym
 
 ## Acceptance Criteria
 
-- [ ] Rewrite hint for Part (iii) with confident MaxEnt approach
-- [ ] Include specific mention of Lagrange multipliers and variational method
-- [ ] Clarify that pure, maximally entangled states are the unique solution
-- [ ] Rewrite hint for Part (iv) to explain unitary transformation redundancy
-- [ ] Add explanation of U(2^N) group action on valid solutions
-- [ ] Connect gauge freedom to under-specification of constraints
-- [ ] Test hints with mathematical precision
+- [x] Rewrite hint for Part (iii) with confident MaxEnt approach
+- [x] Include specific mention of Lagrange multipliers and variational method
+- [x] Clarify that pure, maximally entangled states are the unique solution
+- [x] Rewrite hint for Part (iv) to explain unitary transformation redundancy
+- [x] Add explanation of U(2^N) group action on valid solutions
+- [x] Connect gauge freedom to under-specification of constraints
+- [x] Test hints with mathematical precision
 
 ## Implementation Notes
 
@@ -73,3 +73,11 @@ unitary group U(2ᴺ) acts on the space of valid solutions.
 
 ### 2025-05-30
 Task created. The original hint for part (iii) was actually insightful about MaxEnt - just needs more confidence and mathematical specificity. 
+
+Successfully improved Exercise 2 hints:
+- Part (iii): Implemented confident MaxEnt approach with Lagrange multipliers
+- Specified von Neumann entropy formulation as unique solution
+- Part (iv): Added clear explanation of unitary transformation redundancy
+- Included U(2^N) group action and gauge freedom mechanism
+- Connected mathematical complexity to constraint under-specification
+- Hints now provide clear mathematical guidance for students 
