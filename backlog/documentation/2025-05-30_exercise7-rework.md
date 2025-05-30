@@ -1,6 +1,6 @@
 ---
 id: "2025-05-30_exercise7-rework"
-title: "Rework Exercise 7 with Time Conversion Insights"
+title: "Rework Exercise 8 (Action Principles) with Time Conversion Insights"
 status: "Completed"
 priority: "High"
 created: "2025-05-30"
@@ -17,11 +17,11 @@ tags:
 - major-revision
 ---
 
-# Task: Rework Exercise 7 with Time Conversion Insights
+# Task: Rework Exercise 8 (Action Principles) with Time Conversion Insights
 
 ## Description
 
-Exercise 7 (Action Principles and Information Dynamics) needs substantial revision to account for the geometric time conversion factor discovered in the time conversion mechanism. The relationship between Frieden's EPI and our information game is much deeper than originally formulated.
+Exercise 8 (Action Principles and Information Dynamics) needed substantial revision to account for the geometric time conversion factor discovered in the time conversion mechanism. The relationship between Frieden's EPI and our information game is much deeper than originally formulated.
 
 **Key Issues to Address:**
 1. EPI formulates actions in physical time t, our game works in entropy time τ
@@ -38,7 +38,7 @@ This could be the missing piece that properly connects information-theoretic opt
 - [ ] Revise Lagrangian structure with geometric kinetic term: G_ij(θ) dθ^i/dτ dθ^j/dτ
 - [ ] Reinterpret EPI connection with metric determinant
 - [ ] Explain why energy conservation emerges in physical time
-- [ ] Update all three parts of Exercise 7 accordingly
+- [ ] Update all three parts of Exercise 8 accordingly
 - [ ] Revise hints to reflect new understanding
 - [ ] Test mathematical consistency
 
@@ -83,7 +83,7 @@ This could be the missing piece that properly connects information-theoretic opt
 ### 2025-05-30
 Task created. This revision could fundamentally change our understanding of how information optimization connects to physical action principles through geometry. 
 
-**COMPLETED (CORRECTED)**: Successfully reworked Exercise 7 with the correct perspective on time conversion:
+**COMPLETED (CORRECTED)**: Successfully reworked Exercise 8 with the correct perspective on time conversion:
 - **Entropy conservation is fundamental**: S + I = constant in entropy time τ (optimization dynamics)
 - **Energy conservation is emergent**: Arises when entropy conservation is viewed in geometric time t
 - Updated action principle: Start with ∫[S - I]dτ, transform to geometric time dt = √|G(θ)|dτ
