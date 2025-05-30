@@ -18,11 +18,11 @@ This file provides an overview of all current backlog items organized by categor
 
 - [Improve Exercise 2 Paradox Explanation Clarity](documentation/2025-05-30_exercise2-paradox-clarity.md)
 
-- [Write Complete Solutions for Exercise 7: Gradient Flow Dynamics](documentation/2025-05-30_exercise7-solutions.md)
-
 - [Exercise 3 Enhancements: Calculations, Examples, and Decoherence](documentation/2025-05-30_exercise3-improvements.md)
 
 - [Write Complete Solutions for Exercise 8: Action Principles and Information Dynamics](documentation/2025-05-30_exercise8-solutions.md)
+
+- [Extend Exercise 7 with Gauge Theory and Discrete-Continuous Interface](documentation/2025-01-20_exercise7-gauge-extensions.md)
 
 
 ## Infrastructure
@@ -86,9 +86,9 @@ This file provides an overview of all current backlog items organized by categor
 
 - [Improve Exercise 2 Hints (Parts iii and iv)](documentation/2025-05-30_exercise2-hints.md)
 
-- [Rework Exercise 8 (Action Principles) with Time Conversion Insights](documentation/2025-05-30_exercise7-rework.md)
+- [Create Exercise 7 Solutions](documentation/2025-05-30_exercise7-solutions.md)
 
-- [Create Gradient Flow Dynamics Exercise (Exercise 7)](documentation/2025-05-30_gradient-flow-exercise.md)
+- [Rework Exercise 8 (Action Principles) with Time Conversion Insights](documentation/2025-05-30_exercise7-rework.md)
 
 
 ## Recently Abandoned Tasks
