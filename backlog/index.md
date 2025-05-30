@@ -11,12 +11,14 @@ This file provides an overview of all current backlog items organized by categor
 
 ### In Progress
 
-*No tasks currently in progress.*
+- [Update Solutions File for Exercise Changes](documentation/2025-05-30_update-solutions-file.md)
 
 
 ### Proposed
 
-*No tasks currently proposed.*
+- [Improve Exercise 2 Paradox Explanation Clarity](documentation/2025-05-30_exercise2-paradox-clarity.md)
+
+- [Exercise 3 Enhancements: Calculations, Examples, and Decoherence](documentation/2025-05-30_exercise3-improvements.md)
 
 
 ## Infrastructure
