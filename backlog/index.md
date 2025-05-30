@@ -37,7 +37,7 @@ This file provides an overview of all current backlog items organized by categor
 
 ### Proposed
 
-- [Fix Exercise Logical Dependency Order (6 before 5)](infrastructure/2025-05-30_exercise-reordering.md)
+*No tasks currently proposed.*
 
 
 ## Features
@@ -79,6 +79,8 @@ This file provides an overview of all current backlog items organized by categor
 ## Recently Completed Tasks
 
 - [Add Clarifications to Exercise 1](documentation/2025-05-30_exercise1-clarifications.md)
+
+- [Fix Exercise Logical Dependency Order (6 before 5)](infrastructure/2025-05-30_exercise-reordering.md)
 
 
 ## Recently Abandoned Tasks

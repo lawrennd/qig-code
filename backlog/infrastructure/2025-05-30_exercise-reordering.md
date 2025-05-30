@@ -1,7 +1,7 @@
 ---
 id: "2025-05-30_exercise-reordering"
 title: "Fix Exercise Logical Dependency Order (6 before 5)"
-status: "Proposed"
+status: "Completed"
 priority: "High"
 created: "2025-05-30"
 last_updated: "2025-05-30"
@@ -30,11 +30,11 @@ Reorder exercises so Exercise 6 comes before Exercise 5, providing proper geomet
 
 ## Acceptance Criteria
 
-- [ ] Swap the order of Exercise 5 and Exercise 6 in the main document
-- [ ] Update all cross-references between exercises
-- [ ] Add forward reference in Exercise 6: "The geometric structure developed here will be crucial for understanding effective field theory emergence in the next exercise"
-- [ ] Verify Exercise 5 text makes sense with geometric foundations established
-- [ ] Update exercise numbering consistently throughout
+- [x] Swap the order of Exercise 5 and Exercise 6 in the main document
+- [x] Update all cross-references between exercises
+- [x] Add forward reference in Exercise 6: "The geometric structure developed here will be crucial for understanding effective field theory emergence in the next exercise"
+- [x] Verify Exercise 5 text makes sense with geometric foundations established
+- [x] Update exercise numbering consistently throughout
 
 ## Implementation Notes
 
@@ -59,3 +59,10 @@ Reorder exercises so Exercise 6 comes before Exercise 5, providing proper geomet
 
 ### 2025-05-30
 Task created. This is identified as the most critical structural fix needed for the exercise sequence. 
+
+Successfully completed exercise reordering:
+- Exercise 5 is now "Distinguishability" (establishing geometric foundations)
+- Exercise 6 is now "Hierarchical Partition and the Exponential Family" (using geometric concepts)
+- Added cross-reference in Exercise 6 hint to geometric structure from previous exercise
+- Logical flow is now: discrete → quantum → activation → exchangeability → geometric → field theoretic
+- Exercise 7 remains unchanged but now has proper foundation 
