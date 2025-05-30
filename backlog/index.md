@@ -18,7 +18,11 @@ This file provides an overview of all current backlog items organized by categor
 
 - [Improve Exercise 2 Paradox Explanation Clarity](documentation/2025-05-30_exercise2-paradox-clarity.md)
 
+- [Write Complete Solutions for Exercise 7: Gradient Flow Dynamics](documentation/2025-05-30_exercise7-solutions.md)
+
 - [Exercise 3 Enhancements: Calculations, Examples, and Decoherence](documentation/2025-05-30_exercise3-improvements.md)
+
+- [Write Complete Solutions for Exercise 8: Action Principles and Information Dynamics](documentation/2025-05-30_exercise8-solutions.md)
 
 
 ## Infrastructure

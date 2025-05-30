@@ -81,4 +81,34 @@ Task created. Solutions file significantly out of date due to major exercise res
 
 **Commentary Review**: Extracted improvement suggestions from solutions commentary and created separate backlog tasks:
 - Task: 2025-05-30_exercise2-paradox-clarity (Exercise 2 hint improvement)
-- Task: 2025-05-30_exercise3-improvements (Exercise 3 enhancements) 
+- Task: 2025-05-30_exercise3-improvements (Exercise 3 enhancements)
+
+**Major Structural Issues Fixed:**
+- ✅ Swapped Exercise 5 ↔ Exercise 6 to match main exercises file
+- ✅ Fixed cross-references between exercises
+- ✅ Updated title claim and commentary
+
+**Critical Discovery**: 
+- ❌ **Exercises 7-8 are completely missing** from solutions file
+- **Exercise 7**: Gradient Flow Dynamics and Partition Emergence (advanced information geometry)
+- **Exercise 8**: Action Principles and Information Dynamics (connects to Frieden's EPI)
+- Title claims "Complete Solutions (Exercises 1-8)" but only covers 1-6
+- **Missing content is substantial**: both exercises are advanced, multi-part problems with sophisticated mathematical content
+- **Priority**: HIGH - these represent ~25% of the promised solution content 
+
+## Summary of Required Work
+
+**Exercises 1-6: ✅ STRUCTURALLY COMPLETE**
+- Content exists and is now consistent with main exercises file
+- Minor improvements captured in separate backlog tasks
+
+**Exercises 7-8: ❌ COMPLETELY MISSING**  
+- Represent ~25% of promised solution content
+- Both are advanced, research-level exercises
+- Required to fulfill title promise of "Complete Solutions (Exercises 1-8)"
+
+**Created Subtasks:**
+- Task: 2025-05-30_exercise7-solutions (High priority)
+- Task: 2025-05-30_exercise8-solutions (High priority)
+
+**Estimated Effort**: Substantial - each missing exercise requires multiple hours of advanced mathematical development connecting information theory, differential geometry, and theoretical physics. 
