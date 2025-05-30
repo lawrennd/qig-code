@@ -2,21 +2,23 @@
 
 ## Overview
 
-This framework presents an approach to understanding physical laws through the lens of *information theory* and * information geometry*. 
+This framework presents an approach to understanding physical laws through the lens of *information theory* and *information geometry*. 
 
 By starting with a simple rule around conservation of information we aim to derive complex physics. 
 
-In the emerging framework the Fisher information takes a key role. We think of it as representing the *information topography*.
+In the emerging framework the Fisher information matrix takes a key role. We think of it as representing the *information topography*.
 
-## Core Thesis
+The framework is speculative and not full mathematically formalised.
 
-The work started out from attempts to formalise the notion of *information topography* as used in *The Atomic Human*. The path started from information thermodynamics and information engines to developing an initial game known as *Jaynes' World* which instataneously maximised entropy. The final piece of information conservation emerged as an attempt to deal with the 'cold start' problem that the maximum entropy formalism triggered, what are the parameters at the begining of the game.
+## Background
 
-The information conservation principle leads to a set of effective physics where the information topography, as represented by the Fisher information geometry, is one of the primary components in the emergent physics of the game. 
+The work started out from attempts to formalise the notion of *information topography* used extensively in *The Atomic Human*. The initial path was inspired by a long interest in Maxwell's Demon which led to recent work on information thermodynamics and information engines. A first exploration was a game known as *Jaynes' World* which instataneously maximised entropy. That honed some mathematical intuitions and the final piece of information conservation emerged as an attempt to deal with the 'cold start' problem that the maximum entropy formalism triggered, i.e. what are the parameters at the begining of the game?
+
+The information conservation principle is the only rule, but it leads to a set of `effective physics rules' where the *information topography*, as represented by the Fisher information geometry, is one of the primary components in the emergent physics of the game. 
 
 By founding the game on the principles of information, the hope is that the realtionship between the effective physics and more complex emergent phenomena in the game can be interrelated through the common language of information that *The Atomic Human* also builds on.
 
-## The Information Game
+## Details of The Information Game
 
 The framework centers on an "Information Game" with N variables Z, partitioned into:
 - *Latent variables (M)*: Each has marginal entropy S(m_i) = log 2
@@ -35,7 +37,7 @@ where S(Z) is joint entropy and I(Z) is multi-information.
 
 ## Key Insights from the Game
 
-### 1. Information Constraints Generate Quantum Formalism
+### 1. Information Conservation Constraints Lead Directly to a Quantum Formalism
 
 We demonstrate that quantum mechanics  arises mathematically when classical probability theory encounters fundamental information limitations.
 
