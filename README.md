@@ -8,7 +8,9 @@ By starting with a simple rule around conservation of information we aim to deri
 
 In the emerging framework the Fisher information matrix takes a key role. We think of it as representing the *information topography*.
 
-The framework is speculative and not full mathematically formalised.
+One property of the game is that it does not admit singularities. Because the entropy objectives are bounded above and below any run-away singularity is not possible in this game.
+
+The framework is speculative and not fully mathematically formalised.
 
 ## Background
 
