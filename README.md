@@ -2,15 +2,15 @@
 
 ## Overview
 
-This framework presents an approach to understanding physical laws through the lens of *information theory* and *information geometry*. 
+This framework presents an investigation into whether complex laws can emerge from information conservation principles. It is an active research programme. It operates through the lens of *information theory* and *information geometry*. 
+
+The framework provides mathematical machinery for exploring questions systematically while acknowledging the speculative nature of many claims.
 
 By starting with a simple rule around conservation of information we aim to derive complex physics. 
 
 In the emerging framework the Fisher information matrix takes a key role. We think of it as representing the *information topography*.
 
 One property of the game is that it does not admit singularities. Because the entropy objectives are bounded above and below any run-away singularity is not possible in this game.
-
-The framework is speculative and not fully mathematically formalised.
 
 ## Background
 
@@ -19,6 +19,12 @@ The work started out from attempts to formalise the notion of *information topog
 The information conservation principle is the only rule, but it leads to a set of `effective physics rules' where the *information topography*, as represented by the Fisher information geometry, is one of the primary components in the emergent physics of the game. 
 
 By founding the game on the principles of information, the hope is that the realtionship between the effective physics and more complex emergent phenomena in the game can be interrelated through the common language of information that *The Atomic Human* also builds on.
+
+## Research Status and Limitations
+
+The framework operates at the intersection of established mathematical results some conjectured theoretical development. The core mathematical foundations rest on well-established information theory, quantum mechanics, and differential geometry. The speculation centres on whether complex physics can emergence from information conservation framework.
+
+The framework provides a systematic approach for investigating these foundational questions and clarifying which aspects can be rigorously derived versus which require additional theoretical development. 
 
 ## Details of The Information Game
 
@@ -37,15 +43,19 @@ S(Z) + I(Z) = constant
 ```
 where S(Z) is joint entropy and I(Z) is multi-information.
 
-## Key Insights from the Game
+## Research Directions and Open Questions
 
-### 1. Information Conservation Constraints Lead Directly to a Quantum Formalism
+The framework identifies promising research directions that might merit continued investigation. The relationship between information conservation constraints and quantum formalism provides opportunities for advancing understanding of quantum foundations. The connection between Fisher information geometry and physical dynamics offers novel perspectives on the geometric basis of field theory.
 
-We demonstrate that quantum mechanics  arises mathematically when classical probability theory encounters fundamental information limitations.
+These directions represent research opportunities rather than established theoretical results. The framework's mathematical machinery provides tools for systematic investigation while acknowledging the substantial theoretical development required to establish definitive conclusions about fundamental physics emergence.
 
-- *Complex amplitudes* emerge from Maximum Entropy principles under information constraints
-- *Density matrices* arise as optimal representations of partial information
-- *The Born rule* emerges as inevitable under maximum entropy when variables transit from undistinguishable to distinguishable 
+### 1. Information Conservation Constraints and Quantum Formalism
+
+We investigate whether quantum mechanics arises mathematically when classical probability theory encounters information limitations.
+
+- *Complex amplitudes* and Maximum Entropy principles under information constraints
+- *Density matrices* as optimal representations of partial information
+- *The Born rule* and maximum entropy when variables transit from undistinguishable to distinguishable 
 
 ### 2. Fisher Information as Universal Substrate
 
@@ -53,12 +63,12 @@ The Fisher information metric provides a unified mathematical language that unde
 
 ### 3. Emergence of Space, Time, and Physical Laws
 
-The framework shows how fundamental physics emerges from information optimization:
+The framework explores how physics might emerge from information optimization:
 
-- *Space and time* emerge from distinguishability requirements and Fisher information geometry
-- *Energy conservation* emerges from information conservation through geometric time coordinate transforms
-- *Gauge symmetries* arise naturally from the discrete-continuous interface
-- *Classical independence* emerges from quantum entanglement via de Finetti's theorem
+- *Space and time* from distinguishability requirements and Fisher information geometry
+- *Energy conservation* from information conservation through geometric time coordinate transforms
+- *Gauge symmetries* from the discrete-continuous interface
+- *Classical independence* from quantum entanglement via de Finetti's theorem
 
 ## Framework Structure
 
@@ -117,26 +127,26 @@ S = ∫[S(X,M_d|θ) - I(X,M_d|θ)]dτ
 S = ∫[½G_ij(θ)dθ_i/dt dθ_j/dt - V(θ)]dt
 ```
 
-## Key Results and Discoveries
+## Research Investigations and Theoretical Explorations
 
 ### Quantum Mechanics Emergence
-- *Quantum states* arise as unique solutions to information conservation constraints
-- *Entanglement* is the natural default state for maximum correlation
-- *Born rule* emerges as optimal information extraction procedure
-- *Classical independence* emerges from quantum entanglement through scale separation
+- *Quantum states* as potential solutions to information conservation constraints
+- *Entanglement* as natural default state for maximum correlation
+- *Born rule* as candidate optimal information extraction procedure
+- *Classical independence* potentially emerging from quantum entanglement through scale separation
 
 ### Physical Law Emergence
-- *Space and time* emerge from distinguishability requirements
-- *Energy conservation* emerges from information conservation through coordinate geometry
-- *Gauge symmetries* arise from discrete-continuous interface
-- *Standard Model structure* emerges from information optimization under constraints
+- *Space and time* potentially emerging from distinguishability requirements
+- *Energy conservation* potentially emerging from information conservation through coordinate geometry
+- *Gauge symmetries* potentially arising from discrete-continuous interface
+- *Standard Model structure* potentially emerging from information optimization under constraints
 
 ### Emergence Chain
 ```
 Information Conservation → Gauge Theory → EPI → Physical Laws
 ```
 
-### Emergence of Quantum Paradoxes
+### Quantum Paradox Interpretations
 - *Wave-particle duality*: Different information extraction procedures
 - *Measurement problem*: Optimal information extraction at scale transitions  
 - *Quantum-classical boundary*: Natural scale separation effects via de Finetti
@@ -145,9 +155,9 @@ Information Conservation → Gauge Theory → EPI → Physical Laws
 ## Applications and Implications
 
 ### Physics
-- Derives quantum mechanics from information conservation
-- Explains emergence of spacetime and physical laws
-- Unifies quantum and classical mechanics through scale separation
+- Investigates deriving quantum mechanics from information conservation
+- Explores emergence of spacetime and physical laws
+- Examines unification of quantum and classical mechanics through scale separation
 - Connects gauge theory to information optimization
 
 ### Beyond Physics
@@ -155,6 +165,14 @@ The framework's emphasis on *dynamic information topography* (dθ/dt ≠ 0) prov
 - Adaptive systems in economics and social science
 - Technological disruption as topographical engineering
 - Complex system emergence through information constraints
+
+## Research Participation Guidelines
+
+This framework allows collaborative investigation of foundational questions in theoretical physics. Researchers should approach the material as exploration of open research questions rather than established theory. 
+
+The exercise progression provides structure for systematic investigation while acknowledging the speculative nature of many theoretical claims.
+
+Productive engagement requires distinguishing between mathematical derivations that can be rigorously established and theoretical assertions that require additional development or empirical validation. The framework's value lies in clarifying these distinctions while advancing understanding of information-theoretic approaches to fundamental physics.
 
 ## Getting Started
 
