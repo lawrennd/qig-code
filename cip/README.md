@@ -35,7 +35,10 @@ Each CIP can have one of the following statuses:
 
 ## Current CIPs
 
-- [CIP-0001](./cip0001.md): 
+- [CIP-0001](./cip0001.md): Cybernetic Information Theory Connections
+- [CIP-0002](./cip0002.md): Lynguine Framework Integration
+- [CIP-0003](./cip0003.md): Gödel's Incompleteness and Information Topography: The Architecture of Undecidability
+- [CIP-0004](./cip0004.md): Natural Parameters as Optimal Error-Correcting Codes: Fisher Information and Shannon Capacity
 
 ## Creating a Good CIP
 
