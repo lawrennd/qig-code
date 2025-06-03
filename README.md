@@ -1,4 +1,4 @@
-# Information Conservation: A Simple Game with Complex Consequences
+# Information Conservation: Exploring the Foundations of Successful Physics
 
 ## Overview
 
