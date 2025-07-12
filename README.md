@@ -1,3 +1,7 @@
+<a target="_blank" href="https://colab.research.google.com/github/lawrennd/the-inaccessible-game/blob/main/origin-evolution.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
+
 # Information Conservation: The Inaccessible Game and Emergent Physics
 
 ## Overview
