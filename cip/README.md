@@ -6,20 +6,20 @@ Code Improvement Proposals (CIPs) are documents that describe proposed changes t
 
 ## Process
 
-1. **Create a New CIP**:
+1. *Create a New CIP*:
    - Copy the `cip_template.md` file
    - Name it `cipXXXX.md` where XXXX is the next number in sequence
    - Fill in the details of your proposal
 
-2. **Review**:
+2. *Review*:
    - Share the CIP with other developers for feedback
    - Update the CIP based on feedback
 
-3. **Implementation**:
+3. *Implementation*:
    - Update the CIP with implementation details
    - Mark tasks as complete in the Implementation Status section as you make progress
 
-4. **Completion**:
+4. *Completion*:
    - Once all tasks are complete, mark the CIP as completed
    - Add a summary of the changes made
 
@@ -27,15 +27,16 @@ Code Improvement Proposals (CIPs) are documents that describe proposed changes t
 
 Each CIP can have one of the following statuses:
 
-- **Draft**: Initial proposal, subject to change
-- **Accepted**: Proposal has been accepted and is ready for implementation
-- **In Progress**: Implementation is underway
-- **Completed**: Implementation is complete
-- **Rejected**: Proposal has been rejected
+- *Draft*: Initial proposal, subject to change
+- *Accepted*: Proposal has been accepted and is ready for implementation
+- *In Progress*: Implementation is underway
+- *Completed*: Implementation is complete
+- *Rejected*: Proposal has been rejected
 
 ## Current CIPs
 
 - [CIP-0001](./cip0001.md): Inaccessible Game Quantum Tensor Utilities Module
+- [CIP-0002](./cip0002.md): Add Comprehensive Test Suite for inxg.py Module
 
 ## Creating a Good CIP
 
