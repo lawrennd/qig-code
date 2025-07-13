@@ -57,6 +57,66 @@ This is an active research project. The current focus is on developing, clarifyi
 
 - Read the draft paper (`the-inaccessible-game.tex`) for the latest and most complete exposition of the framework.
 
+## Software Library
+
+This project includes a comprehensive Python software library for quantum information calculations related to the inaccessible game research.
+
+### Core Module: `inxg.py`
+
+The `inxg.py` module provides tensor-based quantum information processing utilities specifically designed for the inaccessible game framework:
+
+#### Key Features
+- **Tensor-based quantum operations** using explicit-legs tensor layouts
+- **Hybrid quantum-classical algorithms** for entropy evolution
+- **Constraint-satisfying gradient flows** for information conservation
+- **Robust numerical implementations** with multiple fallback strategies
+- **Comprehensive type hints and documentation** for all functions
+
+#### Main Function Categories
+1. **State Creation**: Bell pair tensors and multi-qudit initial states
+2. **Quantum Operations**: Partial trace, entanglement entropy calculations
+3. **Entropy & Gradients**: Von Neumann entropy and gradient computations
+4. **Projection & Constraints**: Gradient projection onto constraint manifolds
+5. **Classical Operations**: IPF (Sinkhorn) projection and classical entropy ascent
+6. **Hybrid Algorithms**: Quantum-to-classical transition workflows
+7. **Utilities**: Local dephasing, density matrix normalization
+
+#### Usage Example
+```python
+import inxg
+
+# Create initial Bell pair state
+rho = inxg.create_initial_state(M=2, d=3)
+
+# Calculate entanglement entropy
+S_ent = inxg.entanglement_entropy(rho, B_indices=[2, 3], total_qudits=4)
+
+# Run hybrid quantum-classical evolution
+final_rho, ent_hist, viol_hist = inxg.gradient_ascent_simulation_tensor(M=2)
+```
+
+### Development Structure
+
+The project follows a professional development structure with:
+
+- **CIPs (Code Improvement Plans)**: Documented development roadmap
+  - [CIP-0001](./cip/cip0001.md): Core module implementation
+  - [CIP-0002](./cip/cip0002.md): Comprehensive test suite
+  - [CIP-0003](./cip/cip0003.md): quimb library integration
+- **Backlog**: Task tracking for ongoing improvements
+- **VibeSafe**: Project management and documentation standards
+
+### Dependencies
+
+Core dependencies include:
+- `numpy`: Numerical computations
+- `scipy`: Linear algebra operations
+- `matplotlib`: Visualization (optional)
+
+Future enhancements planned:
+- `quimb`: Advanced tensor network operations and GPU acceleration
+- `pytest`: Comprehensive testing framework
+
 ## Contributing
 
 
