@@ -37,6 +37,7 @@ Each CIP can have one of the following statuses:
 
 - [CIP-0001](./cip0001.md): Inaccessible Game Quantum Tensor Utilities Module
 - [CIP-0002](./cip0002.md): Add Comprehensive Test Suite for inxg.py Module
+- [CIP-0003](./cip0003.md): Integrate quimb Library for Enhanced Quantum Tensor Operations
 
 ## Creating a Good CIP
 
