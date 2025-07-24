@@ -8,6 +8,41 @@
 
 This project investigates how complex physical laws can emerge from simple information-theoretic principles. The central focus is the "inaccessible game," as developed in the draft paper (`the-inaccessible-game.tex`). The inaccessible game is a zero-player, observer-independent system whose internal state is information-isolated from any observer. Its state variables are exchangeable, and its dynamics are derived from a set of axioms that generalize and extend classical information theory.
 
+## MEPP Library Installation
+
+The Maximum Entropy Production Principle (MEPP) quantum thermalization library can be installed directly from this repository:
+
+```bash
+# Install from GitHub using Poetry
+poetry add git+https://github.com/lawrennd/the-inaccessible-game.git
+
+# Or using pip
+pip install git+https://github.com/lawrennd/the-inaccessible-game.git
+```
+
+### Quick Start
+
+```python
+from mepp import MEPPSimulator
+import numpy as np
+
+# Create a 4-qubit MEPP simulator
+simulator = MEPPSimulator(n_qubits=4, max_support_size=3, d=2)
+
+# Run two-stage thermalization
+final_state, _ = simulator.simulate_evolution(
+    n_steps=30,
+    block_size=8,
+    sigma_alpha=1.0,
+    dephasing_steps=10
+)
+
+# Plot results
+simulator.plot_results()
+```
+
+See `mepp_demo.ipynb` for a comprehensive demonstration.
+
 The project explores how, starting from these axioms, one can derive:
 - Entropy conservation as a fundamental constraint
 - The emergence of time and dynamics via entropy production
