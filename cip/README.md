@@ -32,14 +32,15 @@ Each CIP can have one of the following statuses:
 - *In Progress*: Implementation is underway
 - *Completed*: Implementation is complete
 - *Rejected*: Proposal has been rejected
+- *Abandoned*: Proposal has been abandoned in favour of an alternative approach
 
 ## Current CIPs
 
 - [CIP-0001](./cip0001.md): Inaccessible Game Quantum Tensor Utilities Module
 - [CIP-0002](./cip0002.md): Add Comprehensive Test Suite for inxg.py Module
 - [CIP-0003](./cip0003.md): Integrate quimb Library for Enhanced Quantum Tensor Operations
-- [CIP-0004](./cip0004.md): Implement Proper Quantum Circuit Consistency Across Pseudocode and Implementations
-- [CIP-0005](./cip0005.md): Quantum Thermalization via Random Phase-String Gates and Coarse Graining
+- [CIP-0004](./cip0004.md): Implement Proper Quantum Circuit Consistency Across Pseudocode and Implementations (ABANDONED)
+- [CIP-0005](./cip0005.md): Quantum Thermalization via Maximum Entropy Production Principle (MEPP) and Coarse Graining
 
 ## Creating a Good CIP
 
