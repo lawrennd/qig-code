@@ -178,6 +178,8 @@ The framework turns *information conservation* into a generative engine for gaug
 
 ## Key References
 
+- Beretta, G. P. (2019). The fourth law of thermodynamics: steepest entropy ascent. [arXiv:1908.05768](https://arxiv.org/abs/1908.05768) [cond-mat.stat-mech]. *Philosophical Transactions of the Royal Society A*, 378, 20190168 (2020)
+- Surace, J. (2023). A Theory of Inaccessible Information. [arXiv:2305.05734](https://arxiv.org/abs/2305.05734) [quant-ph]. *Quantum*, 8, 1464 (2024)
 - Lawrence, N. D. (2025). The Inaccessible Game. *draft paper* (see `the-inaccessible-game.tex`)
 - Jaynes, E. T. (1957). Information theory and statistical mechanics. *Physical Review*, 106(4), 620-630
 - Caticha, A. (2011). Entropic inference and the foundations of physics. *Monograph commissioned by the 11th Brazilian Meeting on Bayesian Statistics*
