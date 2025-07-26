@@ -41,6 +41,8 @@ Each CIP can have one of the following statuses:
 - [CIP-0003](./cip0003.md): Integrate quimb Library for Enhanced Quantum Tensor Operations
 - [CIP-0004](./cip0004.md): Implement Proper Quantum Circuit Consistency Across Pseudocode and Implementations (ABANDONED)
 - [CIP-0005](./cip0005.md): Quantum Thermalization via Maximum Entropy Production Principle (MEPP) and Coarse Graining
+- [CIP-0006](./cip0006.md): AISTATS Paper Draft Restructuring for Two-Stage MEPP Framework
+- [CIP-0007](./cip0007.md): Extend MEPPSimulator to Cover Stage 3 Plateau/Stalling Regime
 
 ## Creating a Good CIP
 
