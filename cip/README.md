@@ -36,9 +36,9 @@ Each CIP can have one of the following statuses:
 
 ## Current CIPs
 
-- [CIP-0001](./cip0001.md): Inaccessible Game Quantum Tensor Utilities Module
-- [CIP-0002](./cip0002.md): Add Comprehensive Test Suite for inxg.py Module
-- [CIP-0003](./cip0003.md): Integrate quimb Library for Enhanced Quantum Tensor Operations
+- [CIP-0001](./cip0001.md): Inaccessible Game Quantum Tensor Utilities Module (COMPLETED - Legacy)
+- [CIP-0002](./cip0002.md): Add Comprehensive Test Suite for inxg.py Module (DEFERRED)
+- [CIP-0003](./cip0003.md): Integrate quimb Library for Enhanced Quantum Tensor Operations (SUPERSEDED)
 - [CIP-0004](./cip0004.md): Implement Proper Quantum Circuit Consistency Across Pseudocode and Implementations (ABANDONED)
 - [CIP-0005](./cip0005.md): Quantum Thermalization via Maximum Entropy Production Principle (MEPP) and Coarse Graining
 - [CIP-0006](./cip0006.md): AISTATS Paper Draft Restructuring for Two-Stage MEPP Framework
