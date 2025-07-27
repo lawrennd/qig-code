@@ -16,6 +16,8 @@ category: "features"
 
 Implement block-level Fisher matrix analysis to track the sloppy/fast hierarchy and identify the slowest mode λ_min that creates long entropy plateaus. This provides insight into the information geometry underlying the thermalization process.
 
+**CRITICAL**: This task is also foundational for fixing the random localization bug in the isolation stage (see backlog bug: 2025-07-26_random-localization-bug). The Fisher matrix computation provides the gradient information needed for proper SEA-guided gate selection.
+
 ## Acceptance Criteria
 
 ### 1. Fisher Matrix Computation

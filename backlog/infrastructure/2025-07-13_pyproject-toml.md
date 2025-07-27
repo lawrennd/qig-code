@@ -1,7 +1,7 @@
 ---
 id: "2025-07-13_pyproject-toml"
 title: "Create pyproject.toml for Python project dependencies"
-status: "Completed"
+status: "completed"
 priority: "High"
 created: "2025-07-13"
 last_updated: "2025-01-27"

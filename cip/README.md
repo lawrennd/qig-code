@@ -6,20 +6,20 @@ Code Improvement Proposals (CIPs) are documents that describe proposed changes t
 
 ## Process
 
-1. *Create a New CIP*:
+1. **Create a New CIP**:
    - Copy the `cip_template.md` file
    - Name it `cipXXXX.md` where XXXX is the next number in sequence
    - Fill in the details of your proposal
 
-2. *Review*:
+2. **Review**:
    - Share the CIP with other developers for feedback
    - Update the CIP based on feedback
 
-3. *Implementation*:
+3. **Implementation**:
    - Update the CIP with implementation details
    - Mark tasks as complete in the Implementation Status section as you make progress
 
-4. *Completion*:
+4. **Completion**:
    - Once all tasks are complete, mark the CIP as completed
    - Add a summary of the changes made
 
@@ -27,22 +27,15 @@ Code Improvement Proposals (CIPs) are documents that describe proposed changes t
 
 Each CIP can have one of the following statuses:
 
-- *Draft*: Initial proposal, subject to change
-- *Accepted*: Proposal has been accepted and is ready for implementation
-- *In Progress*: Implementation is underway
-- *Completed*: Implementation is complete
-- *Rejected*: Proposal has been rejected
-- *Abandoned*: Proposal has been abandoned in favour of an alternative approach
+- **Draft**: Initial proposal, subject to change
+- **Accepted**: Proposal has been accepted and is ready for implementation
+- **In Progress**: Implementation is underway
+- **Completed**: Implementation is complete
+- **Rejected**: Proposal has been rejected
 
 ## Current CIPs
 
-- [CIP-0001](./cip0001.md): Inaccessible Game Quantum Tensor Utilities Module (COMPLETED - Legacy)
-- [CIP-0002](./cip0002.md): Add Comprehensive Test Suite for inxg.py Module (DEFERRED)
-- [CIP-0003](./cip0003.md): Integrate quimb Library for Enhanced Quantum Tensor Operations (SUPERSEDED)
-- [CIP-0004](./cip0004.md): Implement Proper Quantum Circuit Consistency Across Pseudocode and Implementations (ABANDONED)
-- [CIP-0005](./cip0005.md): Quantum Thermalization via Maximum Entropy Production Principle (MEPP) and Coarse Graining
-- [CIP-0006](./cip0006.md): AISTATS Paper Draft Restructuring for Two-Stage MEPP Framework
-- [CIP-0007](./cip0007.md): Extend MEPPSimulator to Cover Stage 3 Plateau/Stalling Regime
+- [CIP-0001](./cip0001.md): 
 
 ## Creating a Good CIP
 
