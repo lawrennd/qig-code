@@ -10,6 +10,33 @@ With nothing more than "conserve the sum of marginal entropies and always follow
 
 This project implements the *Maximum Entropy Production Principle (MEPP)* framework using *Steepest-Entropy-Ascent (SEA)* dynamics in *Jaynes natural parameter* coordinates. Starting from pure information-theoretic axioms, the system demonstrates how complex physical laws—including gauge theories, particle physics, and cosmological evolution—can emerge organically from entropy maximization alone.
 
+## Project Tenets
+
+The Inaccessible Game is guided by seven core tenets that define its philosophical foundation and research approach:
+
+### **1. Information Conservation as Foundation**
+*The sum of marginal entropies must be conserved.* This single constraint serves as the foundational principle from which all emergent physics derives, rather than starting with energy conservation or action principles.
+
+### **2. Steepest Entropy Ascent as Dynamics**  
+*The system always follows the steepest-entropy-ascent direction.* Expressed as θ̇ = -G_∥θ in natural parameter coordinates, this provides the dynamical law driving evolution from quantum to classical regimes.
+
+### **3. Emergent Physics from Information Geometry**
+*All physical laws emerge from the geometry of the information landscape.* The Fisher information metric defines the geometry, and physical phenomena—gauge theories, particle masses, spacetime symmetries—arise as consequences.
+
+### **4. Two-Stage Evolution: Dephasing to Isolation**
+*The system evolves through two distinct stages.* Stage 1 (dephasing) destroys quantum coherences; Stage 2 (isolation) evolves correlations under SEA dynamics, naturally explaining the quantum-to-classical transition.
+
+### **5. Natural Parameters as Canonical Coordinates**
+*All dynamics are expressed in Jaynes natural parameter coordinates.* θ_j = log p_j - ψ provides the canonical framework for understanding the system and separating hard from soft constraints.
+
+### **6. Observer Independence and Information Isolation**
+*The system is information-isolated from any observer.* The game operates independently of external observers, with no information leakage to or from the outside world.
+
+### **7. Mathematical Rigor and Systematic Investigation**
+*The framework operates at the intersection of established mathematical results and conjectured theoretical development.* Systematic investigation distinguishes between rigorous derivations and speculative extensions.
+
+These tenets guide all research decisions, implementation choices, and documentation throughout the project. For detailed explanations and usage guidelines, see [`tenets/inaccessible-game/README.md`](tenets/inaccessible-game/README.md).
+
 ## Key Take‑aways
 
 | Level                       | Emergent structure                                                                                  | Comment                                                                                                       |
@@ -103,6 +130,7 @@ The framework operates in *canonical coordinates* θ_j = log p_j - ψ where:
 - `cip/cip0005.md`: Core CIP documenting MEPP thermalization with SEA dynamics
 - `backlog/features/`: Detailed task specifications for advanced extensions
 - `the-inaccessible-game.tex`: Theoretical foundation paper
+- `tenets/inaccessible-game/`: Project tenets and philosophical foundation
 
 ### Advanced Features (Backlog)
 - *Natural Parameter Framework*: Full Jaynes coordinate implementation
