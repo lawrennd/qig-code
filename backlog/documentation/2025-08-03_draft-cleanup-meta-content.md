@@ -1,9 +1,12 @@
 ---
 id: 2025-08-03_draft-cleanup-meta-content
-status: proposed
+title: Phase-3 Meta-Content Clean-up
+status: ready
 priority: High
+parent: CIP-0006
 owner: Neil
 created: 2025-08-03
+due: 2025-08-10
 ---
 
 # Task: Clean Up Draft Meta-Content (Comments, TODOs, CIPs)
@@ -11,9 +14,11 @@ created: 2025-08-03
 This task collects a set of editorial clean-up actions identified during a triage pass over the current LaTeX draft.  None of these affect the scientific content; they are purely organisational/structural and aimed at improving readability for collaborators and reviewers.
 
 ## Description
+
 The draft currently contains numerous inline comments, obsolete TODO tags, redundant derivations and other author-side artefacts that are "loud" in the compiled PDF and distract from the main argument.  Consolidating or relocating these items will slim the document and clarify the storyline.
 
 ## Acceptance Criteria
+
 - All CIP/M-x tags are migrated to a single external tracker file (or GitHub project board).
 - Long explainer comment blocks (> 20 lines) are moved to `AUTHOR_NOTES.md`, leaving only a 1-line reference marker in the TeX.
 - A single canonical SEA equation macro (`\SEAeq`) is defined and referenced everywhere; alternate notations are removed.
