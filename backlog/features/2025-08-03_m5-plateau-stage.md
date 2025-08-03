@@ -1,7 +1,8 @@
 ---
 title: "Implement M-5: Stage 3 Long Plateau & Quasi-Symmetries"
 date: 2025-08-03
-status: "proposed"
+status: superseded
+superseded_by: CIP-0006
 priority: "High"
 owner: "Neil"
 dependencies: ["cip0006", "2025-08-03_m4-isolation-stage"]

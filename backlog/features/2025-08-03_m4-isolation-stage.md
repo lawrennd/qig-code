@@ -1,7 +1,8 @@
 ---
 title: "Implement M-4: Stage 2 Isolation & SEA Subsection"
 date: 2025-08-03
-status: "proposed"
+status: superseded
+superseded_by: CIP-0006
 priority: "High"
 owner: "Neil"
 dependencies: ["cip0006", "2025-08-03_m3-dephasing-stage"]

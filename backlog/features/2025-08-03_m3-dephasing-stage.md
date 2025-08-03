@@ -1,7 +1,8 @@
 ---
 title: "Implement M-3: Stage 1 Dephasing Subsection"
 date: 2025-08-03
-status: "proposed"
+status: superseded
+superseded_by: CIP-0006
 priority: "High"
 owner: "Neil"
 dependencies: ["cip0006", "2025-08-03_m1-structural-split", "2025-08-03_m2-info-geometry-box"]

@@ -1,7 +1,8 @@
 ---
 title: "Implement Parameter Evolution Framework Across Paper Sections"
 date: 2025-08-03
-status: "proposed"
+status: superseded
+superseded_by: CIP-0006
 priority: "High"
 owner: "Neil"
 dependencies: ["cip0006"]
