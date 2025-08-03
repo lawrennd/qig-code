@@ -145,7 +145,7 @@ The optimized block system completely resolves the original issue and provides:
 ### Integration with Project Goals
 - ✅ *CIP-0005*: Core MEPP objectives achieved with breakthrough performance
 - ✅ *CIP-0007*: Stage 3 implementation can leverage optimized blocks
-- ✅ *CIP-0006*: AISTATS paper can showcase dramatic optimization results
+- ✅ *CIP-0006*: arXiv paper can showcase dramatic optimization results
 
 ### Critical MEPP Violation: *RESOLVED*
 - ❌ *Before*: Random localization violated MEPP principle

@@ -80,7 +80,7 @@ This separation is critical for the paper's narrative structure and makes the pr
 
 ## Related
 
-- **CIP-0006**: Update AISTATS Paper Draft to Jaynes/Natural-Parameter Framework
+- **CIP-0006**: Update arXiv Paper Draft to Jaynes/Natural-Parameter Framework
 - **Backlog Task**: 2025-08-03_m2-info-geometry-box (next structural task)
 - **Backlog Task**: 2025-08-03_parameter-evolution-framework (parameter story integration)
 

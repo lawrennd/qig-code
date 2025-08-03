@@ -72,7 +72,7 @@ The paper contains extensive mathematical derivations that interrupt the narrati
 
 ## Related
 
-- **CIP-0006**: Update AISTATS Paper Draft to Jaynes/Natural-Parameter Framework
+- **CIP-0006**: Update arXiv Paper Draft to Jaynes/Natural-Parameter Framework
 - **Backlog Task**: 2025-08-03_m1-structural-split (prerequisite)
 - **Backlog Task**: 2025-08-03_m7-streamline-proofs (related proof organization)
 

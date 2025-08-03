@@ -11,7 +11,7 @@ dependencies: ["cip0006"]
 
 ## Description
 
-Add a systematic "Parameter Evolution" subsection to each major section of the AISTATS paper to show how parameters evolve from constraints to constants to fields. This creates a coherent narrative thread showing the mathematical framework development from Jaynes natural parameters to fundamental constants.
+Add a systematic "Parameter Evolution" subsection to each major section of the arXiv paper to show how parameters evolve from constraints to constants to fields. This creates a coherent narrative thread showing the mathematical framework development from Jaynes natural parameters to fundamental constants.
 
 ## Background
 
@@ -86,7 +86,7 @@ This mirrors the physical progression from quantum → classical → particle �
 
 ## Related
 
-- **CIP-0006**: Update AISTATS Paper Draft to Jaynes/Natural-Parameter Framework
+- **CIP-0006**: Update arXiv Paper Draft to Jaynes/Natural-Parameter Framework
 - **Backlog Task**: 2025-08-01_paper-restructuring-completion (main restructuring task)
 - **Existing Content**: Fine structure constant analysis in Section 5
 

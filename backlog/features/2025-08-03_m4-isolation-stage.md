@@ -79,7 +79,7 @@ The isolation stage is where the core SEA dynamics operate on the diagonal state
 
 ## Related
 
-- **CIP-0006**: Update AISTATS Paper Draft to Jaynes/Natural-Parameter Framework
+- **CIP-0006**: Update arXiv Paper Draft to Jaynes/Natural-Parameter Framework
 - **Backlog Task**: 2025-08-03_m5-plateau-stage (next stage)
 - **Backlog Task**: 2025-08-03_parameter-evolution-framework (parameter story integration)
 - **Existing Content**: Fine structure constant analysis and electroweak framework

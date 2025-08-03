@@ -77,7 +77,7 @@ The dephasing stage is critical for establishing the transition from quantum to 
 
 ## Related
 
-- **CIP-0006**: Update AISTATS Paper Draft to Jaynes/Natural-Parameter Framework
+- **CIP-0006**: Update arXiv Paper Draft to Jaynes/Natural-Parameter Framework
 - **Backlog Task**: 2025-08-03_m4-isolation-stage (next stage)
 - **Backlog Task**: 2025-08-03_parameter-evolution-framework (parameter story integration)
 - **CIP-0007**: Stage 3 plateau simulation (for entropy curve figures)

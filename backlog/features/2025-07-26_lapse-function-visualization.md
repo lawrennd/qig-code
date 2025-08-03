@@ -41,7 +41,7 @@ Extend the existing plotting infrastructure to visualize Stage 3 plateau dynamic
 - [ ] Clear visual separation between Stages 1, 2, and 3
 - [ ] Color-coded background regions for each stage
 - [ ] Stage transition markers with timing information
-- [ ] Professional formatting for AISTATS Figure 3 generation
+- [ ] Professional formatting for arXiv Figure 3 generation
 
 ## Implementation Notes
 
@@ -85,7 +85,7 @@ Extend the existing plotting infrastructure to visualize Stage 3 plateau dynamic
 
 - `2025-07-26_stage3-simulation-loop`: Generates data for visualization
 - `2025-07-25_fisher-matrix-analysis`: Provides eigenvalue data
-- *AISTATS Paper*: Figure 3 showing plateau dynamics
+- *arXiv Paper*: Figure 3 showing plateau dynamics
 
 ## Physics Interpretation Features
 
@@ -102,7 +102,7 @@ Extend the existing plotting infrastructure to visualize Stage 3 plateau dynamic
 ## Success Metrics
 
 ### Figure Quality
-- Publication-ready figures suitable for AISTATS submission
+- Publication-ready figures suitable for arXiv submission
 - Clear visual demonstration of Stage 3 plateau physics
 - Professional appearance with proper scaling and annotations
 
@@ -115,4 +115,4 @@ Extend the existing plotting infrastructure to visualize Stage 3 plateau dynamic
 
 - CIP-0007: Stage 3 Plateau/Stalling Regime Implementation
 - Beretta (2020): Lapse function formalism for non-equilibrium thermodynamics
-- AISTATS submission requirements: Figure quality and formatting standards 
+- arXiv submission requirements: Figure quality and formatting standards 
