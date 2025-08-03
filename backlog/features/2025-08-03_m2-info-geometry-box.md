@@ -1,7 +1,8 @@
 ---
 title: "Implement M-2: Create Information Geometry Preliminaries Box"
 date: 2025-08-03
-status: "proposed"
+status: superseded
+superseded_by: CIP-0006
 priority: "High"
 owner: "Neil"
 dependencies: ["cip0006", "2025-08-03_m1-structural-split"]
