@@ -454,6 +454,244 @@ def constrained_flow_step(theta: np.ndarray, operators: List[np.ndarray],
     return theta + dt * F
 
 
+def solve_constrained_quantum_maxent(
+    theta_init: np.ndarray,
+    operators: List[np.ndarray],
+    n_sites: int = 3,
+    n_steps: int = 5000,
+    dt: float = 0.005,
+    convergence_tol: float = 1e-5,
+    verbose: bool = True
+) -> Dict:
+    """
+    Integrate constrained quantum maximum entropy dynamics.
+    
+    Dynamics: dθ/dt = -Π_∥(θ) G(θ) θ
+    
+    where Π_∥ projects onto tangent space of constraint Σ h_i = C.
+    
+    Parameters
+    ----------
+    theta_init : ndarray
+        Initial natural parameters
+    operators : list
+        Hermitian generators
+    n_sites : int
+        Number of subsystems
+    n_steps : int
+        Maximum integration steps
+    dt : float
+        Time step
+    convergence_tol : float
+        Stop when ||F(θ)|| < tol
+    verbose : bool
+        Print progress
+        
+    Returns
+    -------
+    solution : dict
+        trajectory, flow_norms, constraint_values, converged, C_init
+    """
+    d = 3  # Qutrit dimension
+    trajectory = [theta_init.copy()]
+    flow_norms = []
+    constraint_values = []
+    theta = theta_init.copy()
+    
+    # Initial constraint value
+    rho_init = compute_density_matrix(theta_init, operators)
+    h_init = []
+    for i in range(n_sites):
+        rho_i = partial_trace(rho_init, keep_site=i, n_sites=n_sites, d=d)
+        h_init.append(von_neumann_entropy(rho_i))
+    C_init = np.sum(h_init)
+    constraint_values.append(C_init)
+    
+    if verbose:
+        print(f"Initial constraint value: C = {C_init:.6f}")
+        print(f"  Individual marginals: h = {h_init}")
+    
+    for step in range(n_steps):
+        # Compute flow at current point
+        try:
+            G = compute_covariance_matrix(theta, operators)
+            a = compute_constraint_gradient(theta, operators, n_sites)
+            
+            # Unconstrained flow: -Gθ (entropy ascent)
+            F_unc = -G @ theta
+            
+            # Lagrange multiplier for tangency
+            nu = np.dot(F_unc, a) / (np.dot(a, a) + 1e-10)
+            
+            # Constrained flow
+            F = F_unc - nu * a
+            
+            # Integration step
+            theta = theta + dt * F
+            
+            # Track
+            flow_norm = np.linalg.norm(F)
+            flow_norms.append(flow_norm)
+            trajectory.append(theta.copy())
+            
+            # Constraint value
+            rho_current = compute_density_matrix(theta, operators)
+            h_current = []
+            for i in range(n_sites):
+                rho_i = partial_trace(rho_current, keep_site=i, n_sites=n_sites, d=d)
+                h_current.append(von_neumann_entropy(rho_i))
+            C_current = np.sum(h_current)
+            constraint_values.append(C_current)
+            
+            # Verbose output
+            if verbose and step % 100 == 0:
+                print(f"Step {step:4d}: ||F|| = {flow_norm:.6e}, "
+                      f"ΔC = {abs(C_current - C_init):.8e}")
+            
+            # Convergence check
+            if flow_norm < convergence_tol:
+                if verbose:
+                    print(f"\nConverged at step {step}")
+                return {
+                    'trajectory': np.array(trajectory),
+                    'flow_norms': np.array(flow_norms),
+                    'constraint_values': np.array(constraint_values),
+                    'converged': True,
+                    'C_init': C_init,
+                    'n_steps': step + 1
+                }
+                
+        except Exception as e:
+            print(f"Error at step {step}: {e}")
+            break
+    
+    if verbose:
+        print(f"\nReached maximum steps ({n_steps})")
+    
+    return {
+        'trajectory': np.array(trajectory),
+        'flow_norms': np.array(flow_norms),
+        'constraint_values': np.array(constraint_values),
+        'converged': False,
+        'C_init': C_init,
+        'n_steps': n_steps
+    }
+
+
+def solve_unconstrained_quantum_maxent(
+    theta_init: np.ndarray,
+    operators: List[np.ndarray],
+    n_sites: int = 3,
+    n_steps: int = 5000,
+    dt: float = 0.005,
+    convergence_tol: float = 1e-5,
+    verbose: bool = True
+) -> Dict:
+    """
+    Integrate unconstrained quantum maximum entropy dynamics.
+    
+    Dynamics: dθ/dt = -G(θ) θ
+    
+    Pure steepest entropy ascent without constraints.
+    
+    Parameters
+    ----------
+    theta_init : ndarray
+        Initial natural parameters
+    operators : list
+        Hermitian generators
+    n_sites : int
+        Number of subsystems
+    n_steps : int
+        Maximum integration steps
+    dt : float
+        Time step
+    convergence_tol : float
+        Stop when ||F(θ)|| < tol
+    verbose : bool
+        Print progress
+        
+    Returns
+    -------
+    solution : dict
+        trajectory, flow_norms, constraint_values, converged
+    """
+    d = 3  # Qutrit dimension
+    trajectory = [theta_init.copy()]
+    flow_norms = []
+    constraint_values = []
+    theta = theta_init.copy()
+    
+    # Initial constraint value
+    rho_init = compute_density_matrix(theta_init, operators)
+    h_init = []
+    for i in range(n_sites):
+        rho_i = partial_trace(rho_init, keep_site=i, n_sites=n_sites, d=d)
+        h_init.append(von_neumann_entropy(rho_i))
+    C_init = np.sum(h_init)
+    constraint_values.append(C_init)
+    
+    if verbose:
+        print(f"Initial marginal entropy sum: C = {C_init:.6f}")
+    
+    for step in range(n_steps):
+        # Compute flow at current point
+        try:
+            G = compute_covariance_matrix(theta, operators)
+            
+            # Unconstrained flow: -Gθ (entropy ascent)
+            F = -G @ theta
+            
+            # Integration step
+            theta = theta + dt * F
+            
+            # Track
+            flow_norm = np.linalg.norm(F)
+            flow_norms.append(flow_norm)
+            trajectory.append(theta.copy())
+            
+            # Constraint value (will drift)
+            rho_current = compute_density_matrix(theta, operators)
+            h_current = []
+            for i in range(n_sites):
+                rho_i = partial_trace(rho_current, keep_site=i, n_sites=n_sites, d=d)
+                h_current.append(von_neumann_entropy(rho_i))
+            C_current = np.sum(h_current)
+            constraint_values.append(C_current)
+            
+            # Verbose output
+            if verbose and step % 100 == 0:
+                print(f"Step {step:4d}: ||F|| = {flow_norm:.6e}, "
+                      f"C = {C_current:.6f}")
+            
+            # Convergence check
+            if flow_norm < convergence_tol:
+                if verbose:
+                    print(f"\nConverged at step {step}")
+                return {
+                    'trajectory': np.array(trajectory),
+                    'flow_norms': np.array(flow_norms),
+                    'constraint_values': np.array(constraint_values),
+                    'converged': True,
+                    'n_steps': step + 1
+                }
+                
+        except Exception as e:
+            print(f"Error at step {step}: {e}")
+            break
+    
+    if verbose:
+        print(f"\nReached maximum steps ({n_steps})")
+    
+    return {
+        'trajectory': np.array(trajectory),
+        'flow_norms': np.array(flow_norms),
+        'constraint_values': np.array(constraint_values),
+        'converged': False,
+        'n_steps': n_steps
+    }
+
+
 # ============================================================================
 # Utilities
 # ============================================================================
