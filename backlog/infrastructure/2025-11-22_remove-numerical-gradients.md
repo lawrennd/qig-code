@@ -1,7 +1,7 @@
 ---
 id: "2025-11-22_remove-numerical-gradients"
 title: "Remove numerical gradient computations from quantum game code"
-status: "Proposed"
+status: "In Progress"
 priority: "High"
 created: "2025-11-22"
 last_updated: "2025-11-22"
@@ -42,14 +42,14 @@ validation and analysis pipeline, especially for CI/integration use.
 
 ## Acceptance Criteria
 
-- [ ] All finite-difference based gradient/Hessian computations in the core library
+- [x] All finite-difference based gradient/Hessian computations in the core library
       (`qig.*` and any remaining logic in `inaccessible_game_quantum.py`) are
       identified and documented.
-- [ ] For each such computation, an alternative implementation is designed
+- [x] For each such computation, an alternative implementation is designed
       (closed-form, analytic, or AD-based) and recorded.
-- [ ] At least the main bottlenecks (Fisher/BKM metric, marginal-entropy constraint
+- [x] At least the main bottlenecks (Fisher/BKM metric, marginal-entropy constraint
       gradients) are re-implemented without naive finite differences.
-- [ ] Existing unit tests in `test_inaccessible_game.py` continue to pass without
+- [x] Existing unit tests in `test_inaccessible_game.py` continue to pass without
       relaxation of numerical tolerances.
 - [ ] High-level scripts (`advanced_analysis.py`, `validate_qutrit_optimality.py`)
       run noticeably faster and no longer require multi-minute runtimes in their
@@ -144,5 +144,43 @@ step for this backlog item is to:
   operator ordering; and then
 - generalise to genuinely quantum (non-commuting) directions, tightening the
   tests once the commuting case is sound.
+
+### 2025-11-22 (Major Progress)
+
+**Status**: In Progress → Core implementations complete
+
+**Two critical bugs found and fixed:**
+
+1. **BKM metric bug** (commit `aa5d7dd`):
+   - **Bug**: Used `A_a * A_b.T.conj()` instead of `A_a * np.conj(A_b)`
+   - **Impact**: 155% error in non-commuting case, even wrong signs!
+   - **Root cause**: Wrong operator ordering/conjugation for non-commuting operators
+   - **Validation approach**:
+     * Created diagonal test families (test_commuting_bkm.py) - passed ✅
+     * Tested simplest non-commuting case (X,Y on single qubit) - failed ❌
+     * Compared integral definition vs spectral formula (test_bkm_integral.py)
+     * Identified exact bug: transpose-then-conjugate vs conjugate-only
+   - **Result**: All tests now pass (diagonal, qubits, qutrits, ququarts)
+
+2. **Marginal entropy gradient** (commit `0648fdc`):
+   - **Replaced**: Finite-difference approximation
+   - **With**: Analytic gradient using exponential family structure:
+     ```
+     ∂C/∂θ_a = ∑_i -Tr((∂ρ_i/∂θ_a) log ρ_i)
+     where ∂ρ/∂θ_a = ρ (F_a - ⟨F_a⟩ I)
+     ```
+   - **Benefits**: Exact (no approximation error), faster, more stable
+   - **Validation**: Matches finite-differences to machine precision
+
+**Key insight**: The diagonal validation gave false confidence - the bug only
+appeared when operators don't commute. This validates the approach of testing
+quantum derivatives carefully:
+- ✅ Check operator commutation
+- ✅ Verify operator ordering
+- ✅ Distinguish quantum vs classical
+- ✅ Respect Hilbert space structure
+- ✅ Question each derivative step
+
+**Remaining work**: Benchmark high-level scripts to measure speedup.
 
 
