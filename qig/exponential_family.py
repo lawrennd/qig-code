@@ -785,6 +785,140 @@ class QuantumExponentialFamily:
                         hessian[b, a] += d2h_i
         
         return hessian
+    
+    def lagrange_multiplier_gradient(self, theta: np.ndarray, 
+                                     method: str = 'sld',
+                                     n_points: int = 100) -> np.ndarray:
+        """
+        Compute ∇ν, the gradient of the Lagrange multiplier ν(θ).
+        
+        From the paper (equations 831-832):
+        ∂ν/∂θ_j = (1/||a||²) [
+            a^T G e_j                      # Fisher information term
+          + a^T (∇G)[θ] e_j                # Third cumulant term  
+          + (∇a)_j^T G θ                   # Hessian-metric coupling
+          - 2ν a^T (∇a)_j                  # Normalization correction
+        ]
+        
+        where:
+        - ν = (a^T G θ)/(a^T a) is the Lagrange multiplier
+        - a = ∇C = ∇(∑h_i) is the constraint gradient
+        - G = Fisher information (BKM metric)
+        - (∇G)[θ] = third cumulant tensor contracted with θ
+        - ∇a = ∇²C is the constraint Hessian
+        
+        Parameters
+        ----------
+        theta : ndarray, shape (n_params,)
+            Natural parameters
+        method : str, default='sld'
+            'sld' or 'duhamel' for derivative precision
+        n_points : int, default=100
+            Quadrature points for Duhamel (ignored for 'sld')
+            
+        Returns
+        -------
+        grad_nu : ndarray, shape (n_params,)
+            Gradient ∇ν
+            
+        Notes
+        -----
+        Uses all the high-precision components from Steps 1-3:
+        - BKM metric G (spectral formula)
+        - Third cumulant (∇G)[θ] (perturbation theory)
+        - Constraint Hessian ∇²C (Duhamel for high precision)
+        """
+        # Get constraint gradient a = ∇C and constraint value
+        C, a = self.marginal_entropy_constraint(theta)
+        
+        # Get BKM metric G
+        G = self.fisher_information(theta)
+        
+        # Compute Lagrange multiplier ν = (a^T G θ)/(||a||²)
+        a_norm_sq = np.dot(a, a)
+        nu = np.dot(a, G @ theta) / a_norm_sq
+        
+        # Get third cumulant contraction (∇G)[θ]
+        third_cumulant_contracted = self.third_cumulant_contraction(theta)
+        
+        # Get constraint Hessian ∇²C = ∇a
+        hessian_C = self.constraint_hessian(theta, method=method, n_points=n_points)
+        
+        # Compute gradient ∇ν for each parameter j
+        grad_nu = np.zeros(self.n_params)
+        
+        for j in range(self.n_params):
+            # e_j is the j-th standard basis vector (handled implicitly)
+            
+            # Term 1: a^T G e_j = (G^T a)_j = (Ga)_j (since G is symmetric)
+            term1 = (G @ a)[j]
+            
+            # Term 2: a^T (∇G)[θ] e_j = [a^T (∇G)[θ]]_j
+            # This is the j-th component of a^T times the third cumulant contraction
+            term2 = np.dot(a, third_cumulant_contracted[:, j])
+            
+            # Term 3: (∇a)_j^T G θ
+            # (∇a)_j is the j-th column of the Hessian
+            grad_a_j = hessian_C[:, j]
+            term3 = np.dot(grad_a_j, G @ theta)
+            
+            # Term 4: -2ν a^T (∇a)_j
+            term4 = -2 * nu * np.dot(a, grad_a_j)
+            
+            # Combine all terms
+            grad_nu[j] = (term1 + term2 + term3 + term4) / a_norm_sq
+        
+        return grad_nu
+    
+    def jacobian(self, theta: np.ndarray,
+                method: str = 'sld',
+                n_points: int = 100) -> np.ndarray:
+        """
+        Compute the Jacobian M = ∂F/∂θ of the constrained dynamics.
+        
+        From the paper (equations 824-827):
+            F(θ) = -G(θ)θ + ν(θ)a(θ)
+            M = ∂F/∂θ = -G - (∇G)[θ] + ν∇²C + a(∇ν)^T
+        
+        Due to the structural identity Gθ = -a, we have:
+            ν = -1 always
+            ∇ν = 0 always
+        
+        Therefore the Jacobian simplifies to:
+            M = -G - (∇G)[θ] - ∇²C
+        
+        Parameters
+        ----------
+        theta : ndarray, shape (n_params,)
+            Natural parameters
+        method : str, default='sld'
+            'sld' or 'duhamel' for derivative precision
+        n_points : int, default=100
+            Quadrature points for Duhamel (ignored for 'sld')
+            
+        Returns
+        -------
+        M : ndarray, shape (n_params, n_params)
+            Jacobian matrix
+            
+        Notes
+        -----
+        This is the full Jacobian for GENERIC dynamics:
+            θ̇ = M θ + ...
+        
+        The degeneracy of M determines the geometry of the constraint manifold
+        and is central to the paper's analysis of the inaccessible game.
+        """
+        # Get all components
+        G = self.fisher_information(theta)
+        third_cumulant = self.third_cumulant_contraction(theta)
+        hessian_C = self.constraint_hessian(theta, method=method, n_points=n_points)
+        
+        # Assemble Jacobian: M = -G - (∇G)[θ] - ∇²C
+        # (using ν = -1 and ∇ν = 0)
+        M = -G - third_cumulant - hessian_C
+        
+        return M
 
 
 __all__ = [
