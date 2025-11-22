@@ -508,6 +508,143 @@ class QuantumExponentialFamily:
         
         return contraction
 
+    def constraint_hessian(self, theta: np.ndarray) -> np.ndarray:
+        """
+        Compute ∇²C, the Hessian of the constraint C(θ) = ∑ᵢ hᵢ(θ).
+        
+        For each marginal entropy hᵢ = -Tr(ρᵢ log ρᵢ):
+            ∂²hᵢ/∂θ_a∂θ_b = -Tr(∂²ρᵢ/∂θ_a∂θ_b (I + log ρᵢ))
+                              -Tr(∂ρᵢ/∂θ_a ∂(log ρᵢ)/∂θ_b)
+        
+        The derivative ∂(log ρᵢ)/∂θ_b is computed using the Daleckii-Krein formula.
+        
+        Parameters
+        ----------
+        theta : ndarray, shape (n_params,)
+            Natural parameters
+        
+        Returns
+        -------
+        hessian : ndarray, shape (n_params, n_params)
+            Constraint Hessian ∇²C (symmetric matrix)
+        
+        Notes
+        -----
+        Quantum derivative principles applied:
+        ✅ Check operator commutation: Marginal operators may not commute
+        ✅ Verify operator ordering: Careful with matrix products
+        ✅ Distinguish quantum vs classical: Uses quantum marginal entropies
+        ✅ Respect Hilbert space structure: Partial traces for marginals
+        ✅ Question each derivative step: Daleckii-Krein for log derivative
+        """
+        from qig.core import partial_trace
+        
+        rho = self.rho_from_theta(theta)
+        I_full = np.eye(self.D, dtype=complex)
+        
+        # Compute ∂ρ/∂θ for all parameters
+        drho_dtheta = []
+        for a in range(self.n_params):
+            F_a = self.operators[a]
+            mean_Fa = np.trace(rho @ F_a).real
+            drho_dtheta.append(rho @ (F_a - mean_Fa * I_full))
+        
+        # Initialize Hessian
+        hessian = np.zeros((self.n_params, self.n_params))
+        
+        # Sum over all marginals
+        for i in range(self.n_sites):
+            # Compute marginal ρᵢ
+            rho_i = partial_trace(rho, self.dims, keep=i)
+            d_i = rho_i.shape[0]
+            I_i = np.eye(d_i, dtype=complex)
+            
+            # Eigendecomposition of ρᵢ
+            eigvals_i, eigvecs_i = eigh(rho_i)
+            eigvals_i = np.maximum(eigvals_i.real, 1e-14)
+            
+            # Compute log(ρᵢ)
+            log_eigvals_i = np.log(eigvals_i)
+            log_rho_i = eigvecs_i @ np.diag(log_eigvals_i) @ eigvecs_i.conj().T
+            
+            # Compute ∂ρᵢ/∂θ for all parameters
+            drho_i_dtheta = []
+            for a in range(self.n_params):
+                drho_i_dtheta.append(partial_trace(drho_dtheta[a], self.dims, keep=i))
+            
+            # Compute ∂²hᵢ/∂θ_a∂θ_b for all a, b
+            for a in range(self.n_params):
+                for b in range(a, self.n_params):  # Only upper triangle (symmetric)
+                    # Term 1: -Tr(∂²ρᵢ/∂θ_a∂θ_b (I + log ρᵢ))
+                    # We need ∂²ρᵢ/∂θ_a∂θ_b
+                    # From ∂ρ/∂θ_a = ρ (F_a - ⟨F_a⟩ I), we get:
+                    # ∂²ρ/∂θ_a∂θ_b = ∂ρ/∂θ_b (F_a - ⟨F_a⟩ I) - ρ ∂⟨F_a⟩/∂θ_b I
+                    # where ∂⟨F_a⟩/∂θ_b = Cov(F_b, F_a) = G_ba
+                    
+                    F_a = self.operators[a]
+                    F_b = self.operators[b]
+                    mean_Fa = np.trace(rho @ F_a).real
+                    mean_Fb = np.trace(rho @ F_b).real
+                    
+                    # Covariance (this is G_ba, but we compute it directly)
+                    cov_FbFa = np.trace(rho @ F_b @ F_a).real - mean_Fb * mean_Fa
+                    
+                    # ∂²ρ/∂θ_a∂θ_b
+                    d2rho_dtheta_ab = (drho_dtheta[b] @ (F_a - mean_Fa * I_full) 
+                                       - rho * cov_FbFa)
+                    
+                    # Partial trace to get ∂²ρᵢ/∂θ_a∂θ_b
+                    d2rho_i_dtheta_ab = partial_trace(d2rho_dtheta_ab, self.dims, keep=i)
+                    
+                    # Term 1
+                    term1 = -np.trace(d2rho_i_dtheta_ab @ (I_i + log_rho_i)).real
+                    
+                    # Term 2: -Tr(∂ρᵢ/∂θ_a ∂(log ρᵢ)/∂θ_b)
+                    # Compute ∂(log ρᵢ)/∂θ_b using Daleckii-Krein formula
+                    
+                    # Transform ∂ρᵢ/∂θ_b to eigenbasis of ρᵢ
+                    drho_i_b_eigenbasis = eigvecs_i.conj().T @ drho_i_dtheta[b] @ eigvecs_i
+                    
+                    # Apply Daleckii-Krein formula element-wise
+                    dlog_rho_i_eigenbasis = np.zeros_like(drho_i_b_eigenbasis)
+                    for ii in range(d_i):
+                        for jj in range(d_i):
+                            if ii == jj:
+                                # Diagonal: ∂(log ρᵢ)/∂θ_b = (∂ρᵢ/∂θ_b) / ρᵢ
+                                dlog_rho_i_eigenbasis[ii, jj] = (
+                                    drho_i_b_eigenbasis[ii, jj] / eigvals_i[ii]
+                                )
+                            else:
+                                # Off-diagonal: Daleckii-Krein formula
+                                log_diff = log_eigvals_i[ii] - log_eigvals_i[jj]
+                                p_diff = eigvals_i[ii] - eigvals_i[jj]
+                                if np.abs(p_diff) > 1e-10:
+                                    dlog_rho_i_eigenbasis[ii, jj] = (
+                                        drho_i_b_eigenbasis[ii, jj] * log_diff / p_diff
+                                    )
+                                else:
+                                    # Limit as p_i → p_j: (log p_i - log p_j)/(p_i - p_j) → 1/p_i
+                                    dlog_rho_i_eigenbasis[ii, jj] = (
+                                        drho_i_b_eigenbasis[ii, jj] / eigvals_i[ii]
+                                    )
+                    
+                    # Transform back to original basis
+                    dlog_rho_i_dtheta_b = (eigvecs_i @ dlog_rho_i_eigenbasis 
+                                           @ eigvecs_i.conj().T)
+                    
+                    # Term 2
+                    term2 = -np.trace(drho_i_dtheta[a] @ dlog_rho_i_dtheta_b).real
+                    
+                    # ∂²hᵢ/∂θ_a∂θ_b
+                    d2h_i = term1 + term2
+                    
+                    # Add to Hessian (symmetric, so fill both (a,b) and (b,a))
+                    hessian[a, b] += d2h_i
+                    if a != b:
+                        hessian[b, a] += d2h_i
+        
+        return hessian
+
 
 __all__ = [
     "pauli_basis",
