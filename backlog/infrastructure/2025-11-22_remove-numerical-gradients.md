@@ -74,6 +74,38 @@ validation and analysis pipeline, especially for CI/integration use.
   runs (without short mode) become significantly faster once numerical gradients
   are replaced.
 
+### Current finite-difference sites and prioritisation
+
+- **Core library (highest priority)**:
+  - `qig/exponential_family.py`
+    - `QuantumExponentialFamily.fisher_information` (Hessian of ψ via central finite differences).
+    - `QuantumExponentialFamily.marginal_entropy_constraint` (∂C/∂θ via finite differences).
+  - `inaccessible_game_quantum.py`
+    - Legacy copies of the same Fisher/BKM and constraint-gradient routines (to be removed once `qig` is the sole source of truth).
+  - `inaccessible_game_quantum.py::compute_jacobian` (Jacobian of the flow via finite differences, used by GENERIC checks).
+
+- **Analysis / validation scripts (medium priority once core is fixed)**:
+  - `diagnose_asymmetry.py`: recomputes G as Hessian of ψ via finite differences.
+  - `derive_quantum_fisher.py`: explicit finite-difference derivation of Fisher/BKM metric.
+  - `quantum_qutrit_n3_backup.py` / `quantum_qutrit_n3.py`: higher-order cumulants and ∂ρ/∂θ via finite differences.
+  - `verify_proof_directly.py`: ∂³ψ via finite differences for proof checking.
+
+- **Tests and documentation (low priority, but should be updated once implementations change)**:
+  - `test_inaccessible_game.py` tests that rely on `compute_jacobian` and the current finite-difference behaviour.
+  - `IMPLEMENTATION_SUMMARY.md`, `IMPLEMENTATION_NOTES.md`, `README_quantum_simulation.md` references to finite-difference computation of G and higher cumulants.
+
+- **Prioritised plan**:
+  1. **Core replacement** (blocking, High):
+     - Replace `fisher_information` and `marginal_entropy_constraint` in `qig/exponential_family.py` with analytic / AD-based implementations.
+     - Remove or deprecate the duplicated legacy versions in `inaccessible_game_quantum.py`.
+  2. **Flow Jacobian** (High/Medium):
+     - Re-implement `compute_jacobian` to use the new analytic derivatives, or move it into `qig.analysis` with a more efficient scheme.
+  3. **Script clean-up** (Medium):
+     - Update `diagnose_asymmetry.py`, `derive_quantum_fisher.py`, `quantum_qutrit_n3*.py`, and `verify_proof_directly.py` to call the new primitives or, where appropriate, mark them as experimental.
+  4. **Tests and docs** (Medium/Low):
+     - Adjust `test_inaccessible_game.py` to assert on the new implementations.
+     - Refresh documentation to describe the new gradient/metric computations instead of finite differences.
+
 ## Related
 
 - CIP: 0001 (Codebase consolidation and documentation)
