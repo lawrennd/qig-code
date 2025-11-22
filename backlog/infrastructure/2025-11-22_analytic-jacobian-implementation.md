@@ -242,3 +242,22 @@ At every step, verify:
   - Mixing SLD ∂ρ with Duhamel ∂²ρ gives worse results
   - Consistent high-precision throughout gives spectacular accuracy
 
+### Test Cleanup Needed
+
+**Diagnostic scripts to remove** (served their purpose, findings documented):
+- `diagnose_second_derivative.py` - diagnosed ∂²ρ issues
+- `diagnose_hermiticity.py` - discovered Hermiticity problem  
+- `verify_drho_formula.py` - tested different ∂ρ formulas
+- `check_d2rho_magnitude.py` - analyzed error magnitude
+- `test_d2rho_complex_step.py` - tested complex-step method
+- `test_d2rho_directly.py` - direct ∂²ρ testing
+- `test_d2rho_duhamel.py` - Duhamel ∂²ρ testing
+- `test_d2rho_numerical_duhamel.py` - numerical Duhamel testing
+
+**Proper test files** (keep, use pytest):
+- `test_third_cumulant.py` ✅ Step 1 validation
+- `test_marginal_entropy_gradient.py` ✅ 
+- `test_constraint_hessian.py` ✅ Step 3 (SLD baseline)
+- `test_constraint_hessian_duhamel.py` ✅ Step 3 (Duhamel precision)
+- All BKM tests (integral, spectral, commuting, non-commuting) ✅
+
