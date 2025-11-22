@@ -1,7 +1,7 @@
 ---
 id: "2025-11-22_commuting-bkm-validation-plan"
 title: "Validate and repair BKM metric via commuting/diagonal toy families"
-status: "Completed"
+status: "In Progress"
 priority: "High"
 created: "2025-11-22"
 last_updated: "2025-11-22"
@@ -47,8 +47,8 @@ stone towards a correct general quantum BKM metric.
 ## Acceptance Criteria
 
 - [x] A clear definition of one or more commuting toy families:
-      - e.g. diagonal F_a on a fixed basis for n_sites=1,2 and d=2,3,4; or
-        a classical multinomial family embedded as diagonal density matrices.
+      - ✅ Diagonal F_a on a fixed basis for n_sites=1,2 and d=2,3,4
+      - ⏸️ General commuting (non-diagonal) families not yet tested
 - [x] An analytic derivation of ∂_a∂_b ψ(θ) for these commuting families,
       written down and checked (including identification with the second
       Kubo–Mori cumulant in this restricted setting).
@@ -133,14 +133,36 @@ commuting/diagonal families in `test_commuting_bkm.py`.
    - Multiple random parameter points for each configuration
 
 **Conclusion**: The spectral BKM metric implementation is **correct** for
-commuting/diagonal families. This validates the core algorithm (spectral
-decomposition, centring, BKM kernel, and assembly) and confirms that the
-implementation correctly reduces to the classical Fisher information in the
-diagonal case.
+**diagonal** families (the simplest commuting case). This validates the core
+algorithm (spectral decomposition, centring, BKM kernel, and assembly) and
+confirms that the implementation correctly reduces to the classical Fisher
+information when all operators are diagonal in a fixed basis.
 
-**Next Steps**: The validation in the commuting case provides strong evidence
-that the spectral implementation is sound. Any remaining discrepancies with
-finite-difference Hessians in the non-commuting case are likely due to:
+**Caveat**: We have only tested the diagonal case, not the general commuting
+case where operators share an eigenbasis but are not diagonal in the
+computational basis. Further validation with non-diagonal but commuting
+operators would strengthen confidence in the implementation.
+
+**What Still Needs Testing**:
+
+To fully validate the "commuting" case, we should also test:
+
+1. **Non-diagonal commuting operators**: Construct families where operators
+   commute (share an eigenbasis) but are not diagonal in the computational
+   basis. For example:
+   - Two qubits with F_1 = σ_x ⊗ I and F_2 = I ⊗ σ_x (commute, not diagonal)
+   - Rotated versions of diagonal operators: F_a = U D_a U† where all D_a are
+     diagonal and U is a fixed unitary
+
+2. **Partially commuting families**: Where some operators commute with each
+   other but not all (to test the transition between classical and quantum
+   regimes).
+
+**Next Steps**: The validation in the diagonal case provides strong evidence
+that the spectral implementation is sound for the classical limit. Extending
+to general commuting operators would provide a bridge to the fully quantum
+(non-commuting) case. Any remaining discrepancies with finite-difference
+Hessians in the non-commuting case are likely due to:
 - Numerical issues in finite-difference approximations for non-commuting operators
 - The need for more careful treatment of parameter-space vs operator-space derivatives
 - Potential issues with the mapping from θ-space flow to ρ-space dynamics
