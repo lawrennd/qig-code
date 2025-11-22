@@ -197,10 +197,13 @@ The marginal entropy constraint C = ∑h_i = const is **highly restrictive** and
 - If this is true then we should see the sparsity in the gradients. 
 
 **Validation strategy:**
+- **Test block-diagonal structure of G**: Verify G_{(k,i),(k',j)} ≈ 0 for k≠k'
 - Track accessible subspace dimension during dynamics
-- Monitor rank and support of states
-- Check if cross-pair entanglement ever forms
+- Monitor rank and support of states  
+- Check if cross-pair entanglement ever forms (should remain zero with direct sum ops)
+- **Verify constraint coupling**: Show that ν and ∇C create the only inter-pair coordination
 - Verify computational cost scales linearly with n (not exponentially)
+- Test that G_k blocks can be computed independently and assembled
 
 **Implementation approach (following tensor product structure):**
 1. **Start at origin**: Product of maximally entangled pairs defines natural coordinates
@@ -248,10 +251,19 @@ F_alpha_i = np.eye(d**2) ⊗ ... ⊗ F_alpha ⊗ ... ⊗ np.eye(d**2)
 
 **Expected computational pattern:**
 - Each pair contributes (d²-1)×(d²-1) block to Fisher metric
-- Total G is block-diagonal with n blocks
+- Total G is block-diagonal with n blocks: G = G₁ ⊕ G₂ ⊕ ... ⊕ Gₙ
+- Cross-pair elements vanish: G_{(k,i),(k',j)} = 0 for k≠k'
 - Constraint Hessian ∇²C similarly structured
-- Jacobian M inherits block structure
+- Jacobian M inherits block structure from G
 - **Cost scales as O(n·d⁴), not O(d^(4n))**
+
+**Critical insight: Coupling only through constraint**
+- Geometry (G) is block-diagonal → no intrinsic pair-pair coupling
+- ALL interaction comes from constraint term ν∇C in dynamics θ̇ = -Gθ + ν∇C
+- Lagrange multiplier ν = (a^T Gθ)/||a||² couples all pairs through global entropy budget
+- Constraint gradient a = ∇(∑h_i) spans all pairs
+- Physical: pairs coordinate through shared marginal entropy constraint, not through geometry
+- Implementation: Can compute G_k independently, coupling enters only in constraint projection
 
 **4. Computational scaling**
 
