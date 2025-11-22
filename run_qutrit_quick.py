@@ -13,7 +13,7 @@ print()
 
 # Setup
 print("Setting up...")
-n_sites = 3
+n_sites = 2  # Changed from 3 to 2 for pair operators (CIP-0002)
 operators = qq.single_site_operators(n_sites)
 print(f"  ✓ Hilbert space dimension: {3**n_sites}")
 print()
@@ -32,7 +32,7 @@ print()
 # Run dynamics (shorter)
 print("Integrating dynamics (500 steps)...")
 sol = qq.solve_constrained_quantum_maxent(
-    theta_init, operators, n_sites=3, n_steps=500, dt=0.01, verbose=False
+    theta_init, operators, n_sites=n_sites, n_steps=500, dt=0.01, verbose=False
 )
 print(f"  ✓ Steps: {len(sol['trajectory'])}")
 print(f"  ✓ Final ||F||: {sol['flow_norms'][-1]:.2e}")
@@ -119,7 +119,7 @@ print("  ✓ fig_qutrit_quantum_properties.pdf")
 
 # 5. GENERIC at initial point only
 print("\nGENERIC analysis at initial point...")
-result_init = qq.analyse_quantum_generic_structure(theta_init, operators, n_sites=3)
+result_init = qq.analyse_quantum_generic_structure(theta_init, operators, n_sites=n_sites)
 print(f"  ||S|| (dissipative): {result_init['norm_S']:.4f}")
 print(f"  ||A|| (conservative): {result_init['norm_A']:.4f}")
 print(f"  Ratio ||A||/||S||: {result_init['ratio']:.4f}")

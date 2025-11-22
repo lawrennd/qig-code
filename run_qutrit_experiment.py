@@ -15,7 +15,7 @@ print()
 
 # Setup
 print("Setting up...")
-n_sites = 3
+n_sites = 2  # Changed from 3 to 2 for pair operators (CIP-0002)
 operators = qq.single_site_operators(n_sites)
 print(f"  ✓ Hilbert space dimension: {3**n_sites}")
 print(f"  ✓ Parameters: {len(operators)}")
@@ -41,7 +41,7 @@ print("  (This may take a few minutes...)")
 sol_constrained = qq.solve_constrained_quantum_maxent(
     theta_init,
     operators,
-    n_sites=3,
+    n_sites=n_sites,
     n_steps=2000,
     dt=0.005,
     convergence_tol=1e-5,
@@ -120,7 +120,7 @@ for idx in sample_indices:
         print(f"    Step {idx}/{len(traj)-1}")
     try:
         result = qq.analyse_quantum_generic_structure(
-            traj[idx], operators, n_sites=3, eps_diff=1e-5
+            traj[idx], operators, n_sites=n_sites, eps_diff=1e-5
         )
         ratios.append(result['ratio'])
         norms_S.append(result['norm_S'])
