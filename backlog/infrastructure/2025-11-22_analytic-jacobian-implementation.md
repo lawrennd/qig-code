@@ -206,9 +206,25 @@ At every step, verify:
   - Tests show error is consistent across different finite-difference step sizes
   - Suggests formula is fundamentally wrong, not numerical precision issue
   
-- **Next steps**:
-  1. Check paper (the-inaccessible-game.tex eq. 821-846) for the EXACT formula
-  2. Consider if we need the full Duhamel integral for second derivatives
-  3. May need numerical integration for accuracy
-  4. Alternative: Look for a different parametrization where derivatives are simpler
+### 2025-11-22 - BREAKTHROUGH: Duhamel Formula Solution! 🎉
+- **Implemented Duhamel exponential derivative formula**:
+  ```
+  ∂ρ/∂θ = ∫₀¹ exp(sH)(F - ⟨F⟩I)exp((1-s)H) ds
+  ```
+  - This is the EXACT formula for exponential derivatives
+  - SLD is just the trapezoid rule with n_points=2
+  - With n_points=100: error drops to **5×10⁻⁶** (1000× better than SLD!)
+  
+- **Second derivative solution**: Numerical differentiation of Duhamel
+  - Computing ∂²ρ analytically from the integral is complex (double integrals)
+  - Instead: use finite differences of high-precision Duhamel ∂ρ/∂θ
+  - Result: **0.55-2.6% error** (vs 26-82% before!)
+  - **30-100× improvement!** ✅
+  - All results Hermitian ✅
+  - Stable across different step sizes ✅
+  
+- **Implementation**:
+  - Added `qig/duhamel.py` with Duhamel integration
+  - Updated `rho_derivative()` to support both 'sld' and 'duhamel' methods
+  - Next: Add high-precision option to constraint_hessian()
 
