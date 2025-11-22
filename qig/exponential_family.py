@@ -486,7 +486,7 @@ class QuantumExponentialFamily:
         return G
 
     def marginal_entropy_constraint(
-        self, theta: np.ndarray
+        self, theta: np.ndarray, method: str = 'duhamel'
     ) -> Tuple[float, np.ndarray]:
         """
         Compute constraint value C(θ) = ∑_i h_i and gradient ∇C analytically.
@@ -498,8 +498,15 @@ class QuantumExponentialFamily:
             ∂h_i/∂θ_a = -Tr((∂ρ_i/∂θ_a) log ρ_i)
         
         and:
-            ∂ρ/∂θ_a = ρ (F_a - ⟨F_a⟩ I)
+            ∂ρ/∂θ_a computed using Duhamel or SLD
             ∂ρ_i/∂θ_a = Tr_{j≠i}[∂ρ/∂θ_a]  (partial trace)
+            
+        Parameters
+        ----------
+        theta : ndarray
+            Natural parameters
+        method : str, default='duhamel'
+            Method for computing ∂ρ/∂θ: 'duhamel' (accurate) or 'sld' (fast)
         """
         rho = self.rho_from_theta(theta)
         h = marginal_entropies(rho, self.dims)
@@ -512,8 +519,8 @@ class QuantumExponentialFamily:
         for a in range(self.n_params):
             F_a = self.operators[a]
             
-            # Compute ∂ρ/∂θ_a using the correct quantum formula (SLD)
-            drho_dtheta_a = self.rho_derivative(theta, a)
+            # Compute ∂ρ/∂θ_a using specified method
+            drho_dtheta_a = self.rho_derivative(theta, a, method=method)
             
             # Sum over all subsystems
             for i in range(self.n_sites):
