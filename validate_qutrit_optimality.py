@@ -45,7 +45,7 @@ def compute_alpha_factor(n_sites: int, d: int, eps: float = 1e-4) -> dict:
     Parameters
     ----------
     n_sites : int
-        Number of sites (should give uniform factorisation)
+        Number of sites (must be even for pair-based operators)
     d : int
         Local dimension (2=qubits, 3=qutrits, 4=ququarts)
     eps : float
@@ -82,8 +82,17 @@ def compute_alpha_factor(n_sites: int, d: int, eps: float = 1e-4) -> dict:
     print(f"  Marginal entropy sum C = {C_lme:.6f}")
     print(f"  C / (m log(d)) = {C_lme / theoretical_max:.6f} (should be ≈1 for LME)")
     
-    # Initialize exponential family
-    exp_family = QuantumExponentialFamily(n_sites, d)
+    # Check if we can use pair operators
+    if n_sites % 2 != 0:
+        raise ValueError(
+            f"n_sites={n_sites} is odd. Pair-based operators require even number of sites."
+        )
+    
+    n_pairs = n_sites // 2
+    
+    # Initialize exponential family with pair operators
+    print(f"  Using pair-based operators: {n_pairs} entangled pair(s)")
+    exp_family = QuantumExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
     
     # Simpler approach: Measure ||∇H||_G at θ=0 (maximally mixed)
     # where we know C = n log(d) exactly. 
@@ -115,7 +124,7 @@ def compute_alpha_factor(n_sites: int, d: int, eps: float = 1e-4) -> dict:
     print(f"  Computing BKM metric G(θ) [this may take 10-30 seconds]...")
     # In short mode, use a larger finite-difference step for extra speed.
     eps_metric = 5e-3 if SHORT_MODE else 1e-3
-    G = exp_family.fisher_information(theta, eps=eps_metric)
+    G = exp_family.fisher_information(theta)
     
     # Compute constraint gradient
     print(f"  Computing constraint gradient ∇C...")
