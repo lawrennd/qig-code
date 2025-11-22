@@ -221,6 +221,7 @@ class QuantumExponentialFamily:
         """
         Compute Fisher information (BKM metric) G(θ) = ∇²ψ(θ) via finite differences.
         """
+        ## TK: This is a temporary solution. Need to do this analytically.
         n = self.n_params
         G = np.zeros((n, n))
 
@@ -262,6 +263,8 @@ class QuantumExponentialFamily:
         h = marginal_entropies(rho, self.dims)
         C = float(np.sum(h))
 
+        # TK: In the classical game this was analytic
+        
         # Compute gradient via finite differences
         eps = 1e-5
         grad_C = np.zeros(self.n_params)
