@@ -27,6 +27,7 @@ from qig.core import (
     create_lme_state,
     marginal_entropies,
 )
+from qig.exponential_family import QuantumExponentialFamily
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
@@ -221,155 +222,19 @@ def create_operator_basis(n_sites: int, d: int) -> Tuple[list, list]:
 
 
 # ============================================================================
-# Quantum Exponential Family
+# Quantum Exponential Family (imported from qig.exponential_family)
 # ============================================================================
+# The QuantumExponentialFamily class is now imported from qig.exponential_family
+# which supports both local operators and pair-based operators for entanglement.
+# This migration enables the study of genuinely entangled systems as described
+# in the paper's discussion of "locally maximally entangled initial states".
 
-class QuantumExponentialFamily:
-    """
-    Quantum exponential family: ρ(θ) = exp(∑ θ_a F_a - ψ(θ))
-    """
-    
-    def __init__(self, n_sites: int, d: int):
-        """
-        Initialise quantum exponential family.
-        
-        Parameters
-        -----------
-        n_sites : int
-            Number of subsystems
-        d : int
-            Local dimension (2 for qubits, 3 for qutrits)
-        """
-        self.n_sites = n_sites
-        self.d = d
-        self.dims = [d] * n_sites
-        self.D = d ** n_sites
-        
-        # Create operator basis
-        self.operators, self.labels = create_operator_basis(n_sites, d)
-        self.n_params = len(self.operators)
-        
-        print(f"Initialised {n_sites}-site system with d={d}")
-        print(f"Hilbert space dimension: {self.D}")
-        print(f"Number of parameters: {self.n_params}")
-    
-    def rho_from_theta(self, theta: np.ndarray) -> np.ndarray:
-        """
-        Compute ρ(θ) = exp(K(θ) - ψ(θ)) where K(θ) = ∑ θ_a F_a.
-        
-        Parameters
-        -----------
-        theta : array, shape (n_params,)
-            Natural parameters
-        
-        Returns
-        --------
-        rho : array, shape (D, D)
-            Density matrix
-        """
-        # Build K(θ) = ∑ θ_a F_a
-        K = np.zeros((self.D, self.D), dtype=complex)
-        for theta_a, F_a in zip(theta, self.operators):
-            K += theta_a * F_a
-        
-        # Compute exp(K)
-        rho_unnorm = expm(K)
-        
-        # Normalise: ρ = exp(K) / Tr(exp(K))
-        Z = np.trace(rho_unnorm)
-        rho = rho_unnorm / Z
-        
-        return rho
-    
-    def log_partition(self, theta: np.ndarray) -> float:
-        """
-        Compute log partition function ψ(θ) = log Tr(exp(∑ θ_a F_a)).
-        """
-        K = sum(theta_a * F_a for theta_a, F_a in zip(theta, self.operators))
-        return np.log(np.trace(expm(K))).real
-    
-    def fisher_information(self, theta: np.ndarray, eps: float = 1e-5) -> np.ndarray:
-        """
-        Compute Fisher information (BKM metric) G(θ) = ∇²ψ(θ).
-        Uses finite differences.
-        
-        Parameters
-        -----------
-        theta : array, shape (n_params,)
-            Natural parameters
-        eps : float
-            Step size for finite differences
-        
-        Returns
-        --------
-        G : array, shape (n_params, n_params)
-            Fisher information matrix
-        """
-        n = self.n_params
-        G = np.zeros((n, n))
-        
-        for i in range(n):
-            for j in range(i, n):
-                # Compute ∂²ψ/∂θi∂θj using finite differences
-                theta_pp = theta.copy()
-                theta_pp[i] += eps
-                theta_pp[j] += eps
-                
-                theta_pm = theta.copy()
-                theta_pm[i] += eps
-                theta_pm[j] -= eps
-                
-                theta_mp = theta.copy()
-                theta_mp[i] -= eps
-                theta_mp[j] += eps
-                
-                theta_mm = theta.copy()
-                theta_mm[i] -= eps
-                theta_mm[j] -= eps
-                
-                psi_pp = self.log_partition(theta_pp)
-                psi_pm = self.log_partition(theta_pm)
-                psi_mp = self.log_partition(theta_mp)
-                psi_mm = self.log_partition(theta_mm)
-                
-                G[i, j] = (psi_pp - psi_pm - psi_mp + psi_mm) / (4 * eps**2)
-                G[j, i] = G[i, j]  # Symmetric
-        
-        return G
-    
-    def marginal_entropy_constraint(self, theta: np.ndarray) -> Tuple[float, np.ndarray]:
-        """
-        Compute constraint value C(θ) = ∑_i h_i and gradient ∇C.
-        
-        Returns
-        --------
-        C : float
-            Sum of marginal entropies
-        grad_C : array, shape (n_params,)
-            Gradient ∇C
-        """
-        rho = self.rho_from_theta(theta)
-        h = marginal_entropies(rho, self.dims)
-        C = np.sum(h)
-        
-        # Compute gradient via finite differences
-        eps = 1e-5
-        grad_C = np.zeros(self.n_params)
-        for i in range(self.n_params):
-            theta_plus = theta.copy()
-            theta_plus[i] += eps
-            rho_plus = self.rho_from_theta(theta_plus)
-            h_plus = marginal_entropies(rho_plus, self.dims)
-            C_plus = np.sum(h_plus)
-            
-            grad_C[i] = (C_plus - C) / eps
-        
-        return C, grad_C
-
+# Legacy local class definition removed - now using qig.exponential_family
 
 # ============================================================================
-# Constrained Dynamics
+# Constrained Dynamics (kept - uses imported QuantumExponentialFamily)
 # ============================================================================
+
 
 class InaccessibleGameDynamics:
     """
@@ -628,7 +493,7 @@ def validate_framework(n_sites: int, d: int, t_end: float = 5.0,
     Parameters
     -----------
     n_sites : int
-        Number of sites (2 or 3 recommended)
+        Number of sites (must be even: 2, 4, 6, ... for pair-based operators)
     d : int
         Local dimension (2 for qubits, 3 for qutrits)
     t_end : float
@@ -648,9 +513,19 @@ def validate_framework(n_sites: int, d: int, t_end: float = 5.0,
     print(f"System: {n_sites} sites, local dimension d={d}")
     print("="*70)
     
+    # Check if we can use pair operators
+    if n_sites % 2 != 0:
+        raise ValueError(
+            f"n_sites={n_sites} is odd. Pair-based operators require even number of sites. "
+            f"For {n_sites} sites, consider using n_sites={n_sites-1} or n_sites={n_sites+1}."
+        )
+    
+    n_pairs = n_sites // 2
+    
     # 1. Initialise system
     print("\n[1/6] Initializing exponential family...")
-    exp_family = QuantumExponentialFamily(n_sites, d)
+    print(f"  Using pair-based operators: {n_pairs} entangled pair(s)")
+    exp_family = QuantumExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
     
     # 2. Create LME initial state
     print("\n[2/6] Creating LME initial state...")
@@ -812,17 +687,17 @@ if __name__ == "__main__":
     print("QUANTUM INACCESSIBLE GAME: NUMERICAL VALIDATION")
     print("="*70)
     
-    # Test 1: Two qubits (Bell state)
+    # Test 1: Two qubits (1 Bell pair)
     print("\n\n" + "▶"*35)
-    print("TEST 1: TWO QUBITS")
+    print("TEST 1: TWO QUBITS (1 pair)")
     print("▶"*35)
     results_2qubits = validate_framework(n_sites=2, d=2, t_end=3.0, n_points=50)
     
-    # Test 2: Three qutrits
+    # Test 2: Two qutrits (1 maximally entangled qutrit pair)
     print("\n\n" + "▶"*35)
-    print("TEST 2: THREE QUTRITS")
+    print("TEST 2: TWO QUTRITS (1 pair)")
     print("▶"*35)
-    results_3qutrits = validate_framework(n_sites=3, d=3, t_end=2.0, n_points=40)
+    results_2qutrits = validate_framework(n_sites=2, d=3, t_end=2.0, n_points=40)
     
     print("\n" + "="*70)
     print("VALIDATION COMPLETE")
