@@ -209,6 +209,8 @@ def solve_constrained_quantum_maxent(
     n_points: int = 100,
     n_sites: int = 3,
     d: int = 3,
+    n_steps: Optional[int] = None,
+    dt: Optional[float] = None,
     **kwargs
 ) -> Dict:
     """
@@ -228,11 +230,29 @@ def solve_constrained_quantum_maxent(
     if n_sites % 2 != 0:
         raise ValueError(f"n_sites={n_sites} must be even for pair operators")
     
+    # Convert old API (n_steps, dt) to new API (n_points) if needed
+    if n_steps is not None and dt is not None:
+        # Old API: n_steps and dt specified
+        # t_span is still used, but we derive n_points from n_steps
+        n_points = n_steps
+        # Ignore dt for now - qig uses adaptive stepping
+        warnings.warn(
+            f"Legacy API: n_steps={n_steps}, dt={dt} converted to n_points={n_points}. "
+            "Note: qig uses adaptive stepping, dt is ignored.",
+            DeprecationWarning, stacklevel=2
+        )
+    elif n_steps is not None:
+        n_points = n_steps
+    
     n_pairs = n_sites // 2
     exp_fam = QuantumExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
     dynamics = InaccessibleGameDynamics(exp_fam)
     
-    solution = dynamics.integrate(theta_init, t_span, n_points, **kwargs)
+    # Filter out legacy kwargs that qig doesn't accept
+    qig_kwargs = {k: v for k, v in kwargs.items() 
+                  if k not in ['n_steps', 'dt', 'verbose']}
+    
+    solution = dynamics.integrate(theta_init, t_span, n_points, **qig_kwargs)
     
     return {
         'trajectory': solution['theta'],
