@@ -21,9 +21,11 @@ Author: Numerical evidence for "The Origin of the Inaccessible Game"
 
 import numpy as np
 import matplotlib.pyplot as plt
-from inaccessible_game_quantum import *
+from qig.core import create_lme_state, marginal_entropies, von_neumann_entropy
+from qig.exponential_family import QuantumExponentialFamily
 import warnings
-warnings.filterwarnings('ignore')
+
+warnings.filterwarnings("ignore")
 
 
 def compute_alpha_factor(n_sites: int, d: int, eps: float = 1e-4) -> dict:

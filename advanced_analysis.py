@@ -13,7 +13,10 @@ Author: Implementation for "The Origin of the Inaccessible Game"
 
 import numpy as np
 import matplotlib.pyplot as plt
-from inaccessible_game_quantum import *
+from qig.core import create_lme_state, marginal_entropies
+from qig.exponential_family import QuantumExponentialFamily
+from qig.dynamics import InaccessibleGameDynamics
+from inaccessible_game_quantum import compute_jacobian, generic_decomposition
 
 
 def compare_time_parametrisations(n_sites=2, d=2, t_end=5.0):
