@@ -11,7 +11,7 @@ This module contains:
 from typing import Tuple, List
 
 import numpy as np
-from scipy.linalg import expm
+from scipy.linalg import expm, eigh
 
 from qig.core import marginal_entropies
 
@@ -217,40 +217,92 @@ class QuantumExponentialFamily:
         K = sum(theta_a * F_a for theta_a, F_a in zip(theta, self.operators))
         return np.log(np.trace(expm(K))).real
 
-    def fisher_information(self, theta: np.ndarray, eps: float = 1e-5) -> np.ndarray:
+    def fisher_information(self, theta: np.ndarray) -> np.ndarray:
         """
-        Compute Fisher information (BKM metric) G(θ) = ∇²ψ(θ) via finite differences.
+        Compute Fisher information (BKM metric) G(θ) = ∇∇ψ(θ) using the
+        Kubo-Mori / BKM inner product.
+
+        For a quantum exponential family
+            ρ(θ) = exp(K(θ)) / Z(θ),  K(θ) = ∑_a θ_a F_a,
+        the Bogoliubov-Kubo-Mori metric can be written as
+        \[
+            G_{ab}(θ)
+            = \int_0^1 \mathrm{Tr}\!\left(
+                ρ(θ)^s  \tilde F_a  ρ(θ)^{1-s} \tilde F_b
+              \right)\,\mathrm{d}s,
+        \]
+        where \(\tilde F_a = F_a - \mathrm{Tr}[ρ(θ) F_a]\,\mathbb I\) are
+        centred sufficient statistics.  In the eigenbasis of ρ(θ), this
+        reduces to the standard spectral representation with the
+        Morozova-Chentsov function
+            c(λ, μ) = (log λ - log μ)/(λ - μ)
+        (with the diagonal limit c(λ, λ) = 1/λ).  When all F_a commute with
+        ρ(θ) (the classical/diagonal case), this expression reduces to the
+        usual covariance Fisher information matrix.
+
+        This implementation:
+        - diagonalises ρ(θ) = U diag(p) U† (respecting the Hilbert space
+          structure);
+        - centres each F_a in that basis;
+        - applies the BKM kernel c(p_i, p_j) to all matrix elements, taking
+          care with ordering (A_a[i,j] A_b[j,i]) and Hermitian conjugation;
+        - and finally symmetrises G to guard against small numerical
+          asymmetries.
         """
-        ## TK: This is a temporary solution. Need to do this analytically.
+        # Step 1: spectral decomposition of ρ(θ)
+        rho = self.rho_from_theta(theta)
+        eigvals, U = eigh(rho)  # ρ is Hermitian
+
+        # Regularise eigenvalues to avoid log(0); keep normalisation approximate
+        eps_p = 1e-14
+        p = np.clip(np.real(eigvals), eps_p, None)
+
+        # Step 2: build centred sufficient statistics in eigenbasis of ρ
+        D = self.D
         n = self.n_params
+        A_tilde = np.zeros((n, D, D), dtype=complex)
+
+        I = np.eye(D, dtype=complex)
+        for a, F_a in enumerate(self.operators):
+            # Centre F_a: F_a - ⟨F_a⟩_ρ I
+            mean_Fa = np.trace(rho @ F_a).real
+            A_a = F_a - mean_Fa * I
+            # Transform to eigenbasis of ρ
+            A_tilde[a] = U.conj().T @ A_a @ U
+
+        # Step 3: construct BKM kernel k(p_i, p_j)
+        p_i = p[:, None]
+        p_j = p[None, :]
+        diff = p_i - p_j
+        log_diff = np.log(p_i) - np.log(p_j)
+
+        # k(λ, μ) = (λ - μ)/(log λ - log μ), with diagonal limit k(λ, λ) = λ
+        # This is the standard Kubo–Mori / BKM kernel. In the diagonal
+        # (commuting) case it reduces to the classical covariance weight p_i.
+        k = np.zeros_like(diff)
+        off_diag = np.abs(diff) > 1e-14
+        k[off_diag] = diff[off_diag] / log_diff[off_diag]
+        # Diagonal terms: limit (λ-μ)/(log λ - log μ) → λ as μ→λ
+        diag_mask = np.eye(len(p), dtype=bool)
+        k[diag_mask] = p
+
+        # Step 4: assemble G_ab = Σ_{i,j} c(p_i, p_j) A_a[i,j] A_b[j,i]
         G = np.zeros((n, n))
+        for a in range(n):
+            A_a = A_tilde[a]
+            for b in range(a, n):
+                A_b = A_tilde[b]
+                # Note: A_b[j,i] = (A_b.T.conj())[i,j]; we use that to respect
+                # operator ordering and Hermitian structure.
+                prod = A_a * A_b.T.conj()
+                Gab = np.sum(k * prod)
+                # BKM inner product is real for Hermitian observables; take Re.
+                Gab_real = float(np.real(Gab))
+                G[a, b] = Gab_real
+                G[b, a] = Gab_real
 
-        for i in range(n):
-            for j in range(i, n):
-                theta_pp = theta.copy()
-                theta_pp[i] += eps
-                theta_pp[j] += eps
-
-                theta_pm = theta.copy()
-                theta_pm[i] += eps
-                theta_pm[j] -= eps
-
-                theta_mp = theta.copy()
-                theta_mp[i] -= eps
-                theta_mp[j] += eps
-
-                theta_mm = theta.copy()
-                theta_mm[i] -= eps
-                theta_mm[j] -= eps
-
-                psi_pp = self.log_partition(theta_pp)
-                psi_pm = self.log_partition(theta_pm)
-                psi_mp = self.log_partition(theta_mp)
-                psi_mm = self.log_partition(theta_mm)
-
-                G[i, j] = (psi_pp - psi_pm - psi_mp + psi_mm) / (4 * eps**2)
-                G[j, i] = G[i, j]  # Symmetric
-
+        # Symmetrise to enforce exact symmetry numerically
+        G = 0.5 * (G + G.T)
         return G
 
     def marginal_entropy_constraint(
