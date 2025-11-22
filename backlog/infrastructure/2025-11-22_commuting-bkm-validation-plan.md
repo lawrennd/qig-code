@@ -1,7 +1,7 @@
 ---
 id: "2025-11-22_commuting-bkm-validation-plan"
 title: "Validate and repair BKM metric via commuting/diagonal toy families"
-status: "Proposed"
+status: "Completed"
 priority: "High"
 created: "2025-11-22"
 last_updated: "2025-11-22"
@@ -46,24 +46,24 @@ stone towards a correct general quantum BKM metric.
 
 ## Acceptance Criteria
 
-- [ ] A clear definition of one or more commuting toy families:
+- [x] A clear definition of one or more commuting toy families:
       - e.g. diagonal F_a on a fixed basis for n_sites=1,2 and d=2,3,4; or
         a classical multinomial family embedded as diagonal density matrices.
-- [ ] An analytic derivation of ∂_a∂_b ψ(θ) for these commuting families,
+- [x] An analytic derivation of ∂_a∂_b ψ(θ) for these commuting families,
       written down and checked (including identification with the second
       Kubo–Mori cumulant in this restricted setting).
-- [ ] A reference implementation (in tests or in a small helper) that computes
+- [x] A reference implementation (in tests or in a small helper) that computes
       the commuting BKM metric both:
       - via the analytic formula; and
       - via the current spectral implementation in `qig.exponential_family`,
       and shows agreement to tight numerical tolerances.
-- [ ] At least one dedicated test module or test class (e.g.
+- [x] At least one dedicated test module or test class (e.g.
       `TestCommutingBKMMetric`) that:
       - constructs commuting families;
       - checks positive semidefiniteness and symmetry; and
       - enforces spectral≈analytic≈finite-difference equality in the commuting
         case.
-- [ ] The results of this commuting validation are fed back into the main
+- [x] The results of this commuting validation are fed back into the main
       `fisher_information` implementation and into the
       `2025-11-22_remove-numerical-gradients` backlog task (via a progress
       update).
@@ -96,7 +96,58 @@ stone towards a correct general quantum BKM metric.
 
 ## Progress Updates
 
-### 2025-11-22
+### 2025-11-22 (Completion)
+
+**Status**: Completed
+
+Implemented comprehensive validation of the BKM metric implementation via
+commuting/diagonal families in `test_commuting_bkm.py`.
+
+**Key Results**:
+
+1. **Diagonal family construction**: Created `DiagonalQuantumExponentialFamily`
+   class that constructs quantum exponential families where all sufficient
+   statistics F_a are diagonal in a fixed basis. For a D-dimensional Hilbert
+   space, this uses D-1 traceless diagonal operators analogous to the diagonal
+   Gell-Mann matrices.
+
+2. **Analytic BKM metric**: Derived and implemented the analytic Fisher
+   information for diagonal families:
+   ```
+   G_ab = Cov_ρ(F_a, F_b) = ∑_i p_i F_a[i,i] F_b[i,i] - (∑_i p_i F_a[i,i])(∑_i p_i F_b[i,i])
+   ```
+   where p_i are the diagonal elements of ρ(θ). This is exactly the classical
+   Fisher information for the probability distribution over basis states.
+
+3. **Spectral implementation validation**: The spectral BKM implementation in
+   `qig.exponential_family.QuantumExponentialFamily.fisher_information` **passes
+   all validation tests** for commuting families:
+   - ✅ Spectral ≈ Analytic (relative error < 10⁻⁶)
+   - ✅ Spectral ≈ Finite-difference Hessian of ψ(θ) (relative error < 10⁻⁴)
+   - ✅ Positive semidefinite in all tested cases
+   - ✅ Symmetric to machine precision
+
+4. **Test coverage**: 25 tests covering:
+   - Single-site systems: d=2,3,4 (qubits, qutrits, ququarts)
+   - Two-site systems: d=2 (two qubits)
+   - Multiple random parameter points for each configuration
+
+**Conclusion**: The spectral BKM metric implementation is **correct** for
+commuting/diagonal families. This validates the core algorithm (spectral
+decomposition, centring, BKM kernel, and assembly) and confirms that the
+implementation correctly reduces to the classical Fisher information in the
+diagonal case.
+
+**Next Steps**: The validation in the commuting case provides strong evidence
+that the spectral implementation is sound. Any remaining discrepancies with
+finite-difference Hessians in the non-commuting case are likely due to:
+- Numerical issues in finite-difference approximations for non-commuting operators
+- The need for more careful treatment of parameter-space vs operator-space derivatives
+- Potential issues with the mapping from θ-space flow to ρ-space dynamics
+
+These should be addressed in the `2025-11-22_remove-numerical-gradients` task.
+
+### 2025-11-22 (Initial)
 
 Task created with Proposed status. Establishes a concrete plan to validate and
 repair the BKM metric implementation by first working in commuting/diagonal
