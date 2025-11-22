@@ -44,6 +44,22 @@ pytest tests/
 python test_notebook.py
 ```
 
+### Development Setup
+
+For contributors, set up notebook filtering to automatically strip outputs:
+
+```bash
+# Install nbstripout (included in requirements.txt)
+pip install nbstripout
+
+# Install git filter (one-time setup)
+nbstripout --install
+```
+
+This automatically strips notebook outputs, execution counts, and metadata on commit, preventing merge conflicts and keeping the repository clean.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for complete development guidelines.
+
 ### Basic Usage
 
 ```python
@@ -320,30 +336,30 @@ where `a = ∇C` is the constraint gradient.
 
 ## 🤝 Contributing
 
-### Development Workflow
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
-1. Create a branch from `develop`
-2. Make changes and add tests
-3. Run test suite: `pytest tests/ && python test_notebook.py`
-4. Create pull request (CI/CD will run automatically)
-5. Address review comments
+### Quick Start for Contributors
 
-### Adding New Features
+1. Fork and clone the repository
+2. Install dependencies: `pip install -r requirements.txt`
+3. **Set up notebook filtering**: `nbstripout --install` (prevents merge conflicts)
+4. Create a feature branch: `git checkout -b feature/your-feature`
+5. Make changes and add tests
+6. Run test suite: `pytest tests/ && python test_notebook.py`
+7. Commit with clear messages (reference CIPs/backlog when applicable)
+8. Push and create pull request
 
-1. Document in a backlog task: `backlog/features/YYYY-MM-DD_feature-name.md`
-2. For major changes, create a CIP: `cip/cipXXXX.md`
-3. Implement with tests
-4. Update relevant documentation
+**Important**: Use surgical `git add` for specific files, not `git add -A`. See [CONTRIBUTING.md](CONTRIBUTING.md) for VibeSafe workflow guidelines.
 
-### Project Management
+### Project Management (VibeSafe)
 
-This project uses [VibeSafe](https://github.com/lawrennd/vibesafe) for:
+This project uses [VibeSafe](https://github.com/lawrennd/vibesafe) for structured project management:
 - **Tenets**: `tenets/` - Guiding principles
 - **Backlog**: `backlog/` - Task tracking
-- **CIPs**: `cip/` - Code improvement plans
+- **CIPs**: `cip/` - Code improvement plans (see [CIP-0002](cip/cip0002.md) for example)
 - **AI-Requirements**: `ai-requirements/` - Requirements framework
 
-Run `./whats-next` to see project status.
+Run `./whats-next` to see current project status, pending tasks, and next steps.
 
 ## 📊 Validation Results
 
