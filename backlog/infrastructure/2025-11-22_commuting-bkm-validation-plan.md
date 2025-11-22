@@ -1,0 +1,106 @@
+---
+id: "2025-11-22_commuting-bkm-validation-plan"
+title: "Validate and repair BKM metric via commuting/diagonal toy families"
+status: "Proposed"
+priority: "High"
+created: "2025-11-22"
+last_updated: "2025-11-22"
+owner: "Neil D. Lawrence"
+github_issue: ""
+dependencies: ""
+tags:
+- backlog
+- infrastructure
+- information-geometry
+- bkm-metric
+---
+
+# Task: Validate and repair BKM metric via commuting/diagonal toy families
+
+## Description
+
+The current spectral/Kubo–Mori implementation of the BKM metric in
+`qig/exponential_family.QuantumExponentialFamily.fisher_information` does not
+yet agree with the finite-difference Hessian of the log-partition function
+ψ(θ) = log Tr(e^{K(θ)}) for generic non-commuting parameter directions, and
+can even produce non–positive-semidefinite metrics.
+
+To repair this in a controlled way, we will:
+
+1. Construct **commuting/diagonal toy exponential families** where all
+   sufficient statistics F_a commute and are diagonal in a fixed basis.
+2. Derive the second Kubo–Mori cumulant (BKM metric) analytically in this
+   setting, where we know that:
+   \[
+     ∂_a∂_b ψ(θ) = κ^{(2)}_{ab}(\theta)
+   \]
+   and the classical interpretation is under full control.
+3. Use this commuting case to validate and, if necessary, correct the spectral
+   BKM implementation (operator ordering, centring, kernel, and mapping from
+   parameter derivatives to operator directions).
+4. Only once the commuting case is sound, extend back to the fully quantum
+   (non-commuting) setting and tighten the tests there.
+
+This task focuses purely on the **commuting/diagonal families** as a stepping
+stone towards a correct general quantum BKM metric.
+
+## Acceptance Criteria
+
+- [ ] A clear definition of one or more commuting toy families:
+      - e.g. diagonal F_a on a fixed basis for n_sites=1,2 and d=2,3,4; or
+        a classical multinomial family embedded as diagonal density matrices.
+- [ ] An analytic derivation of ∂_a∂_b ψ(θ) for these commuting families,
+      written down and checked (including identification with the second
+      Kubo–Mori cumulant in this restricted setting).
+- [ ] A reference implementation (in tests or in a small helper) that computes
+      the commuting BKM metric both:
+      - via the analytic formula; and
+      - via the current spectral implementation in `qig.exponential_family`,
+      and shows agreement to tight numerical tolerances.
+- [ ] At least one dedicated test module or test class (e.g.
+      `TestCommutingBKMMetric`) that:
+      - constructs commuting families;
+      - checks positive semidefiniteness and symmetry; and
+      - enforces spectral≈analytic≈finite-difference equality in the commuting
+        case.
+- [ ] The results of this commuting validation are fed back into the main
+      `fisher_information` implementation and into the
+      `2025-11-22_remove-numerical-gradients` backlog task (via a progress
+      update).
+
+## Implementation Notes
+
+- Start with the simplest possible commuting model:
+  - single-site diagonal family (n_sites=1) with d=2,3,4, where
+    K(θ) = ∑_a θ_a H_a and all H_a are diagonal.
+  - In this case ψ(θ) reduces to a classical log-partition function of a
+    finite probability vector, and ∂²ψ can be written in closed form.
+- Consider implementing this as:
+  - a small, standalone commuting `QuantumExponentialFamily` variant; or
+  - a special case of the existing `QuantumExponentialFamily` where we only
+    select diagonal operators from the existing bases.
+- Verify:
+  - that in the commuting case, the spectral BKM implementation reduces to the
+    classical Fisher information expressed in the eigenbasis; and
+  - that the tests can distinguish between genuine quantum/non-commuting
+    effects and bugs in the implementation.
+
+## Related
+
+- Backlog:
+  - `2025-11-22_remove-numerical-gradients`
+  - `2025-11-22_full-jacobian-and-third-order-cumulants`
+  - `2025-11-22_qig-docs-and-tests-refactor`
+- CIPs:
+  - 0001 (Consolidate and document quantum inaccessible game validation code).
+
+## Progress Updates
+
+### 2025-11-22
+
+Task created with Proposed status. Establishes a concrete plan to validate and
+repair the BKM metric implementation by first working in commuting/diagonal
+toy families where the second Kubo–Mori cumulant can be derived and checked
+analytically.
+
+
