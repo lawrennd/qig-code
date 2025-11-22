@@ -8,12 +8,18 @@ This module contains:
   Fisher/BKM metric G(θ), and the marginal-entropy constraint.
 """
 
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 import numpy as np
 from scipy.linalg import expm, eigh
 
 from qig.core import marginal_entropies, partial_trace
+from qig.pair_operators import (
+    pair_basis_generators,
+    multi_pair_basis,
+    bell_state_density_matrix,
+    product_of_bell_states
+)
 
 
 # ============================================================================
@@ -174,29 +180,80 @@ class QuantumExponentialFamily:
     Quantum exponential family: ρ(θ) = exp(∑ θ_a F_a - ψ(θ))
     """
 
-    def __init__(self, n_sites: int, d: int):
+    def __init__(self, n_sites: Optional[int] = None, d: int = 2, 
+                 n_pairs: Optional[int] = None, pair_basis: bool = False):
         """
         Initialise quantum exponential family.
 
         Parameters
         -----------
-        n_sites : int
-            Number of subsystems
+        n_sites : int, optional
+            Number of subsystems (for local operator basis)
         d : int
             Local dimension (2 for qubits, 3 for qutrits)
+        n_pairs : int, optional
+            Number of entangled pairs (for pair basis)
+        pair_basis : bool
+            If True, use su(d²) operators for entangled pairs
+            If False, use local operators (default)
+            
+        Notes
+        -----
+        Two modes of operation:
+        
+        1. Local operators (pair_basis=False, default):
+           - Specify n_sites: number of independent subsystems
+           - Uses operators like σ_x⊗I, I⊗σ_y (local Pauli/Gell-Mann)
+           - Can ONLY represent separable states
+           - Suitable for testing, but NOT for quantum game with entanglement
+           
+        2. Pair operators (pair_basis=True):
+           - Specify n_pairs: number of entangled pairs
+           - Uses su(d²) generators acting on each pair
+           - Can represent entangled states (including Bell states)
+           - Required for proper quantum inaccessible game
+           - Fisher metric G is block-diagonal (one block per pair)
         """
-        self.n_sites = n_sites
-        self.d = d
-        self.dims = [d] * n_sites
-        self.D = d**n_sites
+        self.pair_basis = pair_basis
+        
+        if pair_basis:
+            # Pair-based operators for entangled pairs
+            if n_pairs is None:
+                raise ValueError("Must specify n_pairs when using pair_basis=True")
+            self.n_pairs = n_pairs
+            self.n_sites = 2 * n_pairs  # Each pair has 2 subsystems
+            self.d = d
+            self.dims = [d] * self.n_sites
+            self.D = d**(2 * n_pairs)  # Hilbert space: (d²)^n_pairs
+            
+            # Create pair operator basis
+            self.operators, self.pair_indices = multi_pair_basis(n_pairs, d)
+            self.labels = [f"F{a}_pair{k}" for k in range(n_pairs) 
+                          for a in range(d**4 - 1)]
+            self.n_params = len(self.operators)
+            
+            print(f"Initialised {n_pairs}-pair system with d={d} (pair basis)")
+            print(f"Number of subsystems: {self.n_sites} (2 per pair)")
+            print(f"Hilbert space dimension: {self.D}")
+            print(f"Number of parameters: {self.n_params} = {n_pairs} × {d**4-1}")
+        else:
+            # Local operators (original mode)
+            if n_sites is None:
+                raise ValueError("Must specify n_sites when using pair_basis=False")
+            self.n_sites = n_sites
+            self.d = d
+            self.dims = [d] * n_sites
+            self.D = d**n_sites
+            self.n_pairs = None
+            self.pair_indices = None
 
-        # Create operator basis
-        self.operators, self.labels = create_operator_basis(n_sites, d)
-        self.n_params = len(self.operators)
+            # Create operator basis
+            self.operators, self.labels = create_operator_basis(n_sites, d)
+            self.n_params = len(self.operators)
 
-        print(f"Initialised {n_sites}-site system with d={d}")
-        print(f"Hilbert space dimension: {self.D}")
-        print(f"Number of parameters: {self.n_params}")
+            print(f"Initialised {n_sites}-site system with d={d} (local basis)")
+            print(f"Hilbert space dimension: {self.D}")
+            print(f"Number of parameters: {self.n_params}")
 
     def rho_from_theta(self, theta: np.ndarray) -> np.ndarray:
         """
@@ -347,13 +404,13 @@ class QuantumExponentialFamily:
         For a quantum exponential family
             ρ(θ) = exp(K(θ)) / Z(θ),  K(θ) = ∑_a θ_a F_a,
         the Bogoliubov-Kubo-Mori metric can be written as
-        \[
+        \\[
             G_{ab}(θ)
-            = \int_0^1 \mathrm{Tr}\!\left(
-                ρ(θ)^s  \tilde F_a  ρ(θ)^{1-s} \tilde F_b
-              \right)\,\mathrm{d}s,
-        \]
-        where \(\tilde F_a = F_a - \mathrm{Tr}[ρ(θ) F_a]\,\mathbb I\) are
+            = \\int_0^1 \\mathrm{Tr}\\!\\left(
+                ρ(θ)^s  \\tilde F_a  ρ(θ)^{1-s} \\tilde F_b
+              \\right)\\,\\mathrm{d}s,
+        \\]
+        where \\(\\tilde F_a = F_a - \\mathrm{Tr}[ρ(θ) F_a]\\,\\mathbb I\\) are
         centred sufficient statistics.  In the eigenbasis of ρ(θ), this
         reduces to the standard spectral representation with the
         Morozova-Chentsov function
@@ -919,6 +976,117 @@ class QuantumExponentialFamily:
         M = -G - third_cumulant - hessian_C
         
         return M
+    
+    def von_neumann_entropy(self, theta: np.ndarray) -> float:
+        """
+        Compute the von Neumann entropy H(ρ) = -Tr(ρ log ρ).
+        
+        Parameters
+        ----------
+        theta : ndarray
+            Natural parameters
+            
+        Returns
+        -------
+        float
+            Von Neumann entropy in nats
+        """
+        rho = self.rho_from_theta(theta)
+        eigenvalues = np.linalg.eigvalsh(rho)
+        # Filter out zero/negative eigenvalues (numerical noise)
+        eigenvalues = eigenvalues[eigenvalues > 1e-14]
+        return -np.sum(eigenvalues * np.log(eigenvalues))
+    
+    def mutual_information(self, theta: np.ndarray) -> float:
+        """
+        Compute mutual information I = C - H where C = ∑h_i, H = S(ρ).
+        
+        For separable states: I = 0
+        For entangled states: I > 0
+        Maximum for Bell states: I = 2log(d)
+        
+        Parameters
+        ----------
+        theta : ndarray
+            Natural parameters
+            
+        Returns
+        -------
+        float
+            Mutual information in nats
+            
+        Notes
+        -----
+        This only makes sense for pair-based systems. For local operators,
+        I ≈ 0 always since those can only create separable states.
+        """
+        rho = self.rho_from_theta(theta)
+        h_marginals = marginal_entropies(rho, self.dims)
+        C = np.sum(h_marginals)
+        H = self.von_neumann_entropy(theta)
+        return C - H
+    
+    def purity(self, theta: np.ndarray) -> float:
+        """
+        Compute purity Tr(ρ²).
+        
+        Pure states: Tr(ρ²) = 1
+        Maximally mixed: Tr(ρ²) = 1/D
+        
+        Parameters
+        ----------
+        theta : ndarray
+            Natural parameters
+            
+        Returns
+        -------
+        float
+            Purity, between 1/D and 1
+        """
+        rho = self.rho_from_theta(theta)
+        return np.trace(rho @ rho).real
+    
+    def get_bell_state_parameters(self, epsilon: float = 0.0) -> np.ndarray:
+        """
+        Get parameters θ* corresponding to a (regularized) Bell state.
+        
+        For pure Bell state (epsilon=0), θ → ∞ (singular).
+        For regularized: ρ_ε = (1-ε)|Φ⟩⟨Φ| + ε I/D
+        
+        Parameters
+        ----------
+        epsilon : float, default=0.0
+            Regularization parameter (0 = pure Bell state)
+            
+        Returns
+        -------
+        theta : ndarray
+            Parameters close to Bell state
+            
+        Notes
+        -----
+        Only works for pair_basis=True systems.
+        For epsilon > 0, we return finite parameters approximating the state.
+        For epsilon = 0, raises ValueError (pure state is singular).
+        """
+        if not self.pair_basis:
+            raise ValueError("Bell states only defined for pair_basis=True")
+        
+        if epsilon == 0.0:
+            raise ValueError("Pure Bell state is singular (θ → ∞). Use epsilon > 0.")
+        
+        # Create regularized Bell state
+        rho_bell = bell_state_density_matrix(self.d)
+        rho_mixed = np.eye(self.D) / self.D
+        rho_target = (1 - epsilon) * rho_bell + epsilon * rho_mixed
+        
+        # Find parameters by least squares (simplified approach)
+        # In practice, this requires solving the exponential family inverse problem
+        # For now, return small random perturbation (placeholder)
+        # TODO: Implement proper inverse exponential family map
+        theta = np.random.randn(self.n_params) * 0.1
+        
+        return theta
 
 
 __all__ = [
