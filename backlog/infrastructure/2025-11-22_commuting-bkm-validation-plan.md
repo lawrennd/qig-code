@@ -143,7 +143,15 @@ case where operators share an eigenbasis but are not diagonal in the
 computational basis. Further validation with non-diagonal but commuting
 operators would strengthen confidence in the implementation.
 
-**What Still Needs Testing**:
+Check operator commutation
+
+Verify operator ordering
+
+Distinguish quantum vs classical
+
+Respect Hilbert space structure
+
+Question each derivative step**What Still Needs Testing**:
 
 To fully validate the "commuting" case, we should also test:
 
