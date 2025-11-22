@@ -123,4 +123,26 @@ finite-difference gradients in the quantum game code with more efficient and
 stable alternatives, motivated by slow runs of `advanced_analysis.py` and
 `validate_qutrit_optimality.py`.
 
+### 2025-11-22 (later)
+
+Initial attempt made to implement a spectral/Kubo–Mori version of the BKM metric
+in `qig/exponential_family.QuantumExponentialFamily.fisher_information` and to
+switch tests to use `qig.QuantumExponentialFamily` as the ground truth. This
+exposed that the current spectral implementation:
+
+- can produce non–positive-semidefinite metrics for generic θ; and
+- disagrees with the finite-difference Hessian of ψ(θ) at O(1) level for
+  d=2,3,4 (as shown by the new Fisher-information comparison tests).
+
+As a result, the spectral implementation is now treated as **experimental** and
+is wired into the tests specifically so that its issues are visible. The next
+step for this backlog item is to:
+
+- work out the BKM / second KM-cumulant derivation carefully for a commuting /
+  diagonal toy family (where BKM = Hessian(ψ) is under full analytic control);
+- use that to validate and, if necessary, correct the spectral formula and
+  operator ordering; and then
+- generalise to genuinely quantum (non-commuting) directions, tightening the
+  tests once the commuting case is sound.
+
 
