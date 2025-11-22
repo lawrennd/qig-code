@@ -1,0 +1,142 @@
+name: CIP-0002 Migration Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      qutrit_dim:
+        description: 'Qutrit dimension'
+        required: false
+        default: '3'
+      dynamics_points:
+        description: 'Number of dynamics integration points'
+        required: false
+        default: '20'
+
+jobs:
+  test-notebook-default:
+    name: Test Notebook (Default Config)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install jupyter nbconvert
+    
+    - name: Run notebook test (default configuration)
+      run: |
+        python test_notebook.py
+    
+    - name: Upload executed notebook
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: executed-notebook-default
+        path: /tmp/CIP-0002_Migration_Validation_executed.ipynb
+
+  test-notebook-quick:
+    name: Test Notebook (Quick Config)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install jupyter nbconvert
+    
+    - name: Run notebook test (quick configuration)
+      env:
+        DYNAMICS_POINTS: 5
+        DYNAMICS_T_MAX: 0.5
+      run: |
+        python test_notebook.py
+    
+    - name: Upload executed notebook
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: executed-notebook-quick
+        path: /tmp/CIP-0002_Migration_Validation_executed.ipynb
+
+  test-notebook-custom:
+    name: Test Notebook (Custom Config)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install jupyter nbconvert
+    
+    - name: Run notebook test (custom configuration)
+      env:
+        QUTRIT_DIM: ${{ github.event.inputs.qutrit_dim }}
+        DYNAMICS_POINTS: ${{ github.event.inputs.dynamics_points }}
+      run: |
+        python test_notebook.py
+    
+    - name: Upload executed notebook
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: executed-notebook-custom
+        path: /tmp/CIP-0002_Migration_Validation_executed.ipynb
+
+  test-python-suite:
+    name: Test Python Suite
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run all migrated experiments
+      run: |
+        python run_all_migrated_experiments.py
+    
+    - name: Run phase 3 validation
+      run: |
+        python validate_phase3_entanglement.py
+
