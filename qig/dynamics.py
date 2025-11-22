@@ -23,12 +23,21 @@ class InaccessibleGameDynamics:
     where Π_∥ projects onto constraint manifold ∑_i h_i = C.
     """
 
-    def __init__(self, exp_family: QuantumExponentialFamily):
+    def __init__(self, exp_family: QuantumExponentialFamily, method: str = 'duhamel'):
         """
         Initialise dynamics for given exponential family.
+        
+        Parameters
+        ----------
+        exp_family : QuantumExponentialFamily
+            The exponential family to integrate dynamics for
+        method : str, optional
+            Method for computing ∂ρ/∂θ: 'duhamel' (accurate, slow) or 'sld' (fast, ~5% error)
+            Default: 'duhamel'
         """
         self.exp_family = exp_family
         self.constraint_value: float | None = None
+        self.method = method
 
         # Time parametrisation: 'affine', 'entropy', or 'real'
         self.time_mode = "affine"
@@ -56,7 +65,7 @@ class InaccessibleGameDynamics:
         G = self.exp_family.fisher_information(theta)
 
         # Compute constraint gradient a(θ) = ∇(∑ h_i)
-        _, a = self.exp_family.marginal_entropy_constraint(theta)
+        _, a = self.exp_family.marginal_entropy_constraint(theta, method=self.method)
 
         # Projection matrix Π_∥ = I - aa^T / ||a||²
         a_norm_sq = float(np.dot(a, a))
