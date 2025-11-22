@@ -11,12 +11,18 @@ This script provides:
 Author: Implementation for "The Origin of the Inaccessible Game"
 """
 
+import os
+
 import numpy as np
 import matplotlib.pyplot as plt
 from qig.core import create_lme_state, marginal_entropies
 from qig.exponential_family import QuantumExponentialFamily
 from qig.dynamics import InaccessibleGameDynamics
 from inaccessible_game_quantum import compute_jacobian, generic_decomposition
+
+
+# Short-mode flag for CI / deployment environments
+SHORT_MODE = os.getenv("QIG_SHORT", "0") == "1"
 
 
 def compare_time_parametrisations(n_sites=2, d=2, t_end=5.0):
@@ -29,6 +35,13 @@ def compare_time_parametrisations(n_sites=2, d=2, t_end=5.0):
     print("COMPARING TIME PARAMETRISATIONS")
     print("="*70)
     
+    # Short mode: reduce integration horizon and resolution
+    if SHORT_MODE:
+        t_end = min(t_end, 2.0)
+        n_points = 40
+    else:
+        n_points = 100
+
     exp_family = QuantumExponentialFamily(n_sites, d)
     theta_0 = np.random.randn(exp_family.n_params) * 0.1
     
@@ -36,13 +49,13 @@ def compare_time_parametrisations(n_sites=2, d=2, t_end=5.0):
     print("\n[1/2] Integrating in affine time τ...")
     dynamics_affine = InaccessibleGameDynamics(exp_family)
     dynamics_affine.set_time_mode('affine')
-    sol_affine = dynamics_affine.integrate(theta_0, (0, t_end), n_points=100)
+    sol_affine = dynamics_affine.integrate(theta_0, (0, t_end), n_points=n_points)
     
     # Run in entropy time
     print("\n[2/2] Integrating in entropy time t...")
     dynamics_entropy = InaccessibleGameDynamics(exp_family)
     dynamics_entropy.set_time_mode('entropy')
-    sol_entropy = dynamics_entropy.integrate(theta_0, (0, t_end), n_points=100)
+    sol_entropy = dynamics_entropy.integrate(theta_0, (0, t_end), n_points=n_points)
     
     # Plot comparison
     fig, axes = plt.subplots(2, 2, figsize=(12, 10))
@@ -112,12 +125,20 @@ def generic_evolution(n_sites=2, d=2, t_end=5.0, n_samples=20):
     print("GENERIC DECOMPOSITION EVOLUTION")
     print("="*70)
     
+    # Short mode: reduce horizon, samples, and resolution
+    if SHORT_MODE:
+        t_end = min(t_end, 2.0)
+        n_samples = min(n_samples, 8)
+        n_points = 80
+    else:
+        n_points = 200
+
     exp_family = QuantumExponentialFamily(n_sites, d)
     theta_0 = np.random.randn(exp_family.n_params) * 0.1
     
     print("\nIntegrating dynamics...")
     dynamics = InaccessibleGameDynamics(exp_family)
-    solution = dynamics.integrate(theta_0, (0, t_end), n_points=200)
+    solution = dynamics.integrate(theta_0, (0, t_end), n_points=n_points)
     
     # Sample points along trajectory
     sample_indices = np.linspace(0, len(solution['theta'])-1, n_samples, dtype=int)
@@ -204,6 +225,10 @@ def compare_qubit_qutrit_optimality(t_end=3.0):
     
     results = {}
     
+    # Short mode: shorter horizon for faster runs
+    if SHORT_MODE:
+        t_end = min(t_end, 2.0)
+
     for d_label, (n_sites, d) in [('2 qubits', (2, 2)), ('2 qutrits', (2, 3))]:
         print(f"\n{'-'*70}")
         print(f"System: {d_label}")
@@ -234,7 +259,7 @@ def compare_qubit_qutrit_optimality(t_end=3.0):
         # Run dynamics
         theta_0 = np.random.randn(exp_family.n_params) * 0.1
         dynamics = InaccessibleGameDynamics(exp_family)
-        solution = dynamics.integrate(theta_0, (0, t_end), n_points=50)
+        solution = dynamics.integrate(theta_0, (0, t_end), n_points=50 if not SHORT_MODE else 30)
         
         results[d_label] = {
             'd': d,
@@ -304,7 +329,7 @@ def compare_qubit_qutrit_optimality(t_end=3.0):
     return results
 
 
-def entropy_gradient_geometry(n_sites=2, d=2):
+def entropy_gradient_geometry(n_sites=2, d=2, t_end: float = 5.0):
     """
     Analyse the entropy gradient geometric factor R(θ).
     
@@ -314,12 +339,19 @@ def entropy_gradient_geometry(n_sites=2, d=2):
     print("ENTROPY GRADIENT GEOMETRY ANALYSIS")
     print("="*70)
     
+    # Short mode: reduce horizon and resolution
+    if SHORT_MODE:
+        t_end = min(t_end, 2.0)
+        n_points = 80
+    else:
+        n_points = 100
+
     exp_family = QuantumExponentialFamily(n_sites, d)
     theta_0 = np.random.randn(exp_family.n_params) * 0.1
     
     print("\nIntegrating dynamics...")
     dynamics = InaccessibleGameDynamics(exp_family)
-    solution = dynamics.integrate(theta_0, (0, 5.0), n_points=100)
+    solution = dynamics.integrate(theta_0, (0, t_end), n_points=n_points)
     
     # Compute R(θ) along trajectory
     R_values = []
@@ -381,22 +413,25 @@ if __name__ == "__main__":
     print("\n" + "="*70)
     print("ADVANCED ANALYSIS: QUANTUM INACCESSIBLE GAME")
     print("="*70)
-    
+
+    if SHORT_MODE:
+        print("\n[SHORT MODE] QIG_SHORT=1 → using reduced horizons and sample counts.")
+
     # Analysis 1: Time parametrisations
     print("\n\n[ANALYSIS 1: TIME PARAMETRISATIONS]")
     time_comparison = compare_time_parametrisations(n_sites=2, d=2, t_end=5.0)
-    
+
     # Analysis 2: GENERIC evolution
     print("\n\n[ANALYSIS 2: GENERIC EVOLUTION]")
     generic_analysis = generic_evolution(n_sites=2, d=2, t_end=5.0, n_samples=20)
-    
+
     # Analysis 3: Qubit vs qutrit optimality
     print("\n\n[ANALYSIS 3: QUBIT VS QUTRIT OPTIMALITY]")
     optimality_comparison = compare_qubit_qutrit_optimality(t_end=3.0)
-    
+
     # Analysis 4: Entropy gradient geometry
     print("\n\n[ANALYSIS 4: ENTROPY GRADIENT GEOMETRY]")
-    geometry_analysis = entropy_gradient_geometry(n_sites=2, d=2)
+    geometry_analysis = entropy_gradient_geometry(n_sites=2, d=2, t_end=5.0)
     
     print("\n" + "="*70)
     print("ADVANCED ANALYSIS COMPLETE")

@@ -19,6 +19,8 @@ This script:
 Author: Numerical evidence for "The Origin of the Inaccessible Game"
 """
 
+import os
+
 import numpy as np
 import matplotlib.pyplot as plt
 from qig.core import create_lme_state, marginal_entropies, von_neumann_entropy
@@ -26,6 +28,9 @@ from qig.exponential_family import QuantumExponentialFamily
 import warnings
 
 warnings.filterwarnings("ignore")
+
+# Short-mode flag for CI / deployment environments
+SHORT_MODE = os.getenv("QIG_SHORT", "0") == "1"
 
 
 def compute_alpha_factor(n_sites: int, d: int, eps: float = 1e-4) -> dict:
@@ -108,7 +113,9 @@ def compute_alpha_factor(n_sites: int, d: int, eps: float = 1e-4) -> dict:
     
     # Compute Fisher information (BKM metric)
     print(f"  Computing BKM metric G(θ) [this may take 10-30 seconds]...")
-    G = exp_family.fisher_information(theta, eps=1e-3)  # Coarser for speed
+    # In short mode, use a larger finite-difference step for extra speed.
+    eps_metric = 5e-3 if SHORT_MODE else 1e-3
+    G = exp_family.fisher_information(theta, eps=eps_metric)
     
     # Compute constraint gradient
     print(f"  Computing constraint gradient ∇C...")
@@ -381,33 +388,39 @@ if __name__ == "__main__":
     print("  R(θ_origin) = α(d) · (m/d)log(d)  with α(d) = O(1)")
     print("\nIf validated, this supports the claim:")
     print("  'Qutrits (d=3) maximise R for additive level-budget m'")
-    
-    # Test 1: Compare d=2,3 for fixed n=2 (d=4 omitted for speed)
-    print("\n" + "▶"*35)
+
+    if SHORT_MODE:
+        print("\n[SHORT MODE] QIG_SHORT=1 → using reduced set of dimensions and coarser metric.")
+        dims = [3]
+    else:
+        # Test 1: Compare d=2,3 for fixed n=2 (d=4 omitted for speed)
+        dims = [2, 3]
+
+    print("\n" + "▶" * 35)
     print("TEST 1: COMPARING DIMENSIONS (n=2 sites)")
-    print("▶"*35)
-    
-    results_dims = compare_dimensions_fixed_sites(n_sites=2, dimensions=[2, 3])
-    
-    # Test 2: Scaling with sites for d=3 (SKIPPED for speed - takes too long)
-    print("\n" + "▶"*35)
+    print("▶" * 35)
+
+    results_dims = compare_dimensions_fixed_sites(n_sites=2, dimensions=dims)
+
+    # Test 2: Scaling with sites for d=3 (still skipped by default)
+    print("\n" + "▶" * 35)
     print("TEST 2: SCALING WITH SITES (SKIPPED for speed)")
-    print("▶"*35)
+    print("▶" * 35)
     print("  Skipping n=3 test - Fisher information computation too slow")
     print("  (Would validate R ∝ m scaling)")
-    
+
     results_sites = None  # test_scaling_with_sites(d=3, n_sites_list=[2])
-    
+
     # Generate figure
-    print("\n" + "▶"*35)
+    print("\n" + "▶" * 35)
     print("GENERATING PUBLICATION FIGURE")
-    print("▶"*35)
-    
+    print("▶" * 35)
+
     generate_publication_figure(results_dims, results_sites)
-    
-    print("\n" + "="*70)
+
+    print("\n" + "=" * 70)
     print("VALIDATION COMPLETE")
-    print("="*70)
+    print("=" * 70)
     print("\nConclusion:")
     print("  - If d=3 gave maximum R: qutrit optimality SUPPORTED")
     print("  - If α(d) varied by < factor of 5: O(1) assumption REASONABLE")
