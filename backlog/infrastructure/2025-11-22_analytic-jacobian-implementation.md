@@ -165,8 +165,68 @@ At every step, verify:
 
 ## Progress Updates
 
-### 2025-11-22
+### 2025-11-22 - Step 1 Complete ✅
 - Task created
 - Detailed implementation plan written
-- Ready to begin Step 1: Third cumulant implementation
+- **Step 1 (Third cumulant) COMPLETE**:
+  - Implemented `third_cumulant_contraction()` using perturbation theory
+  - All tests passing with excellent precision:
+    - Diagonal (qutrit): rel_err = 1.97e-09
+    - Single qubit: rel_err = 1.03e-08
+    - Two qubits: rel_err = 1.50e-09
+    - Two qutrits: rel_err = 1.98e-09
+  - Symmetry verified: ∂G/∂θ_c is symmetric for all c
+
+### 2025-11-22 - Step 2 In Progress (Debugging) 🔧
+- **Step 2 (Constraint Hessian) - Issue identified**:
+  - Implemented `constraint_hessian()` with Daleckii-Krein formula
+  - Tests show errors:
+    - Diagonal case: 8.4% relative error
+    - Single qubit: 0.3% error on off-diagonal elements
+  
+- **Root cause identified**: ∂²ρ/∂θ_a∂θ_b formula has ~10% error
+  
+- **Diagnostic results**:
+  ```
+  For single qubit with θ = [0.1, 0.0, 0.0]:
+  ∂²ρ/∂θ_X∂θ_Y analytic vs finite-diff:
+  Max error: 0.050 (10% of magnitude)
+  ```
+  
+- **Problem**: When computing ∂²ρ/∂θ_a∂θ_b from ∂ρ/∂θ_a = ρ(F_a - ⟨F_a⟩I), 
+  the product rule application is incomplete.
+  
+  Current formula:
+  ```
+  ∂²ρ/∂θ_a∂θ_b = ∂ρ/∂θ_b (F_a - ⟨F_a⟩I) - ρ Cov(F_b, F_a) I
+  ```
+  
+  This is missing terms! Need to carefully apply product rule to:
+  ```
+  ∂/∂θ_b [ρ(F_a - ⟨F_a⟩I)]
+  ```
+  
+  Should be:
+  ```
+  = (∂ρ/∂θ_b)(F_a - ⟨F_a⟩I) + ρ(∂F_a/∂θ_b - ∂⟨F_a⟩/∂θ_b I)
+  ```
+  
+  But F_a is constant (doesn't depend on θ), so ∂F_a/∂θ_b = 0.
+  However, ⟨F_a⟩ = Tr(ρ F_a) DOES depend on θ_b!
+  
+  So:
+  ```
+  = (∂ρ/∂θ_b)(F_a - ⟨F_a⟩I) - ρ (∂⟨F_a⟩/∂θ_b) I
+  ```
+  
+  And ∂⟨F_a⟩/∂θ_b = Tr((∂ρ/∂θ_b) F_a) = Cov(F_b, F_a) = G_ba
+  
+  Wait... that's what I have! So the formula looks correct in principle.
+  
+- **Next steps**:
+  - Re-examine the formula derivation from first principles
+  - Check if there's an issue with how I'm computing Cov(F_b, F_a)
+  - Verify the partial trace is being applied correctly
+  - Consider whether the issue is in the Daleckii-Krein application instead
+  - Test on even simpler case (pure state?) to isolate the issue
 
