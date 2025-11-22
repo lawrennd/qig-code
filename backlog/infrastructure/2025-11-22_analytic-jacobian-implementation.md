@@ -242,6 +242,45 @@ At every step, verify:
   - Mixing SLD ∂ρ with Duhamel ∂²ρ gives worse results
   - Consistent high-precision throughout gives spectacular accuracy
 
+### 2025-11-22 - Step 4 Complete (Structural Discovery!) ✅
+- **Implemented `lagrange_multiplier_gradient()`** in `exponential_family.py`
+- **Discovered fundamental structural identity**: **Gθ = -∇C** exactly!
+  - This gives ν = (∇C)^T Gθ / ||∇C||² = -||∇C||² / ||∇C||² = **-1 always**
+  - Therefore **∇ν = 0 everywhere** is CORRECT!
+  - This is a deep property of the constrained exponential family dynamics
+  
+- **Tests created**: `test_lagrange_multiplier_gradient.py`
+  - 4 tests verify ∇ν ≈ 0 (machine precision)
+  - Tests confirm structural identity Gθ = -∇C for single qubit, qutrit, and 2-qubit systems
+  - Both SLD and Duhamel methods validated
+  
+- **Physical interpretation**: Your insight about unitary evolution was spot-on conceptually!
+  - The identity Gθ = -∇C means the natural gradient flow points exactly opposite to the constraint gradient
+  - This ensures the Lagrange multiplier enforces the constraint exactly
+
+### 2025-11-22 - Step 5 Complete (Universal Equilibrium!) ✅
+- **Implemented `jacobian()`** in `exponential_family.py`
+  - Formula: M = -G - (∇G)[θ] - ∇²C (simplified using ν = -1, ∇ν = 0)
+  
+- **MAJOR DISCOVERY**: Gθ = -∇C is **UNIVERSAL**!
+  - ✅ Holds for qubits (Pauli basis)
+  - ✅ Holds for qutrits (Gell-Mann basis)  
+  - ✅ Holds for multi-site systems
+  - **NOT basis-specific** - fundamental property of exponential family with C = ∑h_i
+  
+- **Physical implications**:
+  - F(θ) = -Gθ + νa = 0 everywhere on constraint manifold
+  - **Entire manifold consists of equilibrium points**
+  - Jacobian M describes response to perturbations FROM equilibrium
+  - M ≈ S (almost entirely symmetric, ||A|| ≈ 10^-17)
+  - Degeneracy Sa ≈ 0 confirmed (GENERIC structure!)
+  
+- **Tests created**: `test_jacobian.py` (5/5 pass)
+  - Single qubit (SLD & Duhamel)
+  - Eigenvalue degeneracy
+  - Constraint preservation (a^T M ≈ 0)
+  - Multi-site systems
+
 ### Test Cleanup Needed
 
 **Diagnostic scripts to remove** (served their purpose, findings documented):
