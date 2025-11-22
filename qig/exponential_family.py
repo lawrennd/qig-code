@@ -13,7 +13,7 @@ from typing import Tuple, List
 import numpy as np
 from scipy.linalg import expm, eigh
 
-from qig.core import marginal_entropies
+from qig.core import marginal_entropies, partial_trace
 
 
 # ============================================================================
@@ -310,24 +310,53 @@ class QuantumExponentialFamily:
         self, theta: np.ndarray
     ) -> Tuple[float, np.ndarray]:
         """
-        Compute constraint value C(θ) = ∑_i h_i and gradient ∇C.
+        Compute constraint value C(θ) = ∑_i h_i and gradient ∇C analytically.
+        
+        For a quantum exponential family ρ(θ) = exp(K(θ))/Z(θ), the gradient is:
+            ∂C/∂θ_a = ∑_i ∂h_i/∂θ_a
+        
+        where:
+            ∂h_i/∂θ_a = -Tr((∂ρ_i/∂θ_a) log ρ_i)
+        
+        and:
+            ∂ρ/∂θ_a = ρ (F_a - ⟨F_a⟩ I)
+            ∂ρ_i/∂θ_a = Tr_{j≠i}[∂ρ/∂θ_a]  (partial trace)
         """
         rho = self.rho_from_theta(theta)
         h = marginal_entropies(rho, self.dims)
         C = float(np.sum(h))
 
-        # TK: In the classical game this was analytic
-        
-        # Compute gradient via finite differences
-        eps = 1e-5
+        # Compute gradient analytically
         grad_C = np.zeros(self.n_params)
-        for i in range(self.n_params):
-            theta_plus = theta.copy()
-            theta_plus[i] += eps
-            rho_plus = self.rho_from_theta(theta_plus)
-            h_plus = marginal_entropies(rho_plus, self.dims)
-            C_plus = float(np.sum(h_plus))
-            grad_C[i] = (C_plus - C) / eps
+        I = np.eye(self.D, dtype=complex)
+        
+        for a in range(self.n_params):
+            F_a = self.operators[a]
+            
+            # Compute ⟨F_a⟩ = Tr(ρ F_a)
+            mean_Fa = np.trace(rho @ F_a).real
+            
+            # Compute ∂ρ/∂θ_a = ρ (F_a - ⟨F_a⟩ I)
+            drho_dtheta_a = rho @ (F_a - mean_Fa * I)
+            
+            # Sum over all subsystems
+            for i in range(self.n_sites):
+                # Compute marginal ρ_i
+                rho_i = partial_trace(rho, self.dims, keep=i)
+                
+                # Compute ∂ρ_i/∂θ_a (partial trace of ∂ρ/∂θ_a)
+                drho_i_dtheta_a = partial_trace(drho_dtheta_a, self.dims, keep=i)
+                
+                # Compute log(ρ_i) with regularisation
+                eigvals_i, eigvecs_i = eigh(rho_i)
+                eigvals_i = np.maximum(eigvals_i.real, 1e-14)
+                log_eigvals_i = np.log(eigvals_i)
+                log_rho_i = eigvecs_i @ np.diag(log_eigvals_i) @ eigvecs_i.conj().T
+                
+                # Compute ∂h_i/∂θ_a = -Tr((∂ρ_i/∂θ_a) log(ρ_i))
+                dh_i_dtheta_a = -np.trace(drho_i_dtheta_a @ log_rho_i).real
+                
+                grad_C[a] += dh_i_dtheta_a
 
         return C, grad_C
 
