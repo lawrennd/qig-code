@@ -298,6 +298,77 @@ At every step, verify:
   - Confirmed genuine dynamics: ||F|| ≈ 0.38 (not zero!)
   - Structural identity broken: ||Gθ + a||/||a|| ≈ 1.52
   - Lagrange multiplier varies: ν ≈ -0.50 (not constant -1)
+
+**Verification code examples:**
+
+```python
+# Test entanglement and structural identity breaking
+exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+theta = np.random.randn(exp_fam.n_params) * 0.5
+
+# Check entanglement
+C, a = exp_fam.marginal_entropy_constraint(theta, method='duhamel')
+H = exp_fam.von_neumann_entropy(theta)
+I = exp_fam.mutual_information(theta)
+print(f"C = {C:.6f}, H = {H:.6f}, I = {I:.6f}")  # C ≠ H, I > 0
+
+# Check structural identity
+G = exp_fam.fisher_information(theta)
+Gtheta = G @ theta
+rel_error = np.linalg.norm(Gtheta + a) / np.linalg.norm(a)
+print(f"||Gθ + a|| / ||a|| = {rel_error:.6f}")  # ≈ 1.52 (broken!)
+
+# Check Lagrange multiplier
+nu = np.dot(a, Gtheta) / np.dot(a, a)
+print(f"ν = {nu:.6f}")  # ≈ -0.50 (not -1)
+
+# Check dynamics
+F = -Gtheta + nu * a
+print(f"||F|| = {np.linalg.norm(F):.6f}")  # ≈ 0.38 (non-zero!)
+```
+
+```python
+# Validate Jacobian numerically
+M_analytic = exp_fam.jacobian(theta, method='duhamel')
+
+# Compute F(θ) = -Gθ + νa
+def compute_F(theta_val):
+    G = exp_fam.fisher_information(theta_val)
+    C, a = exp_fam.marginal_entropy_constraint(theta_val, method='duhamel')
+    Gtheta = G @ theta_val
+    nu = np.dot(a, Gtheta) / np.dot(a, a)
+    return -Gtheta + nu * a
+
+# Finite differences
+eps = 1e-6
+M_fd = np.zeros((exp_fam.n_params, exp_fam.n_params))
+for j in range(exp_fam.n_params):
+    theta_plus = theta.copy()
+    theta_plus[j] += eps
+    theta_minus = theta.copy()
+    theta_minus[j] -= eps
+    M_fd[:, j] = (compute_F(theta_plus) - compute_F(theta_minus)) / (2 * eps)
+
+error = np.linalg.norm(M_analytic - M_fd) / np.linalg.norm(M_fd)
+print(f"Jacobian error: {error:.6e}")  # ~1.3×10⁻⁵
+```
+
+```python
+# Compare gradients ∇C vs ∇H
+grad_C = a
+grad_H = np.zeros_like(grad_C)
+for i in range(exp_fam.n_params):
+    theta_plus = theta.copy()
+    theta_plus[i] += eps
+    theta_minus = theta.copy()
+    theta_minus[i] -= eps
+    H_plus = exp_fam.von_neumann_entropy(theta_plus)
+    H_minus = exp_fam.von_neumann_entropy(theta_minus)
+    grad_H[i] = (H_plus - H_minus) / (2 * eps)
+
+rel_diff = np.linalg.norm(grad_C - grad_H) / np.linalg.norm(grad_H)
+print(f"||∇C - ∇H|| / ||∇H|| = {rel_diff:.6f}")  # ≈ 1.11 (110%!)
+```
   
 - **Comprehensive validation** (26 tests total, all passing):
   - 16 tests: Pair exponential family functionality
