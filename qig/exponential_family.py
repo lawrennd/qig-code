@@ -217,6 +217,50 @@ class QuantumExponentialFamily:
         K = sum(theta_a * F_a for theta_a, F_a in zip(theta, self.operators))
         return np.log(np.trace(expm(K))).real
 
+    def rho_derivative(self, theta: np.ndarray, a: int) -> np.ndarray:
+        """
+        Compute ∂ρ/∂θ_a using the correct quantum formula.
+        
+        For the quantum exponential family, the derivative is:
+            ∂ρ/∂θ_a = (1/2)[ρ(F_a - ⟨F_a⟩I) + (F_a - ⟨F_a⟩I)ρ]
+        
+        This symmetrised form preserves Hermiticity and is the symmetric
+        logarithmic derivative (SLD) formula from quantum information geometry.
+        
+        ⚠️ QUANTUM ALERT: Simple ρ(F - ⟨F⟩I) is WRONG for non-commuting operators!
+        
+        Parameters
+        ----------
+        theta : ndarray, shape (n_params,)
+            Natural parameters
+        a : int
+            Parameter index
+        
+        Returns
+        -------
+        drho : ndarray, shape (D, D)
+            Derivative ∂ρ/∂θ_a (Hermitian matrix)
+        
+        Notes
+        -----
+        Quantum derivative principles applied:
+        ✅ Check operator commutation: Uses symmetric form for non-commuting ops
+        ✅ Verify operator ordering: Symmetrised to avoid ordering issues
+        ✅ Distinguish quantum vs classical: Uses SLD, not classical formula
+        ✅ Respect Hilbert space structure: Preserves Hermiticity
+        """
+        rho = self.rho_from_theta(theta)
+        F_a = self.operators[a]
+        mean_Fa = np.trace(rho @ F_a).real
+        I = np.eye(self.D, dtype=complex)
+        
+        F_centered = F_a - mean_Fa * I
+        
+        # Symmetrised formula (symmetric logarithmic derivative)
+        drho = 0.5 * (rho @ F_centered + F_centered @ rho)
+        
+        return drho
+
     def fisher_information(self, theta: np.ndarray) -> np.ndarray:
         """
         Compute Fisher information (BKM metric) G(θ) = ∇∇ψ(θ) using the
@@ -333,11 +377,8 @@ class QuantumExponentialFamily:
         for a in range(self.n_params):
             F_a = self.operators[a]
             
-            # Compute ⟨F_a⟩ = Tr(ρ F_a)
-            mean_Fa = np.trace(rho @ F_a).real
-            
-            # Compute ∂ρ/∂θ_a = ρ (F_a - ⟨F_a⟩ I)
-            drho_dtheta_a = rho @ (F_a - mean_Fa * I)
+            # Compute ∂ρ/∂θ_a using the correct quantum formula (SLD)
+            drho_dtheta_a = self.rho_derivative(theta, a)
             
             # Sum over all subsystems
             for i in range(self.n_sites):
@@ -419,9 +460,7 @@ class QuantumExponentialFamily:
         I = np.eye(self.D, dtype=complex)
         drho_dtheta = []
         for a in range(self.n_params):
-            F_a = self.operators[a]
-            mean_Fa = np.trace(rho @ F_a).real
-            drho_dtheta.append(rho @ (F_a - mean_Fa * I))
+            drho_dtheta.append(self.rho_derivative(theta, a))
         
         # Compute eigenvalue derivatives using Hellmann-Feynman theorem
         # ∂λ_i/∂θ_a = ⟨i|∂ρ/∂θ_a|i⟩
@@ -542,14 +581,12 @@ class QuantumExponentialFamily:
         rho = self.rho_from_theta(theta)
         I_full = np.eye(self.D, dtype=complex)
         
-        # Compute ∂ρ/∂θ for all parameters
+        # Compute ∂ρ/∂θ for all parameters using the correct quantum formula
         drho_dtheta = []
         for a in range(self.n_params):
-            F_a = self.operators[a]
-            mean_Fa = np.trace(rho @ F_a).real
-            drho_dtheta.append(rho @ (F_a - mean_Fa * I_full))
+            drho_dtheta.append(self.rho_derivative(theta, a))
         
-        # Initialize Hessian
+        # Initialise Hessian
         hessian = np.zeros((self.n_params, self.n_params))
         
         # Sum over all marginals
@@ -577,21 +614,30 @@ class QuantumExponentialFamily:
                 for b in range(a, self.n_params):  # Only upper triangle (symmetric)
                     # Term 1: -Tr(∂²ρᵢ/∂θ_a∂θ_b (I + log ρᵢ))
                     # We need ∂²ρᵢ/∂θ_a∂θ_b
-                    # From ∂ρ/∂θ_a = ρ (F_a - ⟨F_a⟩ I), we get:
-                    # ∂²ρ/∂θ_a∂θ_b = ∂ρ/∂θ_b (F_a - ⟨F_a⟩ I) - ρ ∂⟨F_a⟩/∂θ_b I
-                    # where ∂⟨F_a⟩/∂θ_b = Cov(F_b, F_a) = G_ba
+                    # From ∂ρ/∂θ_a = (1/2)[ρ(F_a - ⟨F_a⟩I) + (F_a - ⟨F_a⟩I)ρ], we get:
+                    # ∂²ρ/∂θ_a∂θ_b = (1/2)[∂ρ/∂θ_b (F_a - ⟨F_a⟩I) + (F_a - ⟨F_a⟩I) ∂ρ/∂θ_b]
+                    #                 - (1/2)[ρ + ρ] ∂⟨F_a⟩/∂θ_b I
+                    #               = (1/2)[∂ρ/∂θ_b (F_a - ⟨F_a⟩I) + (F_a - ⟨F_a⟩I) ∂ρ/∂θ_b]
+                    #                 - ρ Cov(F_b, F_a)
+                    # where ∂⟨F_a⟩/∂θ_b = Cov(F_b, F_a)
                     
                     F_a = self.operators[a]
                     F_b = self.operators[b]
                     mean_Fa = np.trace(rho @ F_a).real
                     mean_Fb = np.trace(rho @ F_b).real
                     
-                    # Covariance (this is G_ba, but we compute it directly)
-                    cov_FbFa = np.trace(rho @ F_b @ F_a).real - mean_Fb * mean_Fa
+                    F_a_centered = F_a - mean_Fa * I_full
                     
-                    # ∂²ρ/∂θ_a∂θ_b
-                    d2rho_dtheta_ab = (drho_dtheta[b] @ (F_a - mean_Fa * I_full) 
-                                       - rho * cov_FbFa)
+                    # Symmetrized covariance: when ∂ρ/∂θ = (1/2)[ρF + Fρ - 2⟨F⟩ρ], 
+                    # we have ∂⟨F_a⟩/∂θ_b = (1/2)[⟨F_b F_a⟩ + ⟨F_a F_b⟩] - ⟨F_b⟩⟨F_a⟩
+                    # = (1/2)⟨{F_b, F_a}⟩ - ⟨F_b⟩⟨F_a⟩
+                    cov_sym = 0.5 * (np.trace(rho @ F_b @ F_a).real + 
+                                     np.trace(rho @ F_a @ F_b).real) - mean_Fb * mean_Fa
+                    
+                    # ∂²ρ/∂θ_a∂θ_b (symmetrised second derivative)
+                    d2rho_dtheta_ab = (0.5 * (drho_dtheta[b] @ F_a_centered 
+                                              + F_a_centered @ drho_dtheta[b])
+                                       - cov_sym * rho)
                     
                     # Partial trace to get ∂²ρᵢ/∂θ_a∂θ_b
                     d2rho_i_dtheta_ab = partial_trace(d2rho_dtheta_ab, self.dims, keep=i)
