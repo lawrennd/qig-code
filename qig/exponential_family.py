@@ -935,7 +935,7 @@ class QuantumExponentialFamily:
         return grad_nu
     
     def jacobian(self, theta: np.ndarray,
-                method: str = 'sld',
+                method: str = 'duhamel',
                 n_points: int = 100) -> np.ndarray:
         """
         Compute the Jacobian M = ∂F/∂θ of the constrained dynamics.
@@ -944,19 +944,23 @@ class QuantumExponentialFamily:
             F(θ) = -G(θ)θ + ν(θ)a(θ)
             M = ∂F/∂θ = -G - (∇G)[θ] + ν∇²C + a(∇ν)^T
         
-        Due to the structural identity Gθ = -a, we have:
-            ν = -1 always
-            ∇ν = 0 always
+        For systems with local operators only (no entanglement):
+            - Structural identity Gθ = -a holds
+            - ν = -1 always, ∇ν = 0
+            - Simplifies to: M = -G - (∇G)[θ] - ∇²C
         
-        Therefore the Jacobian simplifies to:
-            M = -G - (∇G)[θ] - ∇²C
+        For systems with entangling operators (pair basis):
+            - Structural identity BROKEN: Gθ ≠ -a
+            - ν ≠ -1, ∇ν ≠ 0
+            - Must use full formula: M = -G - (∇G)[θ] + ν∇²C + a(∇ν)^T
         
         Parameters
         ----------
         theta : ndarray, shape (n_params,)
             Natural parameters
-        method : str, default='sld'
+        method : str, default='duhamel'
             'sld' or 'duhamel' for derivative precision
+            Changed default to 'duhamel' for better accuracy with entangled states
         n_points : int, default=100
             Quadrature points for Duhamel (ignored for 'sld')
             
@@ -968,19 +972,26 @@ class QuantumExponentialFamily:
         Notes
         -----
         This is the full Jacobian for GENERIC dynamics:
-            θ̇ = M θ + ...
+            θ̇ = F(θ) = -Gθ + νa
         
         The degeneracy of M determines the geometry of the constraint manifold
         and is central to the paper's analysis of the inaccessible game.
         """
         # Get all components
         G = self.fisher_information(theta)
+        C, a = self.marginal_entropy_constraint(theta, method=method)
         third_cumulant = self.third_cumulant_contraction(theta)
         hessian_C = self.constraint_hessian(theta, method=method, n_points=n_points)
         
-        # Assemble Jacobian: M = -G - (∇G)[θ] - ∇²C
-        # (using ν = -1 and ∇ν = 0)
-        M = -G - third_cumulant - hessian_C
+        # Compute Lagrange multiplier
+        Gtheta = G @ theta
+        nu = np.dot(a, Gtheta) / np.dot(a, a)
+        
+        # Compute Lagrange multiplier gradient
+        grad_nu = self.lagrange_multiplier_gradient(theta, method=method, n_points=n_points)
+        
+        # Assemble full Jacobian: M = -G - (∇G)[θ] + ν∇²C + a(∇ν)^T
+        M = -G - third_cumulant + nu * hessian_C + np.outer(a, grad_nu)
         
         return M
     
