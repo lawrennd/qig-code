@@ -286,15 +286,16 @@ class QuantumExponentialFamily:
         diag_mask = np.eye(len(p), dtype=bool)
         k[diag_mask] = p
 
-        # Step 4: assemble G_ab = Σ_{i,j} c(p_i, p_j) A_a[i,j] A_b[j,i]
+        # Step 4: assemble G_ab = Σ_{i,j} k(p_i, p_j) A_a[i,j] conj(A_b[i,j])
         G = np.zeros((n, n))
         for a in range(n):
             A_a = A_tilde[a]
             for b in range(a, n):
                 A_b = A_tilde[b]
-                # Note: A_b[j,i] = (A_b.T.conj())[i,j]; we use that to respect
-                # operator ordering and Hermitian structure.
-                prod = A_a * A_b.T.conj()
+                # For Hermitian operators in the eigenbasis of ρ, the BKM metric is:
+                # G_ab = ∑_{i,j} k(p_i, p_j) * A_a[i,j] * conj(A_b[i,j])
+                # where k(p_i, p_j) = (p_i - p_j)/(log p_i - log p_j).
+                prod = A_a * np.conj(A_b)
                 Gab = np.sum(k * prod)
                 # BKM inner product is real for Hermitian observables; take Re.
                 Gab_real = float(np.real(Gab))
