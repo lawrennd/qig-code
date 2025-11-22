@@ -177,56 +177,38 @@ At every step, verify:
     - Two qutrits: rel_err = 1.98e-09
   - Symmetry verified: ∂G/∂θ_c is symmetric for all c
 
-### 2025-11-22 - Step 2 In Progress (Debugging) 🔧
-- **Step 2 (Constraint Hessian) - Issue identified**:
-  - Implemented `constraint_hessian()` with Daleckii-Krein formula
-  - Tests show errors:
-    - Diagonal case: 8.4% relative error
-    - Single qubit: 0.3% error on off-diagonal elements
+### 2025-11-22 - Step 2 Major Discovery: ∂ρ/∂θ Formula Wrong! 🔍
+- **CRITICAL FINDING**: The classical formula ∂ρ/∂θ = ρ(F - ⟨F⟩I) is **WRONG** for quantum systems!
   
-- **Root cause identified**: ∂²ρ/∂θ_a∂θ_b formula has ~10% error
+- **Root cause**: For non-commuting operators, ρ(F - ⟨F⟩I) is NOT Hermitian!
+  - When [ρ, F] ≠ 0, the product ρF is not Hermitian
+  - All derivatives of ρ MUST be Hermitian (since ρ is Hermitian)
+  - Tests show ρ(F - ⟨F⟩I) has Hermiticity errors of 0.1-0.3 for typical quantum states
   
-- **Diagnostic results**:
+- **Correct formula**: Symmetric Logarithmic Derivative (SLD) from quantum information geometry:
   ```
-  For single qubit with θ = [0.1, 0.0, 0.0]:
-  ∂²ρ/∂θ_X∂θ_Y analytic vs finite-diff:
-  Max error: 0.050 (10% of magnitude)
+  ∂ρ/∂θ_a = (1/2)[ρ(F_a - ⟨F_a⟩I) + (F_a - ⟨F_a⟩I)ρ]
   ```
+  - This is Hermitian by construction
+  - Marginal entropy gradient now achieves **machine precision** (~10⁻¹⁶ error) ✅
   
-- **Problem**: When computing ∂²ρ/∂θ_a∂θ_b from ∂ρ/∂θ_a = ρ(F_a - ⟨F_a⟩I), 
-  the product rule application is incomplete.
+- **BUT**: Second derivative still has ~85% error!
+  - Using the SLD approximation in ∂²ρ compounds the error
+  - The SLD itself is an approximation (trapezoid rule) of the true integral:
+    ```
+    ∂ρ/∂θ_a = ∫₀¹ exp(sH)(F_a - ⟨F_a⟩I)exp((1-s)H) ds
+    ```
+  - For ∂²ρ we may need the exact integral or a better quadrature
   
-  Current formula:
-  ```
-  ∂²ρ/∂θ_a∂θ_b = ∂ρ/∂θ_b (F_a - ⟨F_a⟩I) - ρ Cov(F_b, F_a) I
-  ```
-  
-  This is missing terms! Need to carefully apply product rule to:
-  ```
-  ∂/∂θ_b [ρ(F_a - ⟨F_a⟩I)]
-  ```
-  
-  Should be:
-  ```
-  = (∂ρ/∂θ_b)(F_a - ⟨F_a⟩I) + ρ(∂F_a/∂θ_b - ∂⟨F_a⟩/∂θ_b I)
-  ```
-  
-  But F_a is constant (doesn't depend on θ), so ∂F_a/∂θ_b = 0.
-  However, ⟨F_a⟩ = Tr(ρ F_a) DOES depend on θ_b!
-  
-  So:
-  ```
-  = (∂ρ/∂θ_b)(F_a - ⟨F_a⟩I) - ρ (∂⟨F_a⟩/∂θ_b) I
-  ```
-  
-  And ∂⟨F_a⟩/∂θ_b = Tr((∂ρ/∂θ_b) F_a) = Cov(F_b, F_a) = G_ba
-  
-  Wait... that's what I have! So the formula looks correct in principle.
+- **Current status**:
+  - Fixed: ∂ρ/∂θ using SLD formula → machine precision ✅
+  - Still broken: ∂²ρ/∂θ_a∂θ_b has ~85% error
+  - Tests show error is consistent across different finite-difference step sizes
+  - Suggests formula is fundamentally wrong, not numerical precision issue
   
 - **Next steps**:
-  - Re-examine the formula derivation from first principles
-  - Check if there's an issue with how I'm computing Cov(F_b, F_a)
-  - Verify the partial trace is being applied correctly
-  - Consider whether the issue is in the Daleckii-Krein application instead
-  - Test on even simpler case (pure state?) to isolate the issue
+  1. Check paper (the-inaccessible-game.tex eq. 821-846) for the EXACT formula
+  2. Consider if we need the full Duhamel integral for second derivatives
+  3. May need numerical integration for accuracy
+  4. Alternative: Look for a different parametrization where derivatives are simpler
 
