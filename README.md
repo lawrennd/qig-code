@@ -1,10 +1,14 @@
 # The Inaccessible Game (Quantum Implementation)
 
+[![CI/CD Tests](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/test-migration-validation.yml/badge.svg)](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/test-migration-validation.yml)
 [![Migration Status](https://img.shields.io/badge/CIP--0002-COMPLETED-success)](cip/cip0002.md)
 [![Entanglement](https://img.shields.io/badge/Entanglement-GENUINE-brightgreen)]()
-[![Tests](https://img.shields.io/badge/Tests-4%2F4%20Passing-success)]()
+[![Python](https://img.shields.io/badge/Python-3.11+-blue)]()
+[![License](https://img.shields.io/badge/License-TBD-lightgrey)]()
 
 A Python implementation of the quantum inaccessible game: a constrained information geometry framework for studying maximum entropy production in quantum systems with marginal entropy constraints.
+
+> **Note**: The CI/CD badge above automatically updates based on GitHub Actions workflow status. If you've forked this repository, update the badge URL in the README to point to your fork.
 
 ## 🎯 Overview
 
@@ -191,11 +195,28 @@ python run_all_migrated_experiments.py
 
 ### CI/CD
 
-GitHub Actions runs automatically on push/PR:
-- ✅ Default configuration (full validation)
-- ✅ Quick configuration (fast smoke test)
-- ✅ Python suite (all migrated scripts)
-- ✅ Custom configuration (manual dispatch)
+[![CI/CD Status](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/test-migration-validation.yml/badge.svg)](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/test-migration-validation.yml)
+
+GitHub Actions workflow **automatically runs** on every push/PR with 4 test jobs:
+
+1. **Default Config** - Full validation (20 integration points, d=3)
+   - Tests: 4/4 experiments (entanglement, dynamics, comparison, API)
+   - Runtime: ~30-40 seconds
+   
+2. **Quick Config** - Fast smoke test (5 points, 0.5s)
+   - Same tests with reduced parameters
+   - Runtime: ~15-20 seconds
+   
+3. **Python Suite** - All migrated scripts
+   - `run_all_migrated_experiments.py`
+   - `validate_phase3_entanglement.py`
+   - Runtime: ~30 seconds
+   
+4. **Custom Config** - Manual workflow dispatch
+   - Specify custom `QUTRIT_DIM`, `DYNAMICS_POINTS`
+   - Useful for edge case testing
+
+**View Results**: Repository → Actions → "CIP-0002 Migration Validation"
 
 See [TESTING.md](TESTING.md) for complete testing guide.
 
