@@ -1,14 +1,10 @@
 """
 Quantum exponential family and BKM metric interface.
 
-This module currently re-exports `QuantumExponentialFamily` from
-`inaccessible_game_quantum.py` to provide a stable namespace for the
-refactored code. As CIP-0001 is implemented, the class definition and
-supporting utilities can be migrated here.
+Placeholder module for future refactor of `QuantumExponentialFamily`
+from `inaccessible_game_quantum.py` into the `qig` namespace.
 """
 
-from ..inaccessible_game_quantum import QuantumExponentialFamily
-
-__all__ = ["QuantumExponentialFamily"]
+__all__ = []
 
 
