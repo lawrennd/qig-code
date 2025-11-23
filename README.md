@@ -88,7 +88,7 @@ python tests/test_notebook.py
 python run_all_migrated_experiments.py
 ```
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 the-inaccessible-game-orgin/
@@ -99,7 +99,7 @@ the-inaccessible-game-orgin/
 │   ├── pair_operators.py                   # su(d²) generators for entangled pairs
 │   └── duhamel.py                          # High-precision quantum derivatives
 │
-├── generate-paper-figures.ipynb            # Interactive validation notebook (🚀 Run in Colab!)
+├── generate-paper-figures.ipynb            # Interactive validation notebook
 ├── run_all_migrated_experiments.py        # Unified validation suite
 │
 ├── quantum_qutrit_n3.py                    # Backward-compatible wrapper (migrated)
