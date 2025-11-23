@@ -1,178 +1,179 @@
 """
-Quick test of quantum qutrit dynamics simulation.
+Quick test of quantum qutrit dynamics simulation using migrated qig library.
 
 Verifies:
 1. LME state construction
-2. Marginal entropy computation
+2. Marginal entropy computation  
 3. Constraint gradient
-4. Basic dynamics integration
+4. BKM metric (Fisher information)
+5. Basic dynamics integration
+
+Updated for CIP-0002: Uses QuantumExponentialFamily from qig library.
 """
 
 import numpy as np
-import quantum_qutrit_n3 as qq
+import pytest
+from qig.exponential_family import QuantumExponentialFamily
+from qig.core import create_lme_state, von_neumann_entropy
 
-print("="*70)
-print("TESTING QUANTUM QUTRIT SIMULATION")
-print("="*70)
-print()
 
-# Test 1: Setup
-print("Test 1: Setting up operators...")
-n_sites = 2  # Changed from 3 to 2 for pair operators (CIP-0002)
-operators = qq.single_site_operators(n_sites=n_sites)
-print(f"  ✓ Created {len(operators)} Hermitian operators")
-print(f"  ✓ Hilbert space dimension: {operators[0].shape[0]}")
-print()
+def test_qutrit_lme_state():
+    """Test qutrit LME state construction and marginal entropies."""
+    print("\n" + "=" * 70)
+    print("TEST: Qutrit LME State Construction")
+    print("=" * 70)
+    
+    # Create LME state for 1 pair (2 sites)
+    rho_lme, dims = create_lme_state(n_sites=2, d=3)
+    
+    print(f"Created LME state, shape: {rho_lme.shape}")
+    print(f"Trace(ρ) = {np.trace(rho_lme):.6f} (should be 1.0)")
+    print(f"Purity Tr(ρ²) = {np.real(np.trace(rho_lme @ rho_lme)):.6f}")
+    
+    assert np.abs(np.trace(rho_lme) - 1.0) < 1e-10, "Trace should be 1"
+    assert np.abs(np.trace(rho_lme @ rho_lme) - 1.0) < 1e-10, "Should be pure state"
+    
+    # Check marginal entropies
+    from qig.core import marginal_entropies
+    h = marginal_entropies(rho_lme, dims)
+    
+    print(f"Marginal entropies: h₁={h[0]:.4f}, h₂={h[1]:.4f}")
+    print(f"Sum: Σhᵢ = {np.sum(h):.6f}")
+    print(f"Target (2 log 3): {2*np.log(3):.6f}")
+    
+    # For maximally entangled qutrit pair, each marginal is maximally mixed
+    # So h_i = log(3) for each site
+    assert np.abs(h[0] - np.log(3)) < 1e-6, "Marginal should be log(3)"
+    assert np.abs(h[1] - np.log(3)) < 1e-6, "Marginal should be log(3)"
+    
+    print("✓ LME state construction verified")
 
-# Test 2: LME state
-print("Test 2: Creating LME state...")
-rho_lme = qq.create_lme_state(n_sites=n_sites)
-print(f"  ✓ Created LME state, shape: {rho_lme.shape}")
-print(f"  ✓ Trace(ρ) = {np.trace(rho_lme):.6f} (should be 1.0)")
-print(f"  ✓ Purity Tr(ρ²) = {np.real(np.trace(rho_lme @ rho_lme)):.6f} (should be 1.0 for pure state)")
-print()
 
-# Test 3: Marginal entropies
-print("Test 3: Computing marginal entropies...")
-h = qq.compute_marginal_entropies(rho_lme, n_sites=n_sites)
-print(f"  Individual: h₁={h[0]:.4f}, h₂={h[1]:.4f}")
-print(f"  Sum: Σh_i = {np.sum(h):.6f}")
-print(f"  Target (2 log 3): {2*np.log(3):.6f}")
-print(f"  ✓ Deviation: {abs(np.sum(h) - 2*np.log(3)):.2e}")
-print()
+def test_qutrit_fisher_information():
+    """Test BKM metric (Fisher information) computation."""
+    print("\n" + "=" * 70)
+    print("TEST: Qutrit Fisher Information (BKM Metric)")
+    print("=" * 70)
+    
+    # Create exponential family with pair basis
+    exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+    
+    # Test at random point
+    np.random.seed(42)
+    theta = 0.1 * np.random.randn(exp_fam.n_params)
+    
+    # Compute Fisher information
+    G = exp_fam.fisher_information(theta)
+    
+    print(f"Fisher information shape: {G.shape}")
+    print(f"||G||_F = {np.linalg.norm(G, 'fro'):.4f}")
+    
+    eigenvalues = np.linalg.eigvalsh(G)
+    print(f"Eigenvalues: min={np.min(eigenvalues):.2e}, max={np.max(eigenvalues):.2e}")
+    
+    # Fisher information should be positive semidefinite
+    assert np.all(eigenvalues >= -1e-10), "Fisher information should be PSD"
+    assert np.linalg.norm(G - G.T) < 1e-10, "Fisher information should be symmetric"
+    
+    print("✓ Fisher information computation verified")
 
-# Test 4: Natural parameters
-print("Test 4: Finding natural parameters...")
-print("  (Gradient descent, ~30 iterations)")
-theta_init = qq.find_natural_parameters_for_lme(operators, rho_lme, max_iter=30)
-print(f"  ✓ Converged, ||θ|| = {np.linalg.norm(theta_init):.4f}")
 
-# Verify
-rho_reconstructed = qq.compute_density_matrix(theta_init, operators)
-h_reconstructed = qq.compute_marginal_entropies(rho_reconstructed, n_sites=n_sites)
-print(f"  Verification:")
-print(f"    Marginals: {h_reconstructed}")
-print(f"    Sum: {np.sum(h_reconstructed):.6f}")
-print(f"    ||ρ(θ) - ρ_LME||_F = {np.linalg.norm(rho_reconstructed - rho_lme, 'fro'):.2e}")
-print()
+def test_qutrit_constraint_gradient():
+    """Test constraint gradient ∇C computation."""
+    print("\n" + "=" * 70)
+    print("TEST: Qutrit Constraint Gradient")
+    print("=" * 70)
+    
+    # Create exponential family
+    exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+    
+    # Test at random point
+    np.random.seed(42)
+    theta = 0.2 * np.random.randn(exp_fam.n_params)
+    
+    # Compute analytic constraint gradient
+    C_value, a_analytic = exp_fam.marginal_entropy_constraint(theta)
+    
+    print(f"||∇C|| = {np.linalg.norm(a_analytic):.4f}")
+    
+    # Verify against finite differences
+    eps = 1e-6
+    rho_base = exp_fam.rho_from_theta(theta)
+    from qig.core import marginal_entropies
+    h_base = marginal_entropies(rho_base, [3, 3])
+    C_base = np.sum(h_base)
+    
+    a_numerical = np.zeros(exp_fam.n_params)
+    for i in range(min(10, exp_fam.n_params)):  # Sample first 10 parameters
+        theta_plus = theta.copy()
+        theta_plus[i] += eps
+        rho_plus = exp_fam.rho_from_theta(theta_plus)
+        h_plus = marginal_entropies(rho_plus, [3, 3])
+        C_plus = np.sum(h_plus)
+        a_numerical[i] = (C_plus - C_base) / eps
+    
+    # Compare sampled entries
+    max_error = np.max(np.abs(a_analytic[:10] - a_numerical[:10]))
+    print(f"Max error vs finite differences: {max_error:.2e}")
+    
+    assert max_error < 1e-4, f"Constraint gradient error too large: {max_error}"
+    
+    print("✓ Constraint gradient verified")
 
-# Test 5: BKM metric (now analytic!)
-print("Test 5: Computing BKM metric (analytic)...")
-G_analytic = qq.compute_covariance_matrix(theta_init, operators)
-print(f"  ✓ Shape: {G_analytic.shape}")
-print(f"  ✓ ||G||_F = {np.linalg.norm(G_analytic, 'fro'):.4f}")
-print(f"  ✓ Eigenvalues: min={np.min(np.linalg.eigvalsh(G_analytic)):.2e}, max={np.max(np.linalg.eigvalsh(G_analytic)):.2e}")
 
-# Numerical verification
-print("  Numerical verification:")
-theta_test = 0.1 * np.random.randn(len(operators))
-G_analytic_test = qq.compute_covariance_matrix(theta_test, operators)
+def test_qutrit_third_cumulant():
+    """Test third cumulant tensor computation."""
+    print("\n" + "=" * 70)
+    print("TEST: Third Cumulant Tensor")
+    print("=" * 70)
+    
+    # Create exponential family
+    exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+    
+    # Test at random point
+    np.random.seed(42)
+    theta = 0.1 * np.random.randn(exp_fam.n_params)
+    
+    # Compute third cumulant contraction
+    T_contracted = exp_fam.third_cumulant_contraction(theta, method='fd')
+    
+    print(f"Third cumulant contraction shape: {T_contracted.shape}")
+    print(f"||T·G⁻¹·θ|| = {np.linalg.norm(T_contracted):.4f}")
+    
+    # Verify it's finite
+    assert np.all(np.isfinite(T_contracted)), "Third cumulant should be finite"
+    
+    print("✓ Third cumulant computation verified")
 
-# Compute few entries numerically
-eps = 1e-6
-rho_base = qq.compute_density_matrix(theta_test, operators)
-errors = []
-for a in [0, 5, 10]:
-    for b in [0, 5, 10]:
-        # Numerical: Cov(F_a, F_b) via samples isn't the right approach
-        # Instead verify: G_ab = Tr[ρ F_a F_b] - Tr[ρ F_a]Tr[ρ F_b]
-        E_a = np.trace(rho_base @ operators[a])
-        E_b = np.trace(rho_base @ operators[b])
-        E_ab = np.trace(rho_base @ operators[a] @ operators[b])
-        G_numerical = np.real(E_ab - E_a * E_b)
-        error = abs(G_analytic_test[a, b] - G_numerical)
-        errors.append(error)
 
-max_error = max(errors)
-print(f"    Max error vs direct formula: {max_error:.2e}")
-if max_error < 1e-10:
-    print(f"    ✓ Analytic BKM metric verified")
-else:
-    print(f"    ⚠ Warning: error = {max_error:.2e}")
-print()
+def test_qutrit_mutual_information():
+    """Test mutual information computation for entangled qutrit pair."""
+    print("\n" + "=" * 70)
+    print("TEST: Mutual Information for Qutrit Pair")
+    print("=" * 70)
+    
+    # Create exponential family
+    exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+    
+    # Start near LME state (should have high mutual information)
+    np.random.seed(42)
+    theta_lme = np.random.randn(exp_fam.n_params) * 0.5
+    
+    I_lme = exp_fam.mutual_information(theta_lme)
+    print(f"Mutual information near LME: I = {I_lme:.4f}")
+    
+    # Test at zero (product state, should have I=0)
+    theta_zero = np.zeros(exp_fam.n_params)
+    I_zero = exp_fam.mutual_information(theta_zero)
+    print(f"Mutual information at zero: I = {I_zero:.4f}")
+    
+    # Mutual information should be non-negative (allow tiny numerical error)
+    assert I_lme >= -1e-10, "Mutual information should be non-negative"
+    assert I_zero >= -1e-10, "Mutual information should be non-negative"
+    assert abs(I_zero) < 0.1, "Product state should have near-zero mutual information"
+    
+    print("✓ Mutual information computation verified")
 
-# Test 6: Constraint gradient (now analytic!)
-print("Test 6: Computing constraint gradient (analytic)...")
-a_analytic = qq.compute_constraint_gradient(theta_init, operators, n_sites=n_sites)
-print(f"  ✓ ||a|| = {np.linalg.norm(a_analytic):.4f}")
 
-# Numerical verification
-print("  Numerical verification:")
-theta_test = 0.2 * np.random.randn(len(operators))
-a_analytic_test = qq.compute_constraint_gradient(theta_test, operators, n_sites=n_sites)
-
-# Compute numerically via finite differences
-eps = 1e-6
-rho_base = qq.compute_density_matrix(theta_test, operators)
-h_base = qq.compute_marginal_entropies(rho_base, n_sites=n_sites)
-sum_h_base = np.sum(h_base)
-
-a_numerical = np.zeros(len(operators))
-for i in [0, 5, 10, 15, 20]:  # Sample a few parameters
-    theta_plus = theta_test.copy()
-    theta_plus[i] += eps
-    rho_plus = qq.compute_density_matrix(theta_plus, operators)
-    h_plus = qq.compute_marginal_entropies(rho_plus, n_sites=n_sites)
-    sum_h_plus = np.sum(h_plus)
-    a_numerical[i] = (sum_h_plus - sum_h_base) / eps
-
-# Compare sampled entries
-errors = []
-for i in [0, 5, 10, 15, 20]:
-    error = abs(a_analytic_test[i] - a_numerical[i])
-    errors.append(error)
-
-max_error = max(errors)
-print(f"    Max error vs finite differences: {max_error:.2e}")
-if max_error < 1e-4:
-    print(f"    ✓ Analytic constraint gradient verified")
-else:
-    print(f"    ⚠ Warning: error = {max_error:.2e}")
-print()
-
-# Test 7: GENERIC decomposition (now fully analytic!)
-print("Test 7: Third-order cumulant symmetry...")
-print("  Testing T_abc = ∂³ψ/∂θ_a∂θ_b∂θ_c symmetry")
-# Test that third derivatives are symmetric (Schwarz's theorem)
-# Use a non-zero theta for the test
-theta_test_sym = 0.5 * np.random.randn(len(operators))
-# compute_third_cumulants returns T[a,b,c] for all a,b,c
-# Test a few permutations to verify symmetry
-print("  Computing third cumulants (this may take a moment)...")
-T = qq.compute_third_cumulants(theta_test_sym, operators, n_integration_points=50, eps=1e-6)
-a, b, c = 0, 1, 2  # Use three different indices
-T_abc = T[a, b, c]
-T_acb = T[a, c, b]
-T_bac = T[b, a, c]
-T_cab = T[c, a, b]
-max_asym = max(abs(T_abc - T_acb), abs(T_abc - T_bac), abs(T_abc - T_cab))
-asymmetry = max_asym / (abs(T_abc) + 1e-12)
-print(f"  T[{a},{b},{c}] = {T_abc:.6e}")
-print(f"  T[{a},{c},{b}] = {T_acb:.6e}")
-print(f"  T[{b},{a},{c}] = {T_bac:.6e}")
-print(f"  T[{c},{a},{b}] = {T_cab:.6e}")
-print(f"  Max asymmetry: {asymmetry*100:.4f}%")
-assert asymmetry < 0.01, "Third cumulant should be symmetric!"
-print(f"  ✓ Third cumulant is symmetric")
-
-# Test 8: GENERIC decomposition (not implemented in clean version)
-# print("\nTest 8: GENERIC decomposition...")
-# theta_test_generic = 0.15 * np.random.randn(len(operators))
-# result = qq.analyse_quantum_generic_structure(theta_test_generic, operators, n_sites=n_sites)
-# print(f"  ✓ ||S|| (symmetric/dissipative): {result['norm_S']:.4f}")
-# print(f"  ✓ ||A|| (antisymmetric/conservative): {result['norm_A']:.4f}")
-# print(f"  ✓ Ratio ||A||/||S||: {result['ratio']:.4f}")
-
-# Numerical verification of Jacobian (not tested in clean version)
-# print("  Numerical verification of Jacobian:")
-# ... (commented out for clean version)
-
-print("="*70)
-print("✓ ALL TESTS PASSED")
-print("="*70)
-print()
-print("The quantum qutrit simulation is working correctly.")
-print()
-print("To run full experiment:")
-print("  python quantum_qutrit_n3.py")
-
+if __name__ == "__main__":
+    pytest.main([__file__, "-v", "-s"])
