@@ -1,10 +1,6 @@
 # The Inaccessible Game (Quantum Implementation)
 
 [![CI/CD Tests](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/test-migration-validation.yml/badge.svg)](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/test-migration-validation.yml)
-[![Migration Status](https://img.shields.io/badge/CIP--0002-COMPLETED-success)](cip/cip0002.md)
-[![Entanglement](https://img.shields.io/badge/Entanglement-GENUINE-brightgreen)]()
-[![Python](https://img.shields.io/badge/Python-3.11+-blue)]()
-[![License](https://img.shields.io/badge/License-TBD-lightgrey)]()
 
 A Python implementation of the quantum inaccessible game: a constrained information geometry framework for studying maximum entropy production in quantum systems with marginal entropy constraints.
 
@@ -12,20 +8,13 @@ A Python implementation of the quantum inaccessible game: a constrained informat
 
 ## 🎯 Overview
 
-This codebase implements the quantum version of the "inaccessible game" described in the paper *"The Inaccessible Game: Constrained Information Geometry for Quantum Systems"*. The game studies the evolution of quantum states under the constraint that marginal entropies remain constant, revealing connections between:
+This codebase implements the quantum version of the "inaccessible game" described in the paper *"The Origin of the Inaccessible Game"*. The game studies the evolution of quantum states under the constraint that marginal entropies remain constant, revealing connections between:
 
 - **Quantum information geometry** (Fisher information, BKM metric)
 - **Maximum entropy production** (GENERIC framework)
 - **Entanglement dynamics** (mutual information evolution)
 - **Optimal quantum systems** (qutrit optimality)
 
-### Key Features
-
-- ✅ **Genuine entanglement**: Creates and evolves maximally entangled pairs (Bell states, qutrit LME states)
-- ✅ **Pair operators**: Uses su(d²) generators for qubit/qutrit pairs (not just local operators)
-- ✅ **Constrained dynamics**: Marginal entropy constraint preserved to machine precision
-- ✅ **Validated implementation**: Comprehensive test suite with 4 validation experiments
-- ✅ **Interactive notebooks**: Jupyter notebooks with explanations and visualizations
 
 ## 🚀 Quick Start
 
