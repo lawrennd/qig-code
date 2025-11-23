@@ -1,0 +1,304 @@
+"""
+Test module for diagnosing BKM metric issues in non-commuting cases.
+
+The diagonal validation (test_commuting_bkm.py) showed the spectral BKM
+implementation is correct when all operators commute. However, tests with
+non-commuting operators (Pauli/Gell-Mann bases) show O(1) errors between
+the spectral BKM and finite-difference Hessian.
+
+This module systematically tests the transition from commuting to non-commuting
+to identify where the implementation breaks down.
+
+Key quantum derivative issues to check:
+1. Operator commutation: [F_a, F_b] ≠ 0 in general
+2. Operator ordering: ABC ≠ CBA for non-commuting operators
+3. Quantum vs classical: ∂_a ρ involves commutators, not just gradients
+4. Hilbert space structure: derivatives must respect tensor product structure
+5. Each derivative step: parameter space → operator space → density matrix space
+"""
+
+import numpy as np
+import pytest
+from scipy.linalg import expm, eigh
+
+from qig.exponential_family import QuantumExponentialFamily
+
+
+# ============================================================================
+# Diagnostic Tests: Simple Non-Commuting Cases
+# ============================================================================
+
+
+class TestSimpleNonCommuting:
+    """
+    Test BKM metric for the simplest non-commuting cases.
+    """
+    
+    def test_single_qubit_pauli_x_y(self):
+        """
+        Test single qubit with only σ_x and σ_y (non-commuting).
+        
+        For a single qubit with K(θ) = θ_x σ_x + θ_y σ_y:
+        - [σ_x, σ_y] = 2i σ_z ≠ 0 (non-commuting)
+        - This is the simplest non-trivial non-commuting case
+        """
+        # Create full family and extract X, Y operators
+        family = QuantumExponentialFamily(n_sites=1, d=2)
+        X_op = family.operators[0]  # σ_x
+        Y_op = family.operators[1]  # σ_y
+        
+        # Verify non-commutation
+        commutator = X_op @ Y_op - Y_op @ X_op
+        assert np.linalg.norm(commutator) > 1e-10, "X and Y should not commute"
+        
+        # Create restricted family with only X and Y
+        class RestrictedFamily:
+            def __init__(self):
+                self.n_sites = 1
+                self.d = 2
+                self.D = 2
+                self.n_params = 2
+                self.operators = [X_op, Y_op]
+                self.labels = ['X', 'Y']
+            
+            def rho_from_theta(self, theta):
+                K = theta[0] * X_op + theta[1] * Y_op
+                rho_unnorm = expm(K)
+                Z = np.trace(rho_unnorm)
+                return rho_unnorm / Z
+            
+            def log_partition(self, theta):
+                K = theta[0] * X_op + theta[1] * Y_op
+                return np.log(np.trace(expm(K))).real
+            
+            def fisher_information(self, theta):
+                """Spectral BKM implementation."""
+                rho = self.rho_from_theta(theta)
+                eigvals, U = eigh(rho)
+                
+                eps_p = 1e-14
+                p = np.clip(np.real(eigvals), eps_p, None)
+                
+                D = self.D
+                n = self.n_params
+                A_tilde = np.zeros((n, D, D), dtype=complex)
+                
+                I = np.eye(D, dtype=complex)
+                for a, F_a in enumerate(self.operators):
+                    mean_Fa = np.trace(rho @ F_a).real
+                    A_a = F_a - mean_Fa * I
+                    A_tilde[a] = U.conj().T @ A_a @ U
+                
+                p_i = p[:, None]
+                p_j = p[None, :]
+                diff = p_i - p_j
+                log_diff = np.log(p_i) - np.log(p_j)
+                
+                k = np.zeros_like(diff)
+                off_diag = np.abs(diff) > 1e-14
+                k[off_diag] = diff[off_diag] / log_diff[off_diag]
+                diag_mask = np.eye(len(p), dtype=bool)
+                k[diag_mask] = p
+                
+                G = np.zeros((n, n))
+                for a in range(n):
+                    A_a = A_tilde[a]
+                    for b in range(a, n):
+                        A_b = A_tilde[b]
+                        prod = A_a * A_b.T.conj()
+                        Gab = np.sum(k * prod)
+                        Gab_real = float(np.real(Gab))
+                        G[a, b] = Gab_real
+                        G[b, a] = Gab_real
+                
+                G = 0.5 * (G + G.T)
+                return G
+        
+        restricted = RestrictedFamily()
+        
+        # Test at a parameter point
+        theta = np.array([0.3, 0.5])
+        
+        # Compute spectral BKM
+        G_spectral = restricted.fisher_information(theta)
+        
+        # Compute finite-difference Hessian
+        eps = 1e-5
+        G_fd = np.zeros((2, 2))
+        
+        psi_0 = restricted.log_partition(theta)
+        
+        for i in range(2):
+            for j in range(i, 2):
+                theta_pp = theta.copy()
+                theta_pp[i] += eps
+                theta_pp[j] += eps
+                psi_pp = restricted.log_partition(theta_pp)
+                
+                theta_pm = theta.copy()
+                theta_pm[i] += eps
+                theta_pm[j] -= eps
+                psi_pm = restricted.log_partition(theta_pm)
+                
+                theta_mp = theta.copy()
+                theta_mp[i] -= eps
+                theta_mp[j] += eps
+                psi_mp = restricted.log_partition(theta_mp)
+                
+                theta_mm = theta.copy()
+                theta_mm[i] -= eps
+                theta_mm[j] -= eps
+                psi_mm = restricted.log_partition(theta_mm)
+                
+                G_fd[i, j] = (psi_pp - psi_pm - psi_mp + psi_mm) / (4 * eps**2)
+                G_fd[j, i] = G_fd[i, j]
+        
+        # Compare
+        diff = G_spectral - G_fd
+        max_abs_err = np.max(np.abs(diff))
+        rel_err = max_abs_err / (np.max(np.abs(G_fd)) + 1e-10)
+        
+        print(f"\nSingle qubit X-Y test:")
+        print(f"Spectral BKM:\n{G_spectral}")
+        print(f"Finite-diff Hessian:\n{G_fd}")
+        print(f"Difference:\n{diff}")
+        print(f"Max absolute error: {max_abs_err:.6e}")
+        print(f"Relative error: {rel_err:.6e}")
+        
+        # This should pass if the implementation is correct
+        assert rel_err < 1e-4, (
+            f"Non-commuting case (X,Y) fails: rel_err={rel_err:.3e}\n"
+            f"Spectral:\n{G_spectral}\n"
+            f"Finite-diff:\n{G_fd}"
+        )
+    
+    def test_single_qubit_all_paulis(self):
+        """
+        Test single qubit with all three Paulis (X, Y, Z).
+        
+        All three Pauli matrices are mutually non-commuting.
+        """
+        family = QuantumExponentialFamily(n_sites=1, d=2)
+        
+        # Test at multiple parameter points
+        np.random.seed(42)
+        for trial in range(3):
+            theta = np.random.randn(family.n_params) * 0.5
+            
+            G_spectral = family.fisher_information(theta)
+            
+            # Finite-difference Hessian
+            eps = 1e-5
+            n = family.n_params
+            G_fd = np.zeros((n, n))
+            
+            for i in range(n):
+                for j in range(i, n):
+                    theta_pp = theta.copy()
+                    theta_pp[i] += eps
+                    theta_pp[j] += eps
+                    psi_pp = family.log_partition(theta_pp)
+                    
+                    theta_pm = theta.copy()
+                    theta_pm[i] += eps
+                    theta_pm[j] -= eps
+                    psi_pm = family.log_partition(theta_pm)
+                    
+                    theta_mp = theta.copy()
+                    theta_mp[i] -= eps
+                    theta_mp[j] += eps
+                    psi_mp = family.log_partition(theta_mp)
+                    
+                    theta_mm = theta.copy()
+                    theta_mm[i] -= eps
+                    theta_mm[j] -= eps
+                    psi_mm = family.log_partition(theta_mm)
+                    
+                    G_fd[i, j] = (psi_pp - psi_pm - psi_mp + psi_mm) / (4 * eps**2)
+                    G_fd[j, i] = G_fd[i, j]
+            
+            diff = G_spectral - G_fd
+            max_abs_err = np.max(np.abs(diff))
+            rel_err = max_abs_err / (np.max(np.abs(G_fd)) + 1e-10)
+            
+            if trial == 0:
+                print(f"\nSingle qubit all Paulis (trial {trial}):")
+                print(f"Spectral BKM:\n{G_spectral}")
+                print(f"Finite-diff Hessian:\n{G_fd}")
+                print(f"Difference:\n{diff}")
+                print(f"Max absolute error: {max_abs_err:.6e}")
+                print(f"Relative error: {rel_err:.6e}")
+            
+            assert rel_err < 1e-4, (
+                f"Trial {trial}: Non-commuting Paulis fail: rel_err={rel_err:.3e}"
+            )
+    
+    def test_two_qubits_local_paulis(self):
+        """
+        Test two qubits with local Pauli operators.
+        
+        This is the case that currently fails in test_inaccessible_game.py.
+        """
+        family = QuantumExponentialFamily(n_sites=2, d=2)
+        
+        # Test at a single parameter point
+        np.random.seed(0)
+        theta = np.random.randn(family.n_params)
+        
+        G_spectral = family.fisher_information(theta)
+        
+        # Finite-difference Hessian
+        eps = 1e-5
+        n = family.n_params
+        G_fd = np.zeros((n, n))
+        
+        for i in range(n):
+            for j in range(i, n):
+                theta_pp = theta.copy()
+                theta_pp[i] += eps
+                theta_pp[j] += eps
+                psi_pp = family.log_partition(theta_pp)
+                
+                theta_pm = theta.copy()
+                theta_pm[i] += eps
+                theta_pm[j] -= eps
+                psi_pm = family.log_partition(theta_pm)
+                
+                theta_mp = theta.copy()
+                theta_mp[i] -= eps
+                theta_mp[j] += eps
+                psi_mp = family.log_partition(theta_mp)
+                
+                theta_mm = theta.copy()
+                theta_mm[i] -= eps
+                theta_mm[j] -= eps
+                psi_mm = family.log_partition(theta_mm)
+                
+                G_fd[i, j] = (psi_pp - psi_pm - psi_mp + psi_mm) / (4 * eps**2)
+                G_fd[j, i] = G_fd[i, j]
+        
+        diff = G_spectral - G_fd
+        max_abs_err = np.max(np.abs(diff))
+        rel_err = max_abs_err / (np.max(np.abs(G_fd)) + 1e-10)
+        
+        print(f"\nTwo qubits (6 parameters):")
+        print(f"Max absolute error: {max_abs_err:.6e}")
+        print(f"Relative error: {rel_err:.6e}")
+        print(f"\nSpectral BKM (first 3x3 block):\n{G_spectral[:3, :3]}")
+        print(f"Finite-diff Hessian (first 3x3 block):\n{G_fd[:3, :3]}")
+        print(f"Difference (first 3x3 block):\n{diff[:3, :3]}")
+        
+        # This will likely fail - documenting the failure
+        if rel_err >= 1e-4:
+            print(f"\n⚠️  EXPECTED FAILURE: rel_err={rel_err:.3e} >> 1e-4")
+            print("This confirms the non-commuting case has fundamental issues.")
+        
+        assert rel_err < 1e-4, (
+            f"Two-qubit case fails: rel_err={rel_err:.3e}\n"
+            f"This is the known issue we're trying to diagnose."
+        )
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v", "-s"])
+
