@@ -1,4 +1,4 @@
-name: CIP-0002 Migration Validation
+name: Tests
 
 on:
   push:
