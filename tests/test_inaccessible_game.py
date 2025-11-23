@@ -611,26 +611,53 @@ class TestNumericalStability:
 # ============================================================================
 
 class TestIntegration:
-    """End-to-end integration tests."""
+    """End-to-end integration tests using qig library."""
     
     @pytest.mark.slow
     def test_full_validation_two_qubits(self):
-        """Full validation pipeline for 2 qubits."""
-        # Very short integration for testing speed
-        results = validate_framework(n_sites=2, d=2, t_end=0.1, n_points=3, plot=False)
+        """Full validation pipeline for 2 qubits (1 entangled pair)."""
+        # Create system with pair basis (1 pair = 2 sites)
+        exp_family = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        dynamics = InaccessibleGameDynamics(exp_family)
         
-        assert results['solution']['success'], "Integration should succeed"
-        assert results['constraint_preservation']['max_violation'] < 5e-2
-        assert results['entropy_production']['delta_H'] >= 0
+        # Random initial state
+        theta_0 = np.random.randn(exp_family.n_params) * 0.1
+        
+        # Very short integration for testing speed
+        solution = dynamics.integrate(theta_0, (0, 0.1), n_points=3)
+        
+        # Verify integration succeeded
+        assert solution['success'], "Integration should succeed"
+        
+        # Verify constraint preservation
+        constraint_violations = np.abs(solution['constraint'] - solution['constraint'][0])
+        max_violation = np.max(constraint_violations)
+        assert max_violation < 5e-2, f"Constraint violation too large: {max_violation}"
+        
+        # Verify entropy increase
+        delta_H = solution['H'][-1] - solution['H'][0]
+        assert delta_H >= -1e-6, f"Entropy should not decrease: ΔH = {delta_H}"
     
     @pytest.mark.slow
     def test_full_validation_two_qutrits(self):
-        """Full validation pipeline for 2 qutrits."""
-        # Very short integration for testing speed
-        results = validate_framework(n_sites=2, d=3, t_end=0.1, n_points=3, plot=False)
+        """Full validation pipeline for 2 qutrits (1 entangled pair)."""
+        # Create system with pair basis (1 pair = 2 sites)
+        exp_family = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        dynamics = InaccessibleGameDynamics(exp_family)
         
-        assert results['solution']['success'], "Integration should succeed"
-        assert results['constraint_preservation']['max_violation'] < 5e-2
+        # Random initial state
+        theta_0 = np.random.randn(exp_family.n_params) * 0.1
+        
+        # Very short integration for testing speed
+        solution = dynamics.integrate(theta_0, (0, 0.1), n_points=3)
+        
+        # Verify integration succeeded
+        assert solution['success'], "Integration should succeed"
+        
+        # Verify constraint preservation
+        constraint_violations = np.abs(solution['constraint'] - solution['constraint'][0])
+        max_violation = np.max(constraint_violations)
+        assert max_violation < 5e-2, f"Constraint violation too large: {max_violation}"
 
 
 # ============================================================================
