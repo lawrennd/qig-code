@@ -28,7 +28,7 @@ pip install -r requirements.txt
 
 # Run tests to verify installation
 pytest tests/
-python test_notebook.py
+python tests/test_notebook.py
 ```
 
 ### Development Setup
@@ -76,10 +76,13 @@ print(f"Mutual information: {I_initial:.3f} → {I_final:.3f}")
 
 ```bash
 # Run all 4 validation experiments (interactive notebook)
-jupyter notebook CIP-0002_Migration_Validation.ipynb
+jupyter notebook generate-paper-figures.ipynb
+
+# Or run on Google Colab (no local installation needed!)
+# Click the "Open in Colab" badge in the notebook
 
 # Or run programmatically
-python test_notebook.py
+python tests/test_notebook.py
 
 # Run comprehensive Python suite
 python run_all_migrated_experiments.py
@@ -96,9 +99,8 @@ the-inaccessible-game-orgin/
 │   ├── pair_operators.py                   # su(d²) generators for entangled pairs
 │   └── duhamel.py                          # High-precision quantum derivatives
 │
-├── CIP-0002_Migration_Validation.ipynb    # Interactive validation notebook
+├── generate-paper-figures.ipynb            # Interactive validation notebook (🚀 Run in Colab!)
 ├── run_all_migrated_experiments.py        # Unified validation suite
-├── test_notebook.py                        # Automated notebook testing
 │
 ├── quantum_qutrit_n3.py                    # Backward-compatible wrapper (migrated)
 ├── inaccessible_game_quantum.py           # Core game implementation
@@ -108,6 +110,7 @@ the-inaccessible-game-orgin/
 ├── run_qutrit_quick.py                     # Quick qutrit tests
 │
 ├── tests/                                  # Test suite
+│   ├── test_notebook.py                   # Automated notebook testing
 │   ├── test_pair_exponential_family.py    # Pair operator tests
 │   ├── test_pair_numerical_validation.py  # Numerical gradient validation
 │   ├── test_jacobian_analytic.py          # Analytic Jacobian tests
@@ -119,6 +122,8 @@ the-inaccessible-game-orgin/
 │
 ├── backlog/                                # Task tracking
 ├── .github/workflows/                      # CI/CD pipelines
+│   ├── tests.yml                          # Main test suite
+│   └── notebook-tests.yml                 # Notebook validation tests
 ├── TESTING.md                              # Testing guide
 └── README.md                               # This file
 ```
@@ -158,10 +163,10 @@ The constraint makes the *underlying variables inaccessible* to direct control. 
 pytest tests/
 
 # Quick smoke test
-DYNAMICS_POINTS=5 DYNAMICS_T_MAX=0.5 python test_notebook.py
+DYNAMICS_POINTS=5 DYNAMICS_T_MAX=0.5 python tests/test_notebook.py
 
 # Full validation
-python test_notebook.py
+python tests/test_notebook.py
 
 # All migrated experiments
 python run_all_migrated_experiments.py
@@ -169,9 +174,19 @@ python run_all_migrated_experiments.py
 
 ### CI/CD
 
-[![CI/CD Status](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/test-migration-validation.yml/badge.svg)](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/test-migration-validation.yml)
+[![Tests](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/tests.yml/badge.svg)](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/tests.yml)
+[![Notebook Tests](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/notebook-tests.yml/badge.svg)](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/notebook-tests.yml)
 
-GitHub Actions workflow **automatically runs** on every push/PR with 4 test jobs:
+GitHub Actions workflows **automatically run** on every push/PR:
+
+#### Main Test Suite (`tests.yml`)
+- **Pytest Suite** - All unit tests in `tests/` directory
+- **Migrated Experiments** - `run_all_migrated_experiments.py`
+- **Phase 3 Validation** - `validate_phase3_entanglement.py`
+- Runtime: ~30-40 seconds
+
+#### Notebook Tests (`notebook-tests.yml`)
+Three parameterized configurations:
 
 1. **Default Config** - Full validation (20 integration points, d=3)
    - Tests: 4/4 experiments (entanglement, dynamics, comparison, API)
@@ -181,16 +196,11 @@ GitHub Actions workflow **automatically runs** on every push/PR with 4 test jobs
    - Same tests with reduced parameters
    - Runtime: ~15-20 seconds
    
-3. **Python Suite** - All migrated scripts
-   - `run_all_migrated_experiments.py`
-   - `validate_phase3_entanglement.py`
-   - Runtime: ~30 seconds
-   
-4. **Custom Config** - Manual workflow dispatch
+3. **Custom Config** - Manual workflow dispatch
    - Specify custom `QUTRIT_DIM`, `DYNAMICS_POINTS`
    - Useful for edge case testing
 
-**View Results**: Repository → Actions → "CIP-0002 Migration Validation"
+**View Results**: Repository → Actions → "Tests" or "Notebook Tests"
 
 See [TESTING.md](TESTING.md) for complete testing guide.
 
@@ -200,13 +210,13 @@ Use environment variables to customize tests:
 
 ```bash
 # Test with 2 qutrit pairs
-N_PAIRS=2 python test_notebook.py
+N_PAIRS=2 python tests/test_notebook.py
 
 # Test with ququarts (d=4)
-QUTRIT_DIM=4 python test_notebook.py
+QUTRIT_DIM=4 python tests/test_notebook.py
 
 # Stricter numerical tolerance
-TOLERANCE=1e-8 python test_notebook.py
+TOLERANCE=1e-8 python tests/test_notebook.py
 ```
 
 ## 📚 Documentation
@@ -220,10 +230,11 @@ TOLERANCE=1e-8 python test_notebook.py
 
 ### Interactive Notebooks
 
-- **[CIP-0002_Migration_Validation.ipynb](CIP-0002_Migration_Validation.ipynb)**: 
-  - 4 experiments validating the migration
+- **[generate-paper-figures.ipynb](generate-paper-figures.ipynb)**: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lawrennd/the-inaccessible-game-orgin/blob/main/generate-paper-figures.ipynb)
+  - 4 experiments validating the migration (entanglement, dynamics, comparison, API)
   - Markdown explanations between code
   - Parameterizable via environment variables
+  - **Run in Google Colab with zero setup!**
 
 - **[quantum_qutrit_experiments.ipynb](quantum_qutrit_experiments.ipynb)**:
   - Qutrit system experiments
