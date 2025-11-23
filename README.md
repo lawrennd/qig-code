@@ -1,6 +1,6 @@
 # The Inaccessible Game (Quantum Implementation)
 
-[![CI/CD Tests](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/test-migration-validation.yml/badge.svg)](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/test-migration-validation.yml)
+[![CI/CD Tests](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/tests.yml/badge.svg)](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/tests.yml)
 
 A Python implementation of the quantum inaccessible game: a constrained information geometry framework for studying maximum entropy production in quantum systems with marginal entropy constraints.
 
