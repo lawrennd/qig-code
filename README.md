@@ -2,9 +2,7 @@
 
 [![CI/CD Tests](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/tests.yml/badge.svg)](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/tests.yml)
 
-A Python implementation of the quantum inaccessible game: a constrained information geometry framework for studying maximum entropy production in quantum systems with marginal entropy constraints.
-
-> **Note**: The CI/CD badge above automatically updates based on GitHub Actions workflow status. If you've forked this repository, update the badge URL in the README to point to your fork.
+A Python implementation of simulations from the quantum inaccessible game: a constrained information geometry framework for studying maximum entropy production with marginal entropy constraints.
 
 ## 🎯 Overview
 
