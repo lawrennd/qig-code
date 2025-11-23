@@ -35,81 +35,8 @@ from qig.core import partial_trace, marginal_entropies
 from inaccessible_game_quantum import compute_jacobian
 
 
-def analytic_jacobian(
-    dynamics: InaccessibleGameDynamics,
-    theta: np.ndarray
-) -> np.ndarray:
-    """
-    Compute Jacobian M = ∂F/∂θ analytically.
-    
-    The flow is F(θ) = -Π_∥(θ) G(θ) θ, so:
-        M_ij = ∂F_i/∂θ_j
-             = -∂Π_∥/∂θ_j [G θ]_i - Π_∥ ∂G/∂θ_j [θ]_i - Π_∥ G e_j
-    
-    where e_j is the j-th unit vector.
-    
-    This is complex because:
-    1. ∂G/∂θ involves third-order cumulants (expensive!)
-    2. ∂Π_∥/∂θ involves Hessian of constraint
-    3. All derivatives must respect quantum operator structure
-    
-    For now, we'll use a hybrid approach:
-    - Compute ∂G/∂θ numerically (third-order cumulants are very complex)
-    - Compute ∂a/∂θ analytically (Hessian of constraint)
-    - Assemble Jacobian analytically from these pieces
-    """
-    exp_family = dynamics.exp_family
-    n = exp_family.n_params
-    
-    # Compute G(θ) and a(θ)
-    G = exp_family.fisher_information(theta)
-    _, a = exp_family.marginal_entropy_constraint(theta)
-    
-    # Compute projection matrix
-    a_norm_sq = float(np.dot(a, a))
-    if a_norm_sq < 1e-12:
-        Pi = np.eye(n)
-    else:
-        Pi = np.eye(n) - np.outer(a, a) / a_norm_sq
-    
-    # Compute ∂a/∂θ (Hessian of constraint)
-    # This is the second derivative of C(θ) = ∑_i h_i
-    H_constraint = constraint_hessian(exp_family, theta)
-    
-    # For each column j of the Jacobian
-    M = np.zeros((n, n))
-    
-    for j in range(n):
-        # Term 1: -Π_∥ G e_j (simple)
-        term1 = -Pi @ G[:, j]
-        
-        # Term 2: -Π_∥ ∂G/∂θ_j θ (requires third-order cumulant - use finite diff for now)
-        # TODO: Implement analytic third-order cumulant
-        eps = 1e-6
-        theta_plus = theta.copy()
-        theta_plus[j] += eps
-        G_plus = exp_family.fisher_information(theta_plus)
-        dG_dtheta_j = (G_plus - G) / eps
-        term2 = -Pi @ (dG_dtheta_j @ theta)
-        
-        # Term 3: -∂Π_∥/∂θ_j (G θ)
-        # ∂Π_∥/∂θ_j = -∂/∂θ_j [aa^T / ||a||²]
-        #            = -(∂a/∂θ_j a^T + a ∂a/∂θ_j^T) / ||a||²
-        #              + 2 aa^T (a^T ∂a/∂θ_j) / ||a||⁴
-        da_dtheta_j = H_constraint[:, j]
-        
-        if a_norm_sq > 1e-12:
-            dPi_dtheta_j = (
-                -(np.outer(da_dtheta_j, a) + np.outer(a, da_dtheta_j)) / a_norm_sq
-                + 2 * np.outer(a, a) * np.dot(a, da_dtheta_j) / a_norm_sq**2
-            )
-            term3 = -dPi_dtheta_j @ (G @ theta)
-        else:
-            term3 = np.zeros(n)
-        
-        M[:, j] = term1 + term2 + term3
-    
-    return M
+# NOTE: analytic_jacobian function was removed - it was buggy.
+# The correct analytical Jacobian is implemented in qig/exponential_family.py
 
 
 def constraint_hessian(
@@ -231,8 +158,8 @@ class TestJacobianAnalytic:
         np.random.seed(42)
         theta = np.random.randn(exp_family.n_params) * 0.2
         
-        # Analytic Hessian
-        H_analytic = constraint_hessian(exp_family, theta)
+        # Analytic Hessian (using QIG implementation)
+        H_analytic = exp_family.constraint_hessian(theta)
         
         # Finite-difference Hessian
         eps = 1e-6
@@ -262,36 +189,36 @@ class TestJacobianAnalytic:
             f"Constraint Hessian doesn't match: rel_err={rel_err:.3e}"
         )
     
-    @pytest.mark.parametrize("n_sites,d", [
-        (2, 2),  # Two qubits
+    @pytest.mark.parametrize("n_pairs,d", [
+        (1, 3),  # One entangled qutrit pair (where Jacobian actually matters)
     ])
-    def test_jacobian_vs_finite_difference(self, n_sites, d):
+    def test_jacobian_vs_finite_difference(self, n_pairs, d):
         """Test that analytic Jacobian matches finite differences."""
-        exp_family = QuantumExponentialFamily(n_sites, d)
+        exp_family = QuantumExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
         dynamics = InaccessibleGameDynamics(exp_family)
         
         np.random.seed(42)
-        theta = np.random.randn(exp_family.n_params) * 0.2
-        
-        # Analytic Jacobian
-        M_analytic = analytic_jacobian(dynamics, theta)
-        
+        theta = np.random.randn(exp_family.n_params) * 0.1  # Smaller for stability
+
+        # Analytic Jacobian (using QIG implementation)
+        M_analytic = exp_family.jacobian(theta)
+
         # Finite-difference Jacobian
         M_fd = compute_jacobian(dynamics, theta, eps=1e-6)
-        
+
         # Compare
         diff = M_analytic - M_fd
         max_abs_err = np.max(np.abs(diff))
         rel_err = max_abs_err / (np.max(np.abs(M_fd)) + 1e-10)
-        
-        print(f"\nJacobian test ({n_sites} sites, d={d}):")
-        print(f"Analytic (first 3x3):\n{M_analytic[:3, :3]}")
-        print(f"Finite-diff (first 3x3):\n{M_fd[:3, :3]}")
+
+        print(f"\nJacobian test ({n_pairs} pair(s), d={d}):")
+        print(f"Analytic norm: {np.linalg.norm(M_analytic):.6f}")
+        print(f"Finite-diff norm: {np.linalg.norm(M_fd):.6f}")
         print(f"Max absolute error: {max_abs_err:.6e}")
         print(f"Relative error: {rel_err:.6e}")
-        
-        # Looser tolerance because we're still using finite-diff for ∂G/∂θ
-        assert rel_err < 1e-3, (
+
+        # For entangled systems, analytical should match finite diff very well
+        assert rel_err < 1e-5, (
             f"Jacobian doesn't match: rel_err={rel_err:.3e}"
         )
 
