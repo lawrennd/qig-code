@@ -1,18 +1,25 @@
 #!/usr/bin/env python3
 """
-Test script for CIP-0002 Migration Validation Notebook
+Test script for Jupyter Notebooks
 
-This script executes the Jupyter notebook and validates it completes successfully.
-It can be run with different configurations via environment variables.
+This script executes Jupyter notebooks from the project root and validates they 
+complete successfully. It can be run with different configurations via environment variables.
 
 Usage:
-    python test_notebook.py
+    # Test default notebook (generate-paper-figures.ipynb)
+    python tests/test_notebook.py
+    
+    # Test specific notebook
+    python tests/test_notebook.py quantum_qutrit_experiments.ipynb
+    
+    # Test all notebooks in root directory
+    python tests/test_notebook.py --all
     
     # With custom configuration
-    QUTRIT_DIM=4 DYNAMICS_POINTS=10 python test_notebook.py
+    QUTRIT_DIM=4 DYNAMICS_POINTS=10 python tests/test_notebook.py
     
     # Quick test mode
-    DYNAMICS_POINTS=5 DYNAMICS_T_MAX=0.5 python test_notebook.py
+    DYNAMICS_POINTS=5 DYNAMICS_T_MAX=0.5 python tests/test_notebook.py
 
 Environment Variables:
     QUTRIT_DIM: Qutrit dimension (default: 3)
@@ -25,6 +32,8 @@ Environment Variables:
     RANDOM_SEED_3: Random seed for test 3 (default: 456)
     THETA_SCALE: Parameter scaling (default: 0.5)
     TOLERANCE: Numerical tolerance (default: 1e-6)
+
+Note: All notebooks are located in the project root directory.
 """
 
 import os
@@ -159,27 +168,64 @@ def main():
     print("="*70)
     print()
     
-    # Find notebook
+    # Find notebook(s) - look in project root (parent of tests/)
     script_dir = Path(__file__).parent
-    notebook_path = script_dir / "generate-paper-figures.ipynb"
+    project_root = script_dir.parent
     
-    # Execute notebook
-    success, output_path = run_notebook(notebook_path)
+    # Check if specific notebook requested via command line
+    if len(sys.argv) > 1:
+        if sys.argv[1] == '--all':
+            # Test all notebooks in root directory
+            notebooks = sorted(project_root.glob('*.ipynb'))
+            if not notebooks:
+                print("❌ No notebooks found in project root")
+                sys.exit(1)
+            print(f"Found {len(notebooks)} notebook(s) to test:")
+            for nb in notebooks:
+                print(f"  - {nb.name}")
+            print()
+        else:
+            # Test specific notebook
+            notebook_path = project_root / sys.argv[1]
+            notebooks = [notebook_path]
+    else:
+        # Default: test the main validation notebook
+        notebook_path = project_root / "generate-paper-figures.ipynb"
+        notebooks = [notebook_path]
     
-    if not success:
-        print("\n❌ TEST FAILED: Notebook execution error")
+    # Run all notebooks
+    all_success = True
+    for notebook_path in notebooks:
+        print(f"\n{'='*70}")
+        print(f"Testing: {notebook_path.name}")
+        print(f"{'='*70}\n")
+        
+        # Execute notebook
+        success, output_path = run_notebook(notebook_path)
+        
+        if not success:
+            print(f"\n❌ TEST FAILED: {notebook_path.name} execution error")
+            all_success = False
+            continue
+        
+        # Check outputs
+        if not check_notebook_outputs(output_path):
+            print(f"\n❌ TEST FAILED: Not all experiments passed in {notebook_path.name}")
+            all_success = False
+            continue
+        
+        print(f"\n✅ {notebook_path.name} passed!")
+    
+    if all_success:
+        print("\n" + "="*70)
+        print("✅✅✅ ALL TESTS PASSED ✅✅✅")
+        print("="*70)
+        sys.exit(0)
+    else:
+        print("\n" + "="*70)
+        print("❌ SOME TESTS FAILED")
+        print("="*70)
         sys.exit(1)
-    
-    # Check outputs
-    if not check_notebook_outputs(output_path):
-        print("\n❌ TEST FAILED: Not all experiments passed")
-        sys.exit(1)
-    
-    print("\n" + "="*70)
-    print("✅✅✅ ALL TESTS PASSED ✅✅✅")
-    print("="*70)
-    print(f"\nExecuted notebook saved to: {output_path}")
-    sys.exit(0)
 
 if __name__ == "__main__":
     main()

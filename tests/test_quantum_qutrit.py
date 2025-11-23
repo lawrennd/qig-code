@@ -35,16 +35,16 @@ print()
 # Test 3: Marginal entropies
 print("Test 3: Computing marginal entropies...")
 h = qq.compute_marginal_entropies(rho_lme, n_sites=n_sites)
-print(f"  Individual: h₁={h[0]:.4f}, h₂={h[1]:.4f}, h₃={h[2]:.4f}")
+print(f"  Individual: h₁={h[0]:.4f}, h₂={h[1]:.4f}")
 print(f"  Sum: Σh_i = {np.sum(h):.6f}")
-print(f"  Target (3 log 3): {3*np.log(3):.6f}")
-print(f"  ✓ Deviation: {abs(np.sum(h) - 3*np.log(3)):.2e}")
+print(f"  Target (2 log 3): {2*np.log(3):.6f}")
+print(f"  ✓ Deviation: {abs(np.sum(h) - 2*np.log(3)):.2e}")
 print()
 
 # Test 4: Natural parameters
 print("Test 4: Finding natural parameters...")
 print("  (Gradient descent, ~30 iterations)")
-theta_init = qq.find_natural_parameters_for_lme(operators, rho_lme, max_iter=30, lr=0.05)
+theta_init = qq.find_natural_parameters_for_lme(operators, rho_lme, max_iter=30)
 print(f"  ✓ Converged, ||θ|| = {np.linalg.norm(theta_init):.4f}")
 
 # Verify
