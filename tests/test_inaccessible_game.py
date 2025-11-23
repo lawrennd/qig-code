@@ -36,7 +36,7 @@ from qig.exponential_family import (
     create_operator_basis,
 )
 from qig.dynamics import InaccessibleGameDynamics
-from inaccessible_game_quantum import compute_jacobian, generic_decomposition
+from qig.core import generic_decomposition
 
 # Configure pytest markers
 pytest.mark.slow = pytest.mark.slow
@@ -554,13 +554,13 @@ class TestGENERICDecomposition:
         M_reconstructed = S + A
         assert np.allclose(M, M_reconstructed, atol=1e-10), "M should equal S + A"
     
-    def test_compute_jacobian_shape(self):
+    def test_jacobian_shape(self):
         """Jacobian should have correct shape."""
         exp_family = QuantumExponentialFamily(n_sites=2, d=2)
         dynamics = InaccessibleGameDynamics(exp_family)
         theta = np.random.randn(exp_family.n_params) * 0.1
         
-        M = compute_jacobian(dynamics, theta, eps=1e-5)
+        M = dynamics.exp_family.jacobian(theta)
         
         expected_shape = (exp_family.n_params, exp_family.n_params)
         assert M.shape == expected_shape, f"Jacobian shape should be {expected_shape}"
@@ -705,7 +705,7 @@ class TestMathematicalProperties:
         _, a = exp_family.marginal_entropy_constraint(theta)
         
         # GENERIC decomposition (finite differences are slow)
-        M = compute_jacobian(dynamics, theta, eps=1e-4)
+        M = dynamics.exp_family.jacobian(theta)
         S, A = generic_decomposition(M)
         
         # Symmetric part times theta

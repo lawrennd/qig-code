@@ -188,11 +188,35 @@ def marginal_entropies(rho: np.ndarray, dims: list) -> np.ndarray:
     return h
 
 
+def generic_decomposition(M: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Decompose Jacobian into symmetric and antisymmetric parts.
+
+    M = S + A where S = (M + M^T)/2, A = (M - M^T)/2
+
+    Parameters
+    ----------
+    M : array, shape (n, n)
+        Jacobian matrix
+
+    Returns
+    -------
+    S : array, shape (n, n)
+        Symmetric part (dissipative)
+    A : array, shape (n, n)
+        Antisymmetric part (conservative)
+    """
+    S = 0.5 * (M + M.T)
+    A = 0.5 * (M - M.T)
+    return S, A
+
+
 __all__ = [
     "partial_trace",
     "von_neumann_entropy",
     "create_lme_state",
     "marginal_entropies",
+    "generic_decomposition",
 ]
 
 
