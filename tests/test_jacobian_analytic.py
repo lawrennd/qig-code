@@ -197,26 +197,26 @@ class TestJacobianAnalytic:
         exp_family = QuantumExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
         dynamics = InaccessibleGameDynamics(exp_family)
         
-        np.random.seed(42)
-        theta = np.random.randn(exp_family.n_params) * 0.1  # Smaller for stability
-
+        np.random.seed(24)
+        theta = np.random.randn(exp_family.n_params)  
+        
         # Analytic Jacobian (using QIG implementation)
         M_analytic = exp_family.jacobian(theta)
-
+        
         # Finite-difference Jacobian
         M_fd = compute_jacobian(dynamics, theta, eps=1e-6)
-
+        
         # Compare
         diff = M_analytic - M_fd
         max_abs_err = np.max(np.abs(diff))
         rel_err = max_abs_err / (np.max(np.abs(M_fd)) + 1e-10)
-
+        
         print(f"\nJacobian test ({n_pairs} pair(s), d={d}):")
         print(f"Analytic norm: {np.linalg.norm(M_analytic):.6f}")
         print(f"Finite-diff norm: {np.linalg.norm(M_fd):.6f}")
         print(f"Max absolute error: {max_abs_err:.6e}")
         print(f"Relative error: {rel_err:.6e}")
-
+        
         # For entangled systems, analytical should match finite diff very well
         assert rel_err < 1e-5, (
             f"Jacobian doesn't match: rel_err={rel_err:.3e}"

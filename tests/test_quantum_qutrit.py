@@ -3,7 +3,7 @@ Quick test of quantum qutrit dynamics simulation using migrated qig library.
 
 Verifies:
 1. LME state construction
-2. Marginal entropy computation  
+2. Marginal entropy computation
 3. Constraint gradient
 4. BKM metric (Fisher information)
 5. Basic dynamics integration
@@ -22,7 +22,7 @@ def test_qutrit_lme_state():
     print("\n" + "=" * 70)
     print("TEST: Qutrit LME State Construction")
     print("=" * 70)
-    
+
     # Create LME state for 1 pair (2 sites)
     rho_lme, dims = create_lme_state(n_sites=2, d=3)
     
@@ -32,7 +32,7 @@ def test_qutrit_lme_state():
     
     assert np.abs(np.trace(rho_lme) - 1.0) < 1e-10, "Trace should be 1"
     assert np.abs(np.trace(rho_lme @ rho_lme) - 1.0) < 1e-10, "Should be pure state"
-    
+
     # Check marginal entropies
     from qig.core import marginal_entropies
     h = marginal_entropies(rho_lme, dims)
@@ -57,7 +57,7 @@ def test_qutrit_fisher_information():
     
     # Create exponential family with pair basis
     exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
-    
+
     # Test at random point
     np.random.seed(42)
     theta = 0.1 * np.random.randn(exp_fam.n_params)
@@ -70,7 +70,7 @@ def test_qutrit_fisher_information():
     
     eigenvalues = np.linalg.eigvalsh(G)
     print(f"Eigenvalues: min={np.min(eigenvalues):.2e}, max={np.max(eigenvalues):.2e}")
-    
+
     # Fisher information should be positive semidefinite
     assert np.all(eigenvalues >= -1e-10), "Fisher information should be PSD"
     assert np.linalg.norm(G - G.T) < 1e-10, "Fisher information should be symmetric"
@@ -86,7 +86,7 @@ def test_qutrit_constraint_gradient():
     
     # Create exponential family
     exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
-    
+
     # Test at random point
     np.random.seed(42)
     theta = 0.2 * np.random.randn(exp_fam.n_params)
@@ -102,7 +102,7 @@ def test_qutrit_constraint_gradient():
     from qig.core import marginal_entropies
     h_base = marginal_entropies(rho_base, [3, 3])
     C_base = np.sum(h_base)
-    
+
     a_numerical = np.zeros(exp_fam.n_params)
     for i in range(min(10, exp_fam.n_params)):  # Sample first 10 parameters
         theta_plus = theta.copy()
@@ -111,8 +111,8 @@ def test_qutrit_constraint_gradient():
         h_plus = marginal_entropies(rho_plus, [3, 3])
         C_plus = np.sum(h_plus)
         a_numerical[i] = (C_plus - C_base) / eps
-    
-    # Compare sampled entries
+
+# Compare sampled entries
     max_error = np.max(np.abs(a_analytic[:10] - a_numerical[:10]))
     print(f"Max error vs finite differences: {max_error:.2e}")
     
@@ -154,7 +154,7 @@ def test_qutrit_mutual_information():
     
     # Create exponential family
     exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
-    
+
     # Start near LME state (should have high mutual information)
     np.random.seed(42)
     theta_lme = np.random.randn(exp_fam.n_params) * 0.5
@@ -166,7 +166,7 @@ def test_qutrit_mutual_information():
     theta_zero = np.zeros(exp_fam.n_params)
     I_zero = exp_fam.mutual_information(theta_zero)
     print(f"Mutual information at zero: I = {I_zero:.4f}")
-    
+
     # Mutual information should be non-negative (allow tiny numerical error)
     assert I_lme >= -1e-10, "Mutual information should be non-negative"
     assert I_zero >= -1e-10, "Mutual information should be non-negative"

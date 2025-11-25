@@ -342,12 +342,26 @@ class QuantumExponentialFamily:
         rho = rho_unnorm / Z
         return rho
 
-    def log_partition(self, theta: np.ndarray) -> float:
+    def psi(self, theta: np.ndarray) -> float:
         """
-        Compute log partition function ψ(θ) = log Tr(exp(∑ θ_a F_a)).
+        Compute the cumulant generating function ψ(θ) = log Tr(exp(∑ θ_a F_a)).
+
+        This is the log partition function for the exponential family.
         """
         K = sum(theta_a * F_a for theta_a, F_a in zip(theta, self.operators))
         return np.log(np.trace(expm(K))).real
+
+    # Backward compatibility alias
+    def log_partition(self, theta: np.ndarray) -> float:
+        """
+        Deprecated: Use psi() instead.
+
+        Compute the cumulant generating function ψ(θ) = log Tr(exp(∑ θ_a F_a)).
+        """
+        import warnings
+        warnings.warn("log_partition() is deprecated, use psi() instead",
+                     DeprecationWarning, stacklevel=2)
+        return self.psi(theta)
 
     def rho_derivative(self, theta: np.ndarray, a: int, **kwargs) -> np.ndarray:
         """
@@ -1277,25 +1291,70 @@ class QuantumExponentialFamily:
         
         return M
     
-    def von_neumann_entropy(self, theta: np.ndarray) -> float:
+    def _grad_psi(self, theta: np.ndarray) -> np.ndarray:
         """
-        Compute the von Neumann entropy H(ρ) = -Tr(ρ log ρ).
-        
+        Compute ∇ψ(θ), the analytical gradient of the cumulant generating function ψ(θ).
+
+        Since ψ(θ) = log Tr(exp(K(θ))) where K(θ) = ∑ θ_a F_a, differentiate directly:
+        ∂ψ/∂θ_a = ∂/∂θ_a [log Tr(exp(K))] = [1/Tr(exp(K))] * Tr( ∂/∂θ_a exp(K) )
+
+        Since ∂/∂θ_a exp(K) = exp(K) * F_a (in the sense of matrix multiplication),
+        we get: ∂ψ/∂θ_a = Tr( exp(K) F_a ) / Tr(exp(K))
+
+        This computes the gradient directly from the cumulant generating function
+        without materializing ρ(θ) as an intermediate.
+
         Parameters
         ----------
         theta : ndarray
             Natural parameters
-            
+
+        Returns
+        -------
+        grad_psi : ndarray, shape (n_params,)
+            ∇ψ(θ), the gradient of the cumulant generating function
+        """
+        # Compute K(θ) = ∑ θ_a F_a
+        K = sum(theta_a * F_a for theta_a, F_a in zip(theta, self.operators))
+
+        # Compute exp(K) once
+        exp_K = expm(K)
+
+        # Compute normalization Z = Tr(exp(K))
+        Z = np.trace(exp_K)
+
+        # Compute ∇ψ(θ)_a = Tr(exp(K) F_a) / Z for each a
+        return np.array([np.trace(exp_K @ F_a).real / Z.real for F_a in self.operators])
+
+    def von_neumann_entropy(self, theta: np.ndarray) -> float:
+        """
+        Compute the von Neumann entropy.
+
+        For exponential families ρ(θ) = exp(K(θ) - ψ(θ)), we use the fundamental identity:
+        H(ρ) = ψ(θ) - θ^T ∇ψ(θ)
+
+        where ∇ψ(θ) is the analytical gradient of the cumulant generating function ψ(θ).
+
+        This directly uses the exponential family structure and is more numerically
+        stable than eigendecomposition for states within the exponential family manifold.
+
+        Parameters
+        ----------
+        theta : ndarray
+            Natural parameters
+
         Returns
         -------
         float
             Von Neumann entropy in nats
         """
-        rho = self.rho_from_theta(theta)
-        eigenvalues = np.linalg.eigvalsh(rho)
-        # Filter out zero/negative eigenvalues (numerical noise)
-        eigenvalues = eigenvalues[eigenvalues > 1e-14]
-        return -np.sum(eigenvalues * np.log(eigenvalues))
+        # Use exponential family identity: H(ρ) = ψ(θ) - θ^T ∇ψ(θ)
+        psi_theta = self.psi(theta)
+        grad_psi = self._grad_psi(theta)
+        entropy = psi_theta - np.dot(theta, grad_psi)
+
+        # Ensure non-negative (numerical precision issues)
+        return max(0.0, float(entropy.real))
     
     def mutual_information(self, theta: np.ndarray) -> float:
         """

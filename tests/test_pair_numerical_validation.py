@@ -262,7 +262,7 @@ class TestConstraintGradient:
                 np.linalg.norm(grad_C_fd[:10])
         print(f"Constraint gradient relative error (10 elements): {error:.6e}")
         
-        assert error < 1e-4, f"Constraint gradient error {error} too large"
+        assert error < 1e-5, f"Constraint gradient error {error} too large"
     
     def test_constraint_gradient_two_pairs(self):
         """Test ∇C for two pairs with block structure."""

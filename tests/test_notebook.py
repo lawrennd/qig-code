@@ -199,23 +199,23 @@ def main():
         print(f"\n{'='*70}")
         print(f"Testing: {notebook_path.name}")
         print(f"{'='*70}\n")
-        
+
         # Execute notebook
         success, output_path = run_notebook(notebook_path)
-        
+
         if not success:
             print(f"\n❌ TEST FAILED: {notebook_path.name} execution error")
             all_success = False
             continue
-        
+
         # Check outputs
         if not check_notebook_outputs(output_path):
             print(f"\n❌ TEST FAILED: Not all experiments passed in {notebook_path.name}")
             all_success = False
             continue
-        
+
         print(f"\n✅ {notebook_path.name} passed!")
-    
+
     if all_success:
         print("\n" + "="*70)
         print("✅✅✅ ALL TESTS PASSED ✅✅✅")

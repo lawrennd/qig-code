@@ -48,7 +48,7 @@ def test_third_cumulant_symmetry():
     
     print(f"\nComputing third cumulant for sample indices...")
     print(f"Using finite difference with eps = {eps}")
-    
+        
     # Compute T[0,1,2] and its permutations
     a, b, c = 0, 1, 2
     
@@ -78,12 +78,12 @@ def test_third_cumulant_symmetry():
         max_deviation = max(max_deviation, deviation)
     
     relative_error = max_deviation / (abs(reference) + 1e-12)
-    
+        
     print(f"\nSymmetry analysis:")
     print(f"  Reference value: {reference:.6e}")
     print(f"  Max absolute deviation: {max_deviation:.6e}")
     print(f"  Relative error: {relative_error * 100:.4f}%")
-    
+        
     # Allow for numerical error (finite differences are approximate)
     assert relative_error < 0.05, \
         f"Third cumulant is not symmetric! Relative error = {relative_error*100:.2f}%"

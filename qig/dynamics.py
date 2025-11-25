@@ -143,6 +143,204 @@ class InaccessibleGameDynamics:
             "success": sol.success,
         }
 
+    def solve_constrained_maxent(self, theta_init: np.ndarray, n_steps: int = 1000,
+                                dt: float = 0.001, convergence_tol: float = 1e-6,
+                                project: bool = True, project_every: int = 10,
+                                use_entropy_time: bool = False) -> Dict[str, Any]:
+        """
+        Solve constrained maximum entropy dynamics using gradient descent with projection.
+
+        - Uses gradient descent to maximise joint entropy
+        - Projects onto constraint manifold at each step
+        - Much more stable than ODE integration for constrained optimisation
+
+        Dynamics: dθ/dt = F(θ) = -Π_∥(θ) G(θ) θ
+        where Π_∥ projects onto Σᵢ hᵢ(θ) = C
+
+        Parameters
+        ----------
+        theta_init : array
+            Initial parameter vector
+        n_steps : int
+            Maximum number of gradient steps
+        dt : float
+            Step size for gradient descent
+        convergence_tol : float
+            Stop when ||F|| < convergence_tol
+        project : bool
+            Whether to project onto constraint manifold
+        project_every : int
+            Project onto constraint manifold every N steps (for efficiency)
+        use_entropy_time : bool
+            If True, scale step size so that entropy increases by dt per step
+
+        Returns
+        -------
+        dict with keys:
+            trajectory : array, shape (n_steps, n_params)
+                Parameter trajectory θ(t)
+            flow_norms : array
+                ||F(θ)|| at each step
+            constraint_values : array
+                Σᵢ hᵢ at each step (should be ≈ constant)
+            converged : bool
+                Whether convergence criterion was met
+            C_init : float
+                Initial constraint value
+        """
+        n_params = len(theta_init)
+        trajectory = [theta_init.copy()]
+        flow_norms = []
+        constraint_values = []
+        theta = theta_init.copy()
+
+        # Compute initial constraint value using marginal entropies
+        rho_init = self.exp_family.rho_from_theta(theta)
+        h_init = marginal_entropies(rho_init, self.exp_family.dims)
+        C_init = float(np.sum(h_init))
+
+        for step in range(n_steps):
+            # Compute constrained flow at current point
+            G = self.exp_family.fisher_information(theta)
+            _, a = self.exp_family.marginal_entropy_constraint(theta)
+
+            # Unconstrained flow: maximize entropy
+            F_unc = -G @ theta
+
+            # Lagrange multiplier for constraint tangency
+            # a^T F = 0 => a^T(F_unc - ν a) = 0 => ν = (a^T F_unc)/(a^T a)
+            a_norm_sq = np.dot(a, a)
+            if a_norm_sq > 1e-12:
+                nu = np.dot(F_unc, a) / a_norm_sq
+                F = F_unc - nu * a  # Constrained flow
+                # Debug: check tangency
+                tangency_check = np.dot(a, F)
+                if step < 5 or step % 1000 == 0:
+                    print(f"Step {step}: ν = {nu:.6e}, tangency = {tangency_check:.6e}")
+            else:
+                F = F_unc
+
+            # Gradient descent step
+            if use_entropy_time:
+                # Scale step size for entropy time: dH/dt = 1
+                # Entropy production = θ^T G Π_∥ G θ (same as in flow method)
+                a_norm_sq = np.dot(a, a)
+                if a_norm_sq > 1e-12:
+                    Pi = np.eye(len(theta)) - np.outer(a, a) / a_norm_sq
+                else:
+                    Pi = np.eye(len(theta))
+                entropy_production = float(theta @ G @ Pi @ G @ theta)
+                if entropy_production > 1e-12:
+                    effective_dt = dt / entropy_production
+                else:
+                    effective_dt = dt
+            else:
+                effective_dt = dt
+
+            theta_new = theta + effective_dt * F
+
+            # Project back onto constraint manifold (every project_every steps for efficiency)
+            if project and (step + 1) % project_every == 0:
+                # Simple projection: adjust along constraint gradient direction
+                rho_new = self.exp_family.rho_from_theta(theta_new)
+                h_new = marginal_entropies(rho_new, self.exp_family.dims)
+                C_new = np.sum(h_new)
+
+                # Iterative Newton projection to constraint manifold
+                theta_proj = theta_new.copy()
+                for proj_iter in range(10):  # Allow up to 10 iterations
+                    rho_proj = self.exp_family.rho_from_theta(theta_proj)
+                    h_proj = marginal_entropies(rho_proj, self.exp_family.dims)
+                    C_proj = np.sum(h_proj)
+                    error = C_proj - C_init
+
+                    if abs(error) < 1e-12:  # Tight convergence
+                        break
+
+                    # Newton step: θ ← θ - error / ||a||² * a
+                    _, a_proj = self.exp_family.marginal_entropy_constraint(theta_proj)
+                    a_norm_sq = np.dot(a_proj, a_proj)
+                    if a_norm_sq > 1e-15:
+                        step_size = error / a_norm_sq
+                        theta_proj = theta_proj - step_size * a_proj
+                    else:
+                        break
+
+                theta_new = theta_proj
+
+            theta = theta_new
+
+            # Track metrics
+            flow_norm = np.linalg.norm(F)
+            flow_norms.append(flow_norm)
+            trajectory.append(theta.copy())
+
+            # Debug: print progress every 1000 steps
+            if (step + 1) % 1000 == 0:
+                H_current = self.exp_family.von_neumann_entropy(theta)
+                print(f"Step {step+1}: ||F|| = {flow_norm:.6e}, H = {H_current:.6f}, ||θ|| = {np.linalg.norm(theta):.6f}")
+
+            # Check constraint preservation
+            rho = self.exp_family.rho_from_theta(theta)
+            h = marginal_entropies(rho, self.exp_family.dims)
+            C_current = np.sum(h)
+            constraint_values.append(C_current)
+
+            # Check convergence - stop early if we achieve target accuracy
+            if flow_norm < convergence_tol:
+                return {
+                    'trajectory': np.array(trajectory),
+                    'flow_norms': np.array(flow_norms),
+                    'constraint_values': np.array(constraint_values),
+                    'C_init': C_init,
+                    'converged': True,
+                    'n_steps': step + 1
+                }
+
+            # Also check if we've achieved very tight convergence at any point
+            # This handles cases where the algorithm oscillates after convergence
+            if len(flow_norms) > 10:
+                recent_min = np.min(flow_norms[-20:])  # Check last 20 steps
+                if recent_min < convergence_tol:
+                    return {
+                        'trajectory': np.array(trajectory),
+                        'flow_norms': np.array(flow_norms),
+                        'constraint_values': np.array(constraint_values),
+                        'C_init': C_init,
+                        'converged': True,
+                        'n_steps': step + 1
+                    }
+
+        # Check for sustained convergence (last 5 steps all below tolerance)
+        if len(flow_norms) >= 5:
+            last_5_flow_norms = flow_norms[-5:]
+            if np.all(np.array(last_5_flow_norms) < convergence_tol):
+                return {
+                    'trajectory': np.array(trajectory),
+                    'flow_norms': np.array(flow_norms),
+                    'constraint_values': np.array(constraint_values),
+                    'C_init': C_init,
+                    'converged': True,
+                    'n_steps': n_steps
+                }
+
+        return {
+            'trajectory': np.array(trajectory),
+            'flow_norms': np.array(flow_norms),
+            'constraint_values': np.array(constraint_values),
+            'C_init': C_init,
+            'converged': False,
+            'n_steps': n_steps
+        }
+
+        return {
+            'trajectory': np.array(trajectory),
+            'flow_norms': np.array(flow_norms),
+            'constraint_values': np.array(constraint_values),
+            'C_init': C_init,
+            'converged': False,
+            'n_steps': n_steps
+        }
 
 __all__ = ["InaccessibleGameDynamics"]
 

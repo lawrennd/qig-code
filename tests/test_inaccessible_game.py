@@ -511,16 +511,18 @@ class TestConstrainedDynamics:
         assert negative_count == 0, f"Entropy decreased at {negative_count} points"
     
     @pytest.mark.slow
-    def test_entropy_time_parametrisation(self):
-        """In entropy time, dH/dt should be approximately 1."""
-        exp_family = QuantumExponentialFamily(n_sites=2, d=2)
+    def test_constrained_maxent_dynamics(self):
+        """In entropy time, dH/dt should be exactly 1."""
+        # Use entangled pair where entropy time actually matters
+        exp_family = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         dynamics = InaccessibleGameDynamics(exp_family)
         dynamics.set_time_mode('entropy')
-        
+
+        np.random.seed(24)
         theta_0 = np.random.randn(exp_family.n_params) * 0.05
         # Very reduced time and points for speed (entropy time is slow)
         solution = dynamics.integrate(theta_0, (0, 0.1), n_points=5)
-        
+
         # Compute dH/dt
         dH = np.diff(solution['H'])
         dt = np.diff(solution['time'])
@@ -528,7 +530,69 @@ class TestConstrainedDynamics:
         
         # Should be close to 1 (with wide tolerance for short integration)
         mean_rate = np.mean(dH_dt)
-        assert 0.2 < mean_rate < 5.0, f"Entropy production rate far from 1: {mean_rate}"
+        print(f"Entropy production rate: {mean_rate}")
+        assert 1-1e-6 < mean_rate < 1+1e-6, f"Entropy production rate unreasonable: {mean_rate}"
+
+    @pytest.mark.slow
+    def test_constrained_maxent_dynamics(self):
+        """Test constrained maximum entropy dynamics using stable gradient descent."""
+        # Use entangled pairs where the constrained optimization actually has work to do
+        exp_family = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)  # 1 entangled pair
+        dynamics = InaccessibleGameDynamics(exp_family)
+
+        np.random.seed(24)
+        theta_0 = np.random.randn(exp_family.n_params)
+
+        # Run with sufficient iterations to check convergence behavior
+        solution = dynamics.solve_constrained_maxent(theta_0, n_steps=100000, dt=1e-5,
+                                                    convergence_tol=1e-6, project=True, project_every=200,
+                                                    use_entropy_time=True)
+
+        # Debug: Check final flow norms
+        print(f"Final flow norms (last 10): {solution['flow_norms'][-10:]}")
+        print(f"Min flow norm: {np.min(solution['flow_norms'])}")
+        print(f"Max flow norm: {np.max(solution['flow_norms'])}")
+
+        # Debug: Check constraint values
+        print(f"Constraint values (last 10): {solution['constraint_values'][-10:]}")
+        print(f"Initial C: {solution['C_init']:.6f}")
+        print(f"Final constraint violation: {np.abs(solution['constraint_values'][-1] - solution['C_init']):.2e}")
+
+        # Check that joint entropy increased (second law of thermodynamics)
+        # Use the fast exponential family method
+        H_init = exp_family.von_neumann_entropy(theta_0)
+        H_final = exp_family.von_neumann_entropy(solution['trajectory'][-1])
+
+        entropy_increase = H_final - H_init
+        print(f"Joint entropy increase: {entropy_increase:.6f}")
+
+        # Should increase (second law)
+        assert entropy_increase > 0.01, f"Entropy should increase: ΔH = {entropy_increase}"
+
+        # Check constraint preservation (more lenient for very tight convergence)
+        constraint_violation = np.max(np.abs(solution['constraint_values'] - solution['C_init']))
+        print(f"Max constraint violation: {constraint_violation:.2e}")
+        # Allow slightly more drift for ultra-tight convergence
+        assert constraint_violation < 2e-4, f"Constraint not preserved: violation = {constraint_violation}"
+
+        # Check entropy monotonicity - should increase throughout
+        # Sample entropy at various points during trajectory
+        n_check_points = min(10, len(solution['trajectory']))
+        check_indices = np.linspace(0, len(solution['trajectory'])-1, n_check_points, dtype=int)
+
+        entropies = []
+        for idx in check_indices:
+            theta_check = solution['trajectory'][idx]
+            H_check = exp_family.von_neumann_entropy(theta_check)
+            entropies.append(H_check)
+
+        # Check monotonic increase
+        for i in range(1, len(entropies)):
+            assert entropies[i] >= entropies[i-1] - 1e-10, \
+                f"Entropy decreased: H[{check_indices[i-1]}]={entropies[i-1]:.6f}, H[{check_indices[i]}]={entropies[i]:.6f}"
+
+        # Should eventually converge to tight tolerance
+        assert solution['converged'], f"Dynamics should converge to 1e-6 tolerance. Min flow norm: {np.min(solution['flow_norms']):.6e}"
 
 
 # ============================================================================
