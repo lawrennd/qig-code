@@ -151,6 +151,9 @@ def quantum_assert_close(
     """
     Assert arrays are close using quantum-appropriate tolerances.
 
+    For numerical validation (operation_type='numerical_validation'),
+    uses maximum absolute differences to ensure no element exceeds tolerance.
+
     Parameters
     ----------
     actual : array_like
@@ -170,6 +173,8 @@ def quantum_assert_close(
     rtol = kwargs.pop('rtol', tol['rtol'])
     atol = kwargs.pop('atol', tol['atol'])
 
+
+    # For other operation types, use standard np.allclose
     success = np.allclose(actual, expected, rtol=rtol, atol=atol, **kwargs)
 
     if not success:
