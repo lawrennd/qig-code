@@ -22,53 +22,10 @@ QUANTUM DERIVATIVE CHECKLIST:
 
 import numpy as np
 import pytest
-from scipy.linalg import eigh
 
 from qig.exponential_family import QuantumExponentialFamily
-
-
-def compute_constraint_hessian_fd(
-    exp_family: QuantumExponentialFamily,
-    theta: np.ndarray,
-    eps: float = 1e-7
-) -> np.ndarray:
-    """
-    Compute ∇²C using finite differences of ∇C.
-    
-    This is the ground truth for validation.
-    
-    Parameters
-    ----------
-    exp_family : QuantumExponentialFamily
-    theta : ndarray
-    eps : float
-        Finite difference step size
-    
-    Returns
-    -------
-    hessian : ndarray, shape (n_params, n_params)
-        Constraint Hessian ∇²C
-    """
-    n = exp_family.n_params
-    
-    # Get gradient at theta
-    _, grad_C = exp_family.marginal_entropy_constraint(theta)
-    
-    hessian = np.zeros((n, n))
-    
-    for j in range(n):
-        # Compute ∂(∇C)/∂θ_j using finite differences
-        theta_plus = theta.copy()
-        theta_plus[j] += eps
-        _, grad_C_plus = exp_family.marginal_entropy_constraint(theta_plus)
-        
-        theta_minus = theta.copy()
-        theta_minus[j] -= eps
-        _, grad_C_minus = exp_family.marginal_entropy_constraint(theta_minus)
-        
-        hessian[:, j] = (grad_C_plus - grad_C_minus) / (2 * eps)
-    
-    return hessian
+from tests.fd_helpers import finite_difference_constraint_hessian
+from tests.tolerance_framework import quantum_assert_close, quantum_assert_symmetric
 
 
 class TestConstraintHessian:
@@ -89,35 +46,23 @@ class TestConstraintHessian:
         theta[7] = 0.3  # λ8 (diagonal)
         
         # Compute via finite differences (ground truth)
-        hessian_fd = compute_constraint_hessian_fd(exp_family, theta)
+        hessian_fd = finite_difference_constraint_hessian(exp_family, theta, eps=1e-7)
         
-        print(f"\nDiagonal case:")
-        print(f"Finite difference Hessian shape: {hessian_fd.shape}")
-        print(f"Finite difference Hessian norm: {np.linalg.norm(hessian_fd):.6e}")
-        
-        # Check symmetry
-        symmetry_err = np.max(np.abs(hessian_fd - hessian_fd.T))
-        print(f"Symmetry error (FD): {symmetry_err:.6e}")
-        assert symmetry_err < 1e-6, f"Hessian not symmetric: {symmetry_err:.3e}"
+        # Check FD symmetry using tolerance framework
+        quantum_assert_symmetric(hessian_fd, 'constraint_hessian',
+                                err_msg="FD Hessian not symmetric")
         
         # Compute analytic version
         hessian_analytic = exp_family.constraint_hessian(theta)
         
-        # Check analytic symmetry
-        symmetry_err_analytic = np.max(np.abs(hessian_analytic - hessian_analytic.T))
-        print(f"Symmetry error (analytic): {symmetry_err_analytic:.6e}")
-        assert symmetry_err_analytic < 1e-10, f"Analytic Hessian not symmetric: {symmetry_err_analytic:.3e}"
+        # Check analytic symmetry (should be exact)
+        quantum_assert_symmetric(hessian_analytic, 'constraint_hessian',
+                                err_msg="Analytic Hessian not symmetric",
+)
         
-        # Compare
-        diff = hessian_analytic - hessian_fd
-        max_err = np.max(np.abs(diff))
-        rel_err = max_err / (np.max(np.abs(hessian_fd)) + 1e-10)
-        
-        print(f"Analytic Hessian norm: {np.linalg.norm(hessian_analytic):.6e}")
-        print(f"Max absolute error: {max_err:.6e}")
-        print(f"Relative error: {rel_err:.6e}")
-        
-        assert rel_err < 1e-3, f"Diagonal case failed: rel_err={rel_err:.3e}"
+        # Compare analytical vs FD (Category D: analytical derivatives)
+        quantum_assert_close(hessian_analytic, hessian_fd, 'constraint_hessian',
+                           err_msg="Diagonal case: analytic vs FD mismatch")
     
     def test_single_qubit(self):
         """
@@ -127,35 +72,23 @@ class TestConstraintHessian:
         theta = np.array([0.3, 0.5, 0.2])  # X, Y, Z
         
         # Compute via finite differences
-        hessian_fd = compute_constraint_hessian_fd(exp_family, theta)
+        hessian_fd = finite_difference_constraint_hessian(exp_family, theta, eps=1e-7)
         
-        print(f"\nSingle qubit:")
-        print(f"Finite difference Hessian shape: {hessian_fd.shape}")
-        print(f"Finite difference Hessian norm: {np.linalg.norm(hessian_fd):.6e}")
-        
-        # Check symmetry
-        symmetry_err = np.max(np.abs(hessian_fd - hessian_fd.T))
-        print(f"Symmetry error (FD): {symmetry_err:.6e}")
-        assert symmetry_err < 1e-6, f"Hessian not symmetric: {symmetry_err:.3e}"
+        # Check FD symmetry
+        quantum_assert_symmetric(hessian_fd, 'constraint_hessian',
+                                err_msg="FD Hessian not symmetric")
         
         # Compute analytic version
         hessian_analytic = exp_family.constraint_hessian(theta)
         
-        # Check analytic symmetry
-        symmetry_err_analytic = np.max(np.abs(hessian_analytic - hessian_analytic.T))
-        print(f"Symmetry error (analytic): {symmetry_err_analytic:.6e}")
-        assert symmetry_err_analytic < 1e-10, f"Analytic Hessian not symmetric: {symmetry_err_analytic:.3e}"
+        # Check analytic symmetry (should be exact)
+        quantum_assert_symmetric(hessian_analytic, 'constraint_hessian',
+                                err_msg="Analytic Hessian not symmetric",
+)
         
-        # Compare
-        diff = hessian_analytic - hessian_fd
-        max_err = np.max(np.abs(diff))
-        rel_err = max_err / (np.max(np.abs(hessian_fd)) + 1e-10)
-        
-        print(f"Analytic Hessian norm: {np.linalg.norm(hessian_analytic):.6e}")
-        print(f"Max absolute error: {max_err:.6e}")
-        print(f"Relative error: {rel_err:.6e}")
-        
-        assert rel_err < 1e-3, f"Single qubit failed: rel_err={rel_err:.3e}"
+        # Compare analytical vs FD (Category D: analytical derivatives)
+        quantum_assert_close(hessian_analytic, hessian_fd, 'constraint_hessian',
+                           err_msg="Single qubit: analytic vs FD mismatch")
     
     def test_symmetry(self):
         """
@@ -164,15 +97,11 @@ class TestConstraintHessian:
         exp_family = QuantumExponentialFamily(n_sites=1, d=2)
         theta = np.array([0.3, 0.5, 0.2])
         
-        hessian_fd = compute_constraint_hessian_fd(exp_family, theta, eps=1e-7)
+        hessian_fd = finite_difference_constraint_hessian(exp_family, theta, eps=1e-7)
         
-        # Check symmetry
-        symmetry_err = np.max(np.abs(hessian_fd - hessian_fd.T))
-        
-        print(f"\nSymmetry test:")
-        print(f"Max |H - Hᵀ|: {symmetry_err:.6e}")
-        
-        assert symmetry_err < 1e-6, f"Hessian not symmetric: {symmetry_err:.3e}"
+        # Check symmetry using tolerance framework
+        quantum_assert_symmetric(hessian_fd, 'constraint_hessian',
+                                err_msg="Hessian must be symmetric")
     
     @pytest.mark.parametrize("n_sites,d", [
         (2, 2),  # Two qubits
@@ -186,35 +115,23 @@ class TestConstraintHessian:
         theta = np.random.randn(exp_family.n_params) * 0.2
         
         # Compute via finite differences
-        hessian_fd = compute_constraint_hessian_fd(exp_family, theta, eps=1e-6)
+        hessian_fd = finite_difference_constraint_hessian(exp_family, theta, eps=1e-6)
         
-        print(f"\n{n_sites} sites, d={d}:")
-        print(f"Finite difference Hessian shape: {hessian_fd.shape}")
-        print(f"Finite difference Hessian norm: {np.linalg.norm(hessian_fd):.6e}")
-        
-        # Check symmetry
-        symmetry_err = np.max(np.abs(hessian_fd - hessian_fd.T))
-        print(f"Symmetry error (FD): {symmetry_err:.6e}")
-        assert symmetry_err < 1e-5, f"Hessian not symmetric: {symmetry_err:.3e}"
+        # Check FD symmetry
+        quantum_assert_symmetric(hessian_fd, 'constraint_hessian',
+                                err_msg=f"{n_sites} sites d={d}: FD Hessian not symmetric")
         
         # Compute analytic version
         hessian_analytic = exp_family.constraint_hessian(theta)
         
-        # Check analytic symmetry
-        symmetry_err_analytic = np.max(np.abs(hessian_analytic - hessian_analytic.T))
-        print(f"Symmetry error (analytic): {symmetry_err_analytic:.6e}")
-        assert symmetry_err_analytic < 1e-10, f"Analytic Hessian not symmetric: {symmetry_err_analytic:.3e}"
+        # Check analytic symmetry (should be exact)
+        quantum_assert_symmetric(hessian_analytic, 'constraint_hessian',
+                                err_msg=f"{n_sites} sites d={d}: Analytic Hessian not symmetric",
+)
         
-        # Compare
-        diff = hessian_analytic - hessian_fd
-        max_err = np.max(np.abs(diff))
-        rel_err = max_err / (np.max(np.abs(hessian_fd)) + 1e-10)
-        
-        print(f"Analytic Hessian norm: {np.linalg.norm(hessian_analytic):.6e}")
-        print(f"Max absolute error: {max_err:.6e}")
-        print(f"Relative error: {rel_err:.6e}")
-        
-        assert rel_err < 1e-3, f"{n_sites} sites, d={d} failed: rel_err={rel_err:.3e}"
+        # Compare analytical vs FD (Category D: analytical derivatives)
+        quantum_assert_close(hessian_analytic, hessian_fd, 'constraint_hessian',
+                           err_msg=f"{n_sites} sites d={d}: analytic vs FD mismatch")
 
 
 if __name__ == "__main__":

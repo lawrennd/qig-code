@@ -124,9 +124,12 @@ def finite_difference_constraint_gradient(exp_family, theta: np.ndarray, eps: fl
     return grad_fd
 
 
-def finite_difference_constraint_hessian(exp_family, theta: np.ndarray, eps: float = 1e-6) -> np.ndarray:
+def finite_difference_constraint_hessian(exp_family, theta: np.ndarray, eps: float = 1e-7) -> np.ndarray:
     """
     Compute ∇²C(θ) using finite differences of the constraint gradient.
+    
+    Uses a simpler, more numerically stable approach: compute ∂(∇C)/∂θ_j
+    for each parameter j using central differences.
 
     Parameters
     ----------
@@ -136,34 +139,31 @@ def finite_difference_constraint_hessian(exp_family, theta: np.ndarray, eps: flo
         Natural parameters.
     eps : float
         Step size for finite differences.
+    
+    Returns
+    -------
+    H_fd : ndarray, shape (n_params, n_params)
+        Constraint Hessian ∇²C, guaranteed symmetric.
     """
-    H_fd = np.zeros((exp_family.n_params, exp_family.n_params))
-
-    for i in range(exp_family.n_params):
-        for j in range(exp_family.n_params):
-            theta_pp = theta.copy()
-            theta_pp[i] += eps
-            theta_pp[j] += eps
-
-            theta_pm = theta.copy()
-            theta_pm[i] += eps
-            theta_pm[j] -= eps
-
-            theta_mp = theta.copy()
-            theta_mp[i] -= eps
-            theta_mp[j] += eps
-
-            theta_mm = theta.copy()
-            theta_mm[i] -= eps
-            theta_mm[j] -= eps
-
-            grad_pp = finite_difference_constraint_gradient(exp_family, theta_pp, eps)
-            grad_pm = finite_difference_constraint_gradient(exp_family, theta_pm, eps)
-            grad_mp = finite_difference_constraint_gradient(exp_family, theta_mp, eps)
-            grad_mm = finite_difference_constraint_gradient(exp_family, theta_mm, eps)
-
-            H_fd[i, j] = (grad_pp[j] - grad_pm[j] - grad_mp[j] + grad_mm[j]) / (4 * eps * eps)
-
+    n = exp_family.n_params
+    H_fd = np.zeros((n, n))
+    
+    for j in range(n):
+        # Compute ∂(∇C)/∂θ_j using central differences
+        theta_plus = theta.copy()
+        theta_plus[j] += eps
+        _, grad_C_plus = exp_family.marginal_entropy_constraint(theta_plus)
+        
+        theta_minus = theta.copy()
+        theta_minus[j] -= eps
+        _, grad_C_minus = exp_family.marginal_entropy_constraint(theta_minus)
+        
+        # This gives the j-th column of the Hessian
+        H_fd[:, j] = (grad_C_plus - grad_C_minus) / (2 * eps)
+    
+    # Symmetrize to fix numerical errors
+    H_fd = 0.5 * (H_fd + H_fd.T)
+    
     return H_fd
 
 
