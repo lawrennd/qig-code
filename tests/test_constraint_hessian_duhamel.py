@@ -39,8 +39,8 @@ class TestConstraintHessianDuhamel:
 )
         
         # Compare Duhamel vs FD (should be < 1% error with n=100)
-        # Duhamel uses numerical integration, so use Category E tolerances
-        quantum_assert_close(hessian_duhamel, hessian_fd, 'dynamics',
+        # Duhamel uses finite-point quadrature, so use Category E_coarse tolerances
+        quantum_assert_close(hessian_duhamel, hessian_fd, 'duhamel_integration',
                            err_msg="Duhamel method: analytic vs FD mismatch")
 
 
@@ -69,8 +69,8 @@ class TestConstraintHessianDuhamel:
 )
         
         # Compare Duhamel vs FD (should achieve < 1% error)
-        # Duhamel uses numerical integration, so use Category E tolerances
-        quantum_assert_close(hessian_duhamel, hessian_fd, 'dynamics',
+        # Duhamel uses finite-point quadrature, so use Category E_coarse tolerances
+        quantum_assert_close(hessian_duhamel, hessian_fd, 'duhamel_integration',
                            err_msg="Diagonal case: Duhamel vs FD mismatch")
 
 

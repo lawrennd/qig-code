@@ -65,6 +65,14 @@ class QuantumTolerances:
         'atol': 1e-7,
         'description': 'Numerical integration (dynamics, trajectories)'
     }
+    
+    # Category E_coarse: Coarse Numerical Integration (≤ 1e-4)
+    # Duhamel integrals and other finite-point quadrature methods
+    E_coarse = {
+        'rtol': 1e-4,
+        'atol': 1e-5,
+        'description': 'Coarse numerical integration (Duhamel, finite quadrature)'
+    }
 
     # Category F: Physical Validation (≤ 1e-4)
     # Statistical significance for research conclusions
@@ -126,6 +134,10 @@ def select_tolerance_category(operation_type: str) -> dict:
         'trajectory': QuantumTolerances.E,
         'time_evolution': QuantumTolerances.E,
         'constraint_preservation': QuantumTolerances.E,
+        
+        # Category E_coarse: Coarse numerical integration
+        'duhamel_integration': QuantumTolerances.E_coarse,
+        'finite_quadrature': QuantumTolerances.E_coarse,
 
         # Category F: Validation
         'optimality': QuantumTolerances.F,
