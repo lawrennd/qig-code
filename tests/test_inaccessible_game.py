@@ -37,6 +37,12 @@ from qig.exponential_family import (
 )
 from qig.dynamics import InaccessibleGameDynamics
 from qig.core import generic_decomposition
+from tests.tolerance_framework import (
+    quantum_assert_close,
+    quantum_assert_scalar_close,
+    quantum_assert_hermitian,
+    quantum_assert_unit_trace,
+)
 
 # Configure pytest markers
 pytest.mark.slow = pytest.mark.slow
@@ -54,7 +60,14 @@ class TestQuantumStateUtilities:
         psi = np.array([1, 0], dtype=complex)
         rho = np.outer(psi, psi.conj())
         S = von_neumann_entropy(rho)
-        assert np.abs(S) < 1e-10, "Pure state entropy should be ~0"
+        quantum_assert_scalar_close(
+            S,
+            0.0,
+            "entropy",
+            "Pure state entropy should be ~0",
+            atol=1e-10,
+            rtol=0.0,
+        )
     
     def test_von_neumann_entropy_maximally_mixed(self):
         """Maximally mixed state should have entropy log(d)."""
@@ -62,7 +75,14 @@ class TestQuantumStateUtilities:
         rho = np.eye(d) / d
         S = von_neumann_entropy(rho)
         expected = np.log(d)
-        assert np.abs(S - expected) < 1e-10, f"Maximally mixed entropy should be log({d})"
+        quantum_assert_scalar_close(
+            S,
+            expected,
+            "entropy",
+            f"Maximally mixed entropy should be log({d})",
+            atol=1e-10,
+            rtol=0.0,
+        )
     
     def test_von_neumann_entropy_bounds(self):
         """Entropy should satisfy 0 ≤ S ≤ log(d)."""
@@ -86,7 +106,14 @@ class TestQuantumStateUtilities:
         
         # Should be maximally mixed: I/2
         expected = np.eye(2) / 2
-        assert np.allclose(rho_1, expected, atol=1e-10), "Bell state marginal should be I/2"
+        quantum_assert_close(
+            rho_1,
+            expected,
+            "density_matrix",
+            "Bell state marginal should be I/2",
+            atol=1e-10,
+            rtol=0.0,
+        )
     
     def test_partial_trace_preserves_trace(self):
         """Partial trace should preserve trace = 1."""
@@ -99,20 +126,42 @@ class TestQuantumStateUtilities:
         rho_1 = partial_trace(rho, dims=[d1, d2], keep=0)
         rho_2 = partial_trace(rho, dims=[d1, d2], keep=1)
         
-        assert np.abs(np.trace(rho_1) - 1.0) < 1e-10, "Partial trace should preserve unit trace"
-        assert np.abs(np.trace(rho_2) - 1.0) < 1e-10, "Partial trace should preserve unit trace"
+        quantum_assert_unit_trace(
+            rho_1,
+            "density_matrix",
+            "Partial trace should preserve unit trace (subsystem 1)",
+        )
+        quantum_assert_unit_trace(
+            rho_2,
+            "density_matrix",
+            "Partial trace should preserve unit trace (subsystem 2)",
+        )
     
     def test_create_lme_state_two_qubits(self):
         """LME state for 2 qubits should be Bell state."""
         rho, dims = create_lme_state(n_sites=2, d=2)
         
         # Should be pure
-        assert np.abs(np.trace(rho @ rho) - 1.0) < 1e-10, "LME state should be pure"
+        quantum_assert_scalar_close(
+            np.trace(rho @ rho),
+            1.0,
+            "purity",
+            "LME state should be pure",
+            atol=1e-10,
+            rtol=0.0,
+        )
         
         # Marginals should be maximally mixed
         h = marginal_entropies(rho, dims)
         expected = np.log(2)
-        assert np.allclose(h, [expected, expected], atol=1e-10), "Marginals should be maximally mixed"
+        quantum_assert_close(
+            h,
+            np.array([expected, expected]),
+            "marginal_entropy",
+            "Marginals should be maximally mixed",
+            atol=1e-10,
+            rtol=0.0,
+        )
     
     def test_create_lme_state_three_qutrits(self):
         """LME state for 3 qutrits should have correct marginal entropies."""
@@ -120,13 +169,27 @@ class TestQuantumStateUtilities:
         
         # Should be pure
         purity = np.trace(rho @ rho).real
-        assert np.abs(purity - 1.0) < 1e-10, "LME state should be pure"
+        quantum_assert_scalar_close(
+            purity,
+            1.0,
+            "purity",
+            "LME state should be pure",
+            atol=1e-10,
+            rtol=0.0,
+        )
         
         # Check marginal entropy sum (one site will be pure for odd n)
         h = marginal_entropies(rho, dims)
         # Two sites paired: 2*log(3), one site pure: 0
         expected_sum = 2 * np.log(3)
-        assert np.abs(h.sum() - expected_sum) < 1e-8, "Marginal entropy sum incorrect"
+        quantum_assert_scalar_close(
+            h.sum(),
+            expected_sum,
+            "marginal_entropy",
+            "Marginal entropy sum incorrect",
+            atol=1e-8,
+            rtol=0.0,
+        )
 
 
 # ============================================================================
@@ -140,13 +203,24 @@ class TestOperatorBases:
         """Pauli operators should be Hermitian."""
         ops = pauli_basis(site=0, n_sites=2)
         for op in ops:
-            assert np.allclose(op, op.conj().T, atol=1e-10), "Pauli operators should be Hermitian"
+            quantum_assert_hermitian(
+                op,
+                "density_matrix",
+                "Pauli operators should be Hermitian",
+            )
     
     def test_pauli_basis_traceless(self):
         """Pauli operators should be traceless."""
         ops = pauli_basis(site=0, n_sites=2)
         for op in ops:
-            assert np.abs(np.trace(op)) < 1e-10, "Pauli operators should be traceless"
+            quantum_assert_scalar_close(
+                np.trace(op),
+                0.0,
+                "trace",
+                "Pauli operators should be traceless",
+                atol=1e-10,
+                rtol=0.0,
+            )
     
     def test_pauli_commutation_relations(self):
         """Check [σ_x, σ_y] = 2iσ_z at single site."""
@@ -156,19 +230,37 @@ class TestOperatorBases:
         # [X, Y] = 2iZ
         commutator = X @ Y - Y @ X
         expected = 2j * Z
-        assert np.allclose(commutator, expected, atol=1e-10), "Pauli commutation relation failed"
+        quantum_assert_close(
+            commutator,
+            expected,
+            "commutator",
+            "Pauli commutation relation failed",
+            atol=1e-10,
+            rtol=0.0,
+        )
     
     def test_gell_mann_hermitian(self):
         """Gell-Mann matrices should be Hermitian."""
         gm = gell_mann_matrices()
         for G in gm:
-            assert np.allclose(G, G.conj().T, atol=1e-10), "Gell-Mann matrices should be Hermitian"
+            quantum_assert_hermitian(
+                G,
+                "density_matrix",
+                "Gell-Mann matrices should be Hermitian",
+            )
     
     def test_gell_mann_traceless(self):
         """Gell-Mann matrices should be traceless."""
         gm = gell_mann_matrices()
         for G in gm:
-            assert np.abs(np.trace(G)) < 1e-10, "Gell-Mann matrices should be traceless"
+            quantum_assert_scalar_close(
+                np.trace(G),
+                0.0,
+                "trace",
+                "Gell-Mann matrices should be traceless",
+                atol=1e-10,
+                rtol=0.0,
+            )
     
     def test_operator_basis_count(self):
         """Operator basis should have correct number of elements."""
@@ -204,7 +296,11 @@ class TestQuantumExponentialFamily:
         theta = rng.standard_normal(exp_family.n_params) * 0.1
         rho = exp_family.rho_from_theta(theta)
         
-        assert np.abs(np.trace(rho) - 1.0) < 1e-10, "Density matrix should have unit trace"
+        quantum_assert_unit_trace(
+            rho,
+            "density_matrix",
+            "Density matrix should have unit trace",
+        )
     
     def test_rho_from_theta_hermitian(self):
         """Density matrix should be Hermitian."""
@@ -212,7 +308,11 @@ class TestQuantumExponentialFamily:
         theta = np.random.randn(exp_family.n_params) * 0.1
         rho = exp_family.rho_from_theta(theta)
         
-        assert np.allclose(rho, rho.conj().T, atol=1e-10), "Density matrix should be Hermitian"
+        quantum_assert_hermitian(
+            rho,
+            "density_matrix",
+            "Density matrix should be Hermitian",
+        )
     
     def test_rho_from_theta_positive(self):
         """Density matrix should be positive semi-definite."""
