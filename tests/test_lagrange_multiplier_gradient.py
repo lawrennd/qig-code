@@ -6,11 +6,14 @@ The Lagrange multiplier is ν(θ) = (a^T G θ)/(a^T a) where:
 - G = BKM metric (Fisher information)
 
 We validate ∇ν against finite differences.
+
+Uses CIP-0004 tolerance framework with scientifically derived bounds.
 """
 
 import numpy as np
 import pytest
 from qig.exponential_family import QuantumExponentialFamily
+from tests.tolerance_framework import quantum_assert_close, quantum_assert_scalar_close
 
 
 def compute_lagrange_multiplier(exp_family, theta):
@@ -91,8 +94,9 @@ class TestLagrangeMultiplierGradient:
         print(f"  {grad_nu_analytic}")
         print(f"  ||∇ν|| = {grad_nu_norm:.6e}")
         
-        # Should be zero to numerical precision (relaxed for single-site systems)
-        assert grad_nu_norm < 1e-9, f"||∇ν|| = {grad_nu_norm:.3e}, should be ~0"
+        # Should be zero to numerical precision (Category D: analytical derivatives)
+        quantum_assert_close(grad_nu_analytic, np.zeros_like(grad_nu_analytic), 'constraint_gradient',
+                           err_msg="∇ν should be zero due to structural identity Gθ = -a")
         
         # Verify with finite differences
         grad_nu_fd = compute_grad_nu_finite_diff(exp_family, theta, eps=1e-6)
@@ -126,8 +130,9 @@ class TestLagrangeMultiplierGradient:
         print(f"  {grad_nu_duhamel}")
         print(f"  ||∇ν|| = {grad_nu_norm:.6e}")
         
-        # Should be zero (small integration error from Duhamel is acceptable)
-        assert grad_nu_norm < 1e-8, f"Duhamel: ||∇ν|| = {grad_nu_norm:.3e}"
+        # Should be zero (Duhamel integration error is acceptable with E_coarse)
+        quantum_assert_close(grad_nu_duhamel, np.zeros_like(grad_nu_duhamel), 'duhamel_integration',
+                           err_msg="Duhamel: ∇ν should be ~0")
         print("✓ Duhamel confirms ∇ν ≈ 0")
     
     def test_diagonal_case(self):
@@ -165,7 +170,8 @@ class TestLagrangeMultiplierGradient:
         
         print(f"||∇ν|| = {grad_nu_norm:.6e}")
         
-        assert grad_nu_norm < 1e-8, f"||∇ν|| = {grad_nu_norm:.3e}"
+        quantum_assert_close(grad_nu_duhamel, np.zeros_like(grad_nu_duhamel), 'duhamel_integration',
+                           err_msg="Qutrit: ∇ν should be ~0")
         print("✓ Qutrit confirms ∇ν = 0")
     
     @pytest.mark.parametrize("n_sites,d", [
@@ -200,7 +206,8 @@ class TestLagrangeMultiplierGradient:
         
         print(f"  ||∇ν|| = {grad_nu_norm:.6e}")
         
-        assert grad_nu_norm < 1e-8, f"||∇ν|| = {grad_nu_norm:.3e}"
+        quantum_assert_close(grad_nu, np.zeros_like(grad_nu), 'constraint_gradient',
+                           err_msg=f"{n_sites} sites d={d}: ∇ν should be ~0")
 
 
 if __name__ == "__main__":

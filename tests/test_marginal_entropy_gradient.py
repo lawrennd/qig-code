@@ -26,6 +26,8 @@ import pytest
 
 from qig.core import partial_trace, von_neumann_entropy, marginal_entropies
 from qig.exponential_family import QuantumExponentialFamily
+from tests.fd_helpers import finite_difference_constraint_gradient
+from tests.tolerance_framework import quantum_assert_close, quantum_assert_scalar_close
 
 
 def analytic_marginal_entropy_gradient(
@@ -116,33 +118,16 @@ class TestMarginalEntropyGradient:
                 exp_family, theta
             )
             
-            # Finite-difference gradient
+            # Finite-difference gradient from implementation
             C_fd, grad_fd = exp_family.marginal_entropy_constraint(theta)
             
-            # Compare constraint values
-            assert np.abs(C_analytic - C_fd) < 1e-10, (
-                f"Constraint values differ: {C_analytic} vs {C_fd}"
-            )
+            # Compare constraint values (Category C: information metrics)
+            quantum_assert_scalar_close(C_analytic, C_fd, 'marginal_entropy',
+                                       err_msg=f"{n_sites} sites d={d}: Constraint values differ")
             
-            # Compare gradients
-            diff = grad_analytic - grad_fd
-            max_abs_err = np.max(np.abs(diff))
-            rel_err = max_abs_err / (np.max(np.abs(grad_fd)) + 1e-10)
-            
-            if trial == 0:
-                print(f"\n{n_sites} sites, d={d} (trial {trial}):")
-                print(f"Analytic gradient: {grad_analytic[:3]}...")
-                print(f"Finite-diff gradient: {grad_fd[:3]}...")
-                print(f"Max absolute error: {max_abs_err:.6e}")
-                print(f"Relative error: {rel_err:.6e}")
-            
-            assert rel_err < 1e-4, (
-                f"Trial {trial}: Gradients don't match\n"
-                f"Max abs error: {max_abs_err:.3e}\n"
-                f"Relative error: {rel_err:.3e}\n"
-                f"Analytic: {grad_analytic}\n"
-                f"Finite-diff: {grad_fd}"
-            )
+            # Compare gradients (Category D: analytical derivatives)
+            quantum_assert_close(grad_analytic, grad_fd, 'constraint_gradient',
+                               err_msg=f"{n_sites} sites d={d} trial {trial}: Gradients mismatch")
     
     def test_gradient_via_chain_rule(self):
         """
@@ -161,38 +146,12 @@ class TestMarginalEntropyGradient:
             exp_family, theta
         )
         
-        # Verify using numerical differentiation of C(θ)
-        eps = 1e-6
-        grad_numerical = np.zeros(exp_family.n_params)
+        # Verify using numerical differentiation of C(θ) via shared helper
+        grad_numerical = finite_difference_constraint_gradient(exp_family, theta, eps=1e-6)
         
-        for a in range(exp_family.n_params):
-            theta_plus = theta.copy()
-            theta_plus[a] += eps
-            
-            rho_plus = exp_family.rho_from_theta(theta_plus)
-            h_plus = marginal_entropies(rho_plus, exp_family.dims)
-            C_plus = float(np.sum(h_plus))
-            
-            theta_minus = theta.copy()
-            theta_minus[a] -= eps
-            
-            rho_minus = exp_family.rho_from_theta(theta_minus)
-            h_minus = marginal_entropies(rho_minus, exp_family.dims)
-            C_minus = float(np.sum(h_minus))
-            
-            grad_numerical[a] = (C_plus - C_minus) / (2 * eps)
-        
-        diff = grad_analytic - grad_numerical
-        max_abs_err = np.max(np.abs(diff))
-        rel_err = max_abs_err / (np.max(np.abs(grad_numerical)) + 1e-10)
-        
-        print(f"\nChain rule test:")
-        print(f"Analytic: {grad_analytic}")
-        print(f"Numerical: {grad_numerical}")
-        print(f"Max absolute error: {max_abs_err:.6e}")
-        print(f"Relative error: {rel_err:.6e}")
-        
-        assert rel_err < 1e-5, f"Chain rule gradient doesn't match: rel_err={rel_err:.3e}"
+        # Compare gradients using tolerance framework (Category D: analytical derivatives)
+        quantum_assert_close(grad_analytic, grad_numerical, 'constraint_gradient',
+                           err_msg="Chain rule gradient doesn't match numerical")
 
 
 if __name__ == "__main__":
