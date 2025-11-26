@@ -20,6 +20,7 @@ import pytest
 from scipy.linalg import eigh
 
 from qig.exponential_family import QuantumExponentialFamily
+from tests.fd_helpers import finite_difference_fisher
 
 
 # ============================================================================
@@ -390,38 +391,12 @@ class TestCommutingBKMMetric:
         G_analytic = family.analytic_fisher_information(theta)
         G_spectral = family.spectral_fisher_information(theta)
         
-        # Compute finite-difference Hessian
-        eps = 1e-5
-        n = family.n_params
-        H = np.zeros((n, n))
-        
-        psi_0 = family.log_partition(theta)
-        
-        for a in range(n):
-            for b in range(a, n):
-                # Central differences for second derivative
-                theta_pp = theta.copy()
-                theta_pp[a] += eps
-                theta_pp[b] += eps
-                psi_pp = family.log_partition(theta_pp)
-                
-                theta_pm = theta.copy()
-                theta_pm[a] += eps
-                theta_pm[b] -= eps
-                psi_pm = family.log_partition(theta_pm)
-                
-                theta_mp = theta.copy()
-                theta_mp[a] -= eps
-                theta_mp[b] += eps
-                psi_mp = family.log_partition(theta_mp)
-                
-                theta_mm = theta.copy()
-                theta_mm[a] -= eps
-                theta_mm[b] -= eps
-                psi_mm = family.log_partition(theta_mm)
-                
-                H[a, b] = (psi_pp - psi_pm - psi_mp + psi_mm) / (4 * eps**2)
-                H[b, a] = H[a, b]
+        # Compute finite-difference Hessian using shared helper
+        # Note: DiagonalQuantumExponentialFamily has log_partition, but fd_helpers expects psi
+        # Add psi as alias if not present
+        if not hasattr(family, 'psi'):
+            family.psi = family.log_partition
+        H = finite_difference_fisher(family, theta, eps=1e-5)
         
         # Check agreement
         max_diff_analytic = np.max(np.abs(G_analytic - H))

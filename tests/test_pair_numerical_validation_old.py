@@ -49,10 +49,10 @@ def finite_difference_fisher(exp_fam, theta, eps=1e-6):
             theta_mm[a] -= eps
             theta_mm[b] -= eps
             
-            psi_pp = exp_fam.log_partition(theta_pp)
-            psi_pm = exp_fam.log_partition(theta_pm)
-            psi_mp = exp_fam.log_partition(theta_mp)
-            psi_mm = exp_fam.log_partition(theta_mm)
+            psi_pp = exp_fam.psi(theta_pp)
+            psi_pm = exp_fam.psi(theta_pm)
+            psi_mp = exp_fam.psi(theta_mp)
+            psi_mm = exp_fam.psi(theta_mm)
             
             G_fd[a, b] = (psi_pp - psi_pm - psi_mp + psi_mm) / (4 * eps**2)
             G_fd[b, a] = G_fd[a, b]  # Symmetry

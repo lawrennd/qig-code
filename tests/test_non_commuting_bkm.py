@@ -22,6 +22,7 @@ import pytest
 from scipy.linalg import expm, eigh
 
 from qig.exponential_family import QuantumExponentialFamily
+from tests.fd_helpers import finite_difference_fisher
 
 
 # ============================================================================
@@ -67,7 +68,7 @@ class TestSimpleNonCommuting:
                 Z = np.trace(rho_unnorm)
                 return rho_unnorm / Z
             
-            def log_partition(self, theta):
+            def psi(self, theta):
                 K = theta[0] * X_op + theta[1] * Y_op
                 return np.log(np.trace(expm(K))).real
             
@@ -122,36 +123,8 @@ class TestSimpleNonCommuting:
         # Compute spectral BKM
         G_spectral = restricted.fisher_information(theta)
         
-        # Compute finite-difference Hessian
-        eps = 1e-5
-        G_fd = np.zeros((2, 2))
-        
-        psi_0 = restricted.log_partition(theta)
-        
-        for i in range(2):
-            for j in range(i, 2):
-                theta_pp = theta.copy()
-                theta_pp[i] += eps
-                theta_pp[j] += eps
-                psi_pp = restricted.log_partition(theta_pp)
-                
-                theta_pm = theta.copy()
-                theta_pm[i] += eps
-                theta_pm[j] -= eps
-                psi_pm = restricted.log_partition(theta_pm)
-                
-                theta_mp = theta.copy()
-                theta_mp[i] -= eps
-                theta_mp[j] += eps
-                psi_mp = restricted.log_partition(theta_mp)
-                
-                theta_mm = theta.copy()
-                theta_mm[i] -= eps
-                theta_mm[j] -= eps
-                psi_mm = restricted.log_partition(theta_mm)
-                
-                G_fd[i, j] = (psi_pp - psi_pm - psi_mp + psi_mm) / (4 * eps**2)
-                G_fd[j, i] = G_fd[i, j]
+        # Compute finite-difference Hessian using shared helper
+        G_fd = finite_difference_fisher(restricted, theta, eps=1e-5)
         
         # Compare
         diff = G_spectral - G_fd
@@ -187,35 +160,8 @@ class TestSimpleNonCommuting:
             
             G_spectral = family.fisher_information(theta)
             
-            # Finite-difference Hessian
-            eps = 1e-5
-            n = family.n_params
-            G_fd = np.zeros((n, n))
-            
-            for i in range(n):
-                for j in range(i, n):
-                    theta_pp = theta.copy()
-                    theta_pp[i] += eps
-                    theta_pp[j] += eps
-                    psi_pp = family.log_partition(theta_pp)
-                    
-                    theta_pm = theta.copy()
-                    theta_pm[i] += eps
-                    theta_pm[j] -= eps
-                    psi_pm = family.log_partition(theta_pm)
-                    
-                    theta_mp = theta.copy()
-                    theta_mp[i] -= eps
-                    theta_mp[j] += eps
-                    psi_mp = family.log_partition(theta_mp)
-                    
-                    theta_mm = theta.copy()
-                    theta_mm[i] -= eps
-                    theta_mm[j] -= eps
-                    psi_mm = family.log_partition(theta_mm)
-                    
-                    G_fd[i, j] = (psi_pp - psi_pm - psi_mp + psi_mm) / (4 * eps**2)
-                    G_fd[j, i] = G_fd[i, j]
+            # Finite-difference Hessian using shared helper
+            G_fd = finite_difference_fisher(family, theta, eps=1e-5)
             
             diff = G_spectral - G_fd
             max_abs_err = np.max(np.abs(diff))
@@ -247,35 +193,8 @@ class TestSimpleNonCommuting:
         
         G_spectral = family.fisher_information(theta)
         
-        # Finite-difference Hessian
-        eps = 1e-5
-        n = family.n_params
-        G_fd = np.zeros((n, n))
-        
-        for i in range(n):
-            for j in range(i, n):
-                theta_pp = theta.copy()
-                theta_pp[i] += eps
-                theta_pp[j] += eps
-                psi_pp = family.log_partition(theta_pp)
-                
-                theta_pm = theta.copy()
-                theta_pm[i] += eps
-                theta_pm[j] -= eps
-                psi_pm = family.log_partition(theta_pm)
-                
-                theta_mp = theta.copy()
-                theta_mp[i] -= eps
-                theta_mp[j] += eps
-                psi_mp = family.log_partition(theta_mp)
-                
-                theta_mm = theta.copy()
-                theta_mm[i] -= eps
-                theta_mm[j] -= eps
-                psi_mm = family.log_partition(theta_mm)
-                
-                G_fd[i, j] = (psi_pp - psi_pm - psi_mp + psi_mm) / (4 * eps**2)
-                G_fd[j, i] = G_fd[i, j]
+        # Finite-difference Hessian using shared helper
+        G_fd = finite_difference_fisher(family, theta, eps=1e-5)
         
         diff = G_spectral - G_fd
         max_abs_err = np.max(np.abs(diff))
