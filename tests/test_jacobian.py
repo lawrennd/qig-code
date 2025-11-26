@@ -16,6 +16,8 @@ We validate against finite differences of the dynamics:
 import numpy as np
 import pytest
 from qig.exponential_family import QuantumExponentialFamily
+from tests.fd_helpers import finite_difference_jacobian
+from tests.tolerance_framework import quantum_assert_close, quantum_assert_scalar_close
 
 
 def compute_dynamics(exp_family, theta):
@@ -26,25 +28,6 @@ def compute_dynamics(exp_family, theta):
     
     F = -G @ theta + nu * a
     return F
-
-
-def compute_jacobian_fd(exp_family, theta, eps=1e-7):
-    """Compute Jacobian via finite differences."""
-    n = exp_family.n_params
-    M = np.zeros((n, n))
-    
-    for j in range(n):
-        theta_plus = theta.copy()
-        theta_plus[j] += eps
-        F_plus = compute_dynamics(exp_family, theta_plus)
-        
-        theta_minus = theta.copy()
-        theta_minus[j] -= eps
-        F_minus = compute_dynamics(exp_family, theta_minus)
-        
-        M[:, j] = (F_plus - F_minus) / (2 * eps)
-    
-    return M
 
 
 class TestJacobian:
@@ -198,7 +181,9 @@ class TestJacobian:
         rel_preservation = norm_a_T_M / (np.linalg.norm(M) * np.linalg.norm(a))
         print(f"  Relative: {rel_preservation:.6e}")
         
-        assert norm_a_T_M < 1e-8, f"||a^T M|| = {norm_a_T_M:.3e}, should be ~0"
+        # Should be zero (Category D: analytical derivatives)
+        quantum_assert_close(a_T_M, np.zeros_like(a_T_M), 'jacobian',
+                           err_msg="Constraint preservation: a^T M should be ~0")
         print("✓ Constraint preserved: a^T M ≈ 0")
     
     @pytest.mark.parametrize("n_sites,d", [
@@ -234,12 +219,14 @@ class TestJacobian:
         a_T_M_norm = np.linalg.norm(a @ M_analytic)
         
         print(f"  ||a^T M||: {a_T_M_norm:.6e}")
-        assert a_T_M_norm < 1e-6, f"Constraint not preserved"
+        quantum_assert_close(a @ M_analytic, np.zeros(exp_family.n_params), 'jacobian',
+                           err_msg=f"{n_sites} sites d={d}: Constraint not preserved")
         
         # Check Sa degeneracy
         Sa_norm = np.linalg.norm(S @ a)
         print(f"  ||Sa||: {Sa_norm:.6e}")
-        assert Sa_norm < 1e-6, f"Degeneracy Sa=0 not satisfied"
+        quantum_assert_close(S @ a, np.zeros_like(a), 'jacobian',
+                           err_msg=f"{n_sites} sites d={d}: Degeneracy Sa=0 not satisfied")
 
 
 if __name__ == "__main__":
