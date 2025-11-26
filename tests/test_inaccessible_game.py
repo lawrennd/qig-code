@@ -43,6 +43,7 @@ from tests.tolerance_framework import (
     quantum_assert_hermitian,
     quantum_assert_unit_trace,
 )
+from tests.fd_helpers import finite_difference_fisher
 
 # Configure pytest markers
 pytest.mark.slow = pytest.mark.slow
@@ -343,38 +344,6 @@ class TestQuantumExponentialFamily:
         """
         exp_family = QuantumExponentialFamily(n_sites=2, d=2)
 
-        def numerical_fisher_information(theta_vec, eps: float = 1e-5):
-            """Finite-difference Hessian of ψ(θ) = log Z(θ)."""
-            n = exp_family.n_params
-            G_num = np.zeros((n, n))
-            for i in range(n):
-                for j in range(i, n):
-                    theta_pp = theta_vec.copy()
-                    theta_pp[i] += eps
-                    theta_pp[j] += eps
-
-                    theta_pm = theta_vec.copy()
-                    theta_pm[i] += eps
-                    theta_pm[j] -= eps
-
-                    theta_mp = theta_vec.copy()
-                    theta_mp[i] -= eps
-                    theta_mp[j] += eps
-
-                    theta_mm = theta_vec.copy()
-                    theta_mm[i] -= eps
-                    theta_mm[j] -= eps
-
-                    psi_pp = exp_family.log_partition(theta_pp)
-                    psi_pm = exp_family.log_partition(theta_pm)
-                    psi_mp = exp_family.log_partition(theta_mp)
-                    psi_mm = exp_family.log_partition(theta_mm)
-
-                    G_ij = (psi_pp - psi_pm - psi_mp + psi_mm) / (4 * eps**2)
-                    G_num[i, j] = G_ij
-                    G_num[j, i] = G_ij
-            return G_num
-
         # Test agreement for a small ensemble of natural-parameter values
         # drawn from a standard normal (no special "initialisation" scaling).
         rng = np.random.default_rng(0)
@@ -383,7 +352,7 @@ class TestQuantumExponentialFamily:
             theta = rng.standard_normal(exp_family.n_params)
 
             G_analytic = exp_family.fisher_information(theta)
-            G_numeric = numerical_fisher_information(theta, eps=1e-5)
+            G_numeric = finite_difference_fisher(exp_family, theta, eps=1e-5)
 
             diff = G_analytic - G_numeric
             max_abs_err = np.max(np.abs(diff))
@@ -409,45 +378,13 @@ class TestQuantumExponentialFamily:
         """
         exp_family = QuantumExponentialFamily(n_sites=2, d=3)
 
-        def numerical_fisher_information(theta_vec, eps: float = 1e-5):
-            """Finite-difference Hessian of ψ(θ) = log Z(θ) for qutrits."""
-            n = exp_family.n_params
-            G_num = np.zeros((n, n))
-            for i in range(n):
-                for j in range(i, n):
-                    theta_pp = theta_vec.copy()
-                    theta_pp[i] += eps
-                    theta_pp[j] += eps
-
-                    theta_pm = theta_vec.copy()
-                    theta_pm[i] += eps
-                    theta_pm[j] -= eps
-
-                    theta_mp = theta_vec.copy()
-                    theta_mp[i] -= eps
-                    theta_mp[j] += eps
-
-                    theta_mm = theta_vec.copy()
-                    theta_mm[i] -= eps
-                    theta_mm[j] -= eps
-
-                    psi_pp = exp_family.log_partition(theta_pp)
-                    psi_pm = exp_family.log_partition(theta_pm)
-                    psi_mp = exp_family.log_partition(theta_mp)
-                    psi_mm = exp_family.log_partition(theta_mm)
-
-                    G_ij = (psi_pp - psi_pm - psi_mp + psi_mm) / (4 * eps**2)
-                    G_num[i, j] = G_ij
-                    G_num[j, i] = G_ij
-            return G_num
-
         rng = np.random.default_rng(1)
 
         for _ in range(3):
             theta = rng.standard_normal(exp_family.n_params)
 
             G_analytic = exp_family.fisher_information(theta)
-            G_numeric = numerical_fisher_information(theta, eps=1e-5)
+            G_numeric = finite_difference_fisher(exp_family, theta, eps=1e-5)
 
             diff = G_analytic - G_numeric
             max_abs_err = np.max(np.abs(diff))
@@ -472,38 +409,6 @@ class TestQuantumExponentialFamily:
         """
         exp_family = QuantumExponentialFamily(n_sites=2, d=4)
 
-        def numerical_fisher_information(theta_vec, eps: float = 1e-5):
-            """Finite-difference Hessian of ψ(θ) = log Z(θ) for d=4."""
-            n = exp_family.n_params
-            G_num = np.zeros((n, n))
-            for i in range(n):
-                for j in range(i, n):
-                    theta_pp = theta_vec.copy()
-                    theta_pp[i] += eps
-                    theta_pp[j] += eps
-
-                    theta_pm = theta_vec.copy()
-                    theta_pm[i] += eps
-                    theta_pm[j] -= eps
-
-                    theta_mp = theta_vec.copy()
-                    theta_mp[i] -= eps
-                    theta_mp[j] += eps
-
-                    theta_mm = theta_vec.copy()
-                    theta_mm[i] -= eps
-                    theta_mm[j] -= eps
-
-                    psi_pp = exp_family.log_partition(theta_pp)
-                    psi_pm = exp_family.log_partition(theta_pm)
-                    psi_mp = exp_family.log_partition(theta_mp)
-                    psi_mm = exp_family.log_partition(theta_mm)
-
-                    G_ij = (psi_pp - psi_pm - psi_mp + psi_mm) / (4 * eps**2)
-                    G_num[i, j] = G_ij
-                    G_num[j, i] = G_ij
-            return G_num
-
         rng = np.random.default_rng(2)
 
         # Fewer samples here to keep runtime reasonable; d=4 has a larger
@@ -512,7 +417,7 @@ class TestQuantumExponentialFamily:
             theta = rng.standard_normal(exp_family.n_params)
 
             G_analytic = exp_family.fisher_information(theta)
-            G_numeric = numerical_fisher_information(theta, eps=1e-5)
+            G_numeric = finite_difference_fisher(exp_family, theta, eps=1e-5)
 
             diff = G_analytic - G_numeric
             max_abs_err = np.max(np.abs(diff))
@@ -673,7 +578,7 @@ class TestConstrainedDynamics:
         constraint_violation = np.max(np.abs(solution['constraint_values'] - solution['C_init']))
         print(f"Max constraint violation: {constraint_violation:.2e}")
         # Allow slightly more drift for ultra-tight convergence
-        assert constraint_violation < 2e-4, f"Constraint not preserved: violation = {constraint_violation}"
+        assert constraint_violation < 5e-5, f"Constraint not preserved: violation = {constraint_violation}"
 
         # Check entropy monotonicity - should increase throughout
         # Sample entropy at various points during trajectory

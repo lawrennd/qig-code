@@ -17,139 +17,15 @@ from qig.exponential_family import QuantumExponentialFamily
 from tests.tolerance_framework import (
     quantum_assert_close,
     quantum_assert_scalar_close,
-    QuantumTolerances
+    QuantumTolerances,
 )
-
-
-def finite_difference_rho_derivative(exp_fam, theta, a, eps=1e-6):
-    """Compute ∂ρ/∂θ_a using finite differences."""
-    theta_plus = theta.copy()
-    theta_plus[a] += eps
-    theta_minus = theta.copy()
-    theta_minus[a] -= eps
-
-    rho_plus = exp_fam.rho_from_theta(theta_plus)
-    rho_minus = exp_fam.rho_from_theta(theta_minus)
-
-    return (rho_plus - rho_minus) / (2 * eps)
-
-
-def finite_difference_fisher(exp_fam, theta, eps=1e-6):
-    """Compute Fisher metric using finite differences of log partition."""
-    G_fd = np.zeros((exp_fam.n_params, exp_fam.n_params))
-
-    for a in range(exp_fam.n_params):
-        for b in range(a, exp_fam.n_params):
-            # Compute ∂²ψ/∂θ_a∂θ_b using 4-point finite difference
-            theta_pp = theta.copy()
-            theta_pp[a] += eps
-            theta_pp[b] += eps
-
-            theta_pm = theta.copy()
-            theta_pm[a] += eps
-            theta_pm[b] -= eps
-
-            theta_mp = theta.copy()
-            theta_mp[a] -= eps
-            theta_mp[b] += eps
-
-            theta_mm = theta.copy()
-            theta_mm[a] -= eps
-            theta_mm[b] -= eps
-
-            # 4-point finite difference for second derivative
-            psi_pp = exp_fam.psi(theta_pp)
-            psi_pm = exp_fam.psi(theta_pm)
-            psi_mp = exp_fam.psi(theta_mp)
-            psi_mm = exp_fam.psi(theta_mm)
-
-            d2psi_dadb = (psi_pp - psi_pm - psi_mp + psi_mm) / (4 * eps * eps)
-
-            G_fd[a, b] = d2psi_dadb
-            G_fd[b, a] = d2psi_dadb  # Symmetric
-
-    return G_fd
-
-
-def finite_difference_constraint_gradient(exp_fam, theta, eps=1e-6):
-    """Compute ∇C(θ) using finite differences."""
-    C_0, a_0 = exp_fam.marginal_entropy_constraint(theta)
-    grad_fd = np.zeros(exp_fam.n_params)
-
-    for i in range(exp_fam.n_params):
-        theta_plus = theta.copy()
-        theta_plus[i] += eps
-        theta_minus = theta.copy()
-        theta_minus[i] -= eps
-
-        C_plus, a_plus = exp_fam.marginal_entropy_constraint(theta_plus)
-        C_minus, a_minus = exp_fam.marginal_entropy_constraint(theta_minus)
-
-        # Gradient of constraint sum C
-        grad_fd[i] = (C_plus - C_minus) / (2 * eps)
-
-    return grad_fd
-
-
-def finite_difference_constraint_hessian(exp_fam, theta, eps=1e-6):
-    """Compute ∇²C(θ) using finite differences."""
-    H_fd = np.zeros((exp_fam.n_params, exp_fam.n_params))
-
-    for i in range(exp_fam.n_params):
-        for j in range(exp_fam.n_params):
-            # Second derivative via finite differences of gradient
-            theta_pp = theta.copy()
-            theta_pp[i] += eps
-            theta_pp[j] += eps
-
-            theta_pm = theta.copy()
-            theta_pm[i] += eps
-            theta_pm[j] -= eps
-
-            theta_mp = theta.copy()
-            theta_mp[i] -= eps
-            theta_mp[j] += eps
-
-            theta_mm = theta.copy()
-            theta_mm[i] -= eps
-            theta_mm[j] -= eps
-
-            grad_pp = finite_difference_constraint_gradient(exp_fam, theta_pp, eps)
-            grad_pm = finite_difference_constraint_gradient(exp_fam, theta_pm, eps)
-            grad_mp = finite_difference_constraint_gradient(exp_fam, theta_mp, eps)
-            grad_mm = finite_difference_constraint_gradient(exp_fam, theta_mm, eps)
-
-            # Mixed derivative: ∂²C/∂θ_i∂θ_j
-            H_fd[i, j] = (grad_pp[j] - grad_pm[j] - grad_mp[j] + grad_mm[j]) / (4 * eps * eps)
-
-    return H_fd
-
-
-def finite_difference_jacobian(exp_fam, theta, eps=1e-6):
-    """Compute Jacobian M using finite differences of F(θ)."""
-    M_fd = np.zeros((exp_fam.n_params, exp_fam.n_params))
-
-    # Function to compute F(θ) = -Gθ + νa
-    def compute_F(theta_val):
-        G = exp_fam.fisher_information(theta_val)
-        C, a = exp_fam.marginal_entropy_constraint(theta_val, method='duhamel')
-        Gtheta = G @ theta_val
-        nu = np.dot(a, Gtheta) / np.dot(a, a)
-        F = -Gtheta + nu * a
-        return F
-
-    for j in range(exp_fam.n_params):
-        theta_plus = theta.copy()
-        theta_plus[j] += eps
-        theta_minus = theta.copy()
-        theta_minus[j] -= eps
-
-        F_plus = compute_F(theta_plus)
-        F_minus = compute_F(theta_minus)
-
-        M_fd[:, j] = (F_plus - F_minus) / (2 * eps)
-
-    return M_fd
+from tests.fd_helpers import (
+    finite_difference_fisher,
+    finite_difference_rho_derivative,
+    finite_difference_constraint_gradient,
+    finite_difference_constraint_hessian,
+    finite_difference_jacobian,
+)
 
 
 class TestRhoDerivativeNumerical:
