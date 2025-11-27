@@ -6,8 +6,6 @@ The Lagrange multiplier is ν(θ) = (a^T G θ)/(a^T a) where:
 - G = BKM metric (Fisher information)
 
 We validate ∇ν against finite differences.
-
-Uses CIP-0004 tolerance framework with scientifically derived bounds.
 """
 
 import numpy as np
