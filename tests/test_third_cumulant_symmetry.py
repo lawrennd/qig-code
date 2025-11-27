@@ -9,6 +9,7 @@ Updated for CIP-0002: Uses QuantumExponentialFamily from qig library.
 import numpy as np
 import pytest
 from qig.exponential_family import QuantumExponentialFamily
+from tests.tolerance_framework import quantum_assert_close
 
 
 def test_third_cumulant_symmetry():
@@ -70,23 +71,14 @@ def test_third_cumulant_symmetry():
         T_values[perm] = compute_T_abc(*perm)
         print(f"  T[{perm[0]},{perm[1]},{perm[2]}] = {T_values[perm]:.6e}")
     
-    # Check all permutations are equal
     reference = T_values[(0, 1, 2)]
-    max_deviation = 0.0
-    for perm in test_indices[1:]:
-        deviation = abs(T_values[perm] - reference)
-        max_deviation = max(max_deviation, deviation)
     
-    relative_error = max_deviation / (abs(reference) + 1e-12)
-        
     print(f"\nSymmetry analysis:")
     print(f"  Reference value: {reference:.6e}")
-    print(f"  Max absolute deviation: {max_deviation:.6e}")
-    print(f"  Relative error: {relative_error * 100:.4f}%")
-        
-    # Allow for numerical error (finite differences are approximate)
-    assert relative_error < 0.05, \
-        f"Third cumulant is not symmetric! Relative error = {relative_error*100:.2f}%"
+    
+    for perm in test_indices[1:]:
+        quantum_assert_close(T_values[perm], reference, 'fisher_metric',
+                           err_msg=f"Third cumulant permutation T[{perm}] != T[0,1,2]")
     
     print("\n✓ Third cumulant is symmetric (within numerical precision)")
     print("=" * 70)

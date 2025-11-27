@@ -23,6 +23,7 @@ import pytest
 from scipy.linalg import eigh
 
 from qig.exponential_family import QuantumExponentialFamily
+from tests.tolerance_framework import quantum_assert_close, quantum_assert_symmetric
 
 
 def compute_third_cumulant_contraction_fd(
@@ -100,16 +101,11 @@ class TestThirdCumulant:
         # Compute analytic version
         contraction_analytic = exp_family.third_cumulant_contraction(theta)
         
-        # Compare
-        diff = contraction_analytic - contraction_fd
-        max_err = np.max(np.abs(diff))
-        rel_err = max_err / (np.max(np.abs(contraction_fd)) + 1e-10)
-        
         print(f"Analytic contraction norm: {np.linalg.norm(contraction_analytic):.6e}")
-        print(f"Max absolute error: {max_err:.6e}")
-        print(f"Relative error: {rel_err:.6e}")
+        print(f"FD contraction norm: {np.linalg.norm(contraction_fd):.6e}")
         
-        assert rel_err < 1e-3, f"Diagonal case failed: rel_err={rel_err:.3e}"
+        quantum_assert_close(contraction_analytic, contraction_fd, 'fisher_metric',
+                           err_msg="Diagonal case: analytic vs FD third cumulant mismatch")
     
     def test_single_qubit(self):
         """
@@ -128,16 +124,11 @@ class TestThirdCumulant:
         # Compute analytic version
         contraction_analytic = exp_family.third_cumulant_contraction(theta)
         
-        # Compare
-        diff = contraction_analytic - contraction_fd
-        max_err = np.max(np.abs(diff))
-        rel_err = max_err / (np.max(np.abs(contraction_fd)) + 1e-10)
-        
         print(f"Analytic contraction norm: {np.linalg.norm(contraction_analytic):.6e}")
-        print(f"Max absolute error: {max_err:.6e}")
-        print(f"Relative error: {rel_err:.6e}")
+        print(f"FD contraction norm: {np.linalg.norm(contraction_fd):.6e}")
         
-        assert rel_err < 1e-3, f"Single qubit failed: rel_err={rel_err:.3e}"
+        quantum_assert_close(contraction_analytic, contraction_fd, 'fisher_metric',
+                           err_msg="Single qubit: analytic vs FD third cumulant mismatch")
     
     def test_symmetry_in_first_two_indices(self):
         """
@@ -164,13 +155,9 @@ class TestThirdCumulant:
             
             dG_dtheta_c = (G_plus - G_minus) / (2 * eps)
             
-            # Check symmetry
-            diff = dG_dtheta_c - dG_dtheta_c.T
-            max_err = np.max(np.abs(diff))
-            
-            assert max_err < 1e-6, (
-                f"∂G/∂θ_{c} not symmetric: max_err={max_err:.3e}"
-            )
+            # Check symmetry (Category D: analytical derivatives)
+            quantum_assert_symmetric(dG_dtheta_c, 'fisher_metric',
+                                   err_msg=f"∂G/∂θ_{c} not symmetric")
         
         print(f"\nSymmetry test: All ∂G/∂θ_c are symmetric ✓")
     
@@ -195,16 +182,11 @@ class TestThirdCumulant:
         # Compute analytic version
         contraction_analytic = exp_family.third_cumulant_contraction(theta)
         
-        # Compare
-        diff = contraction_analytic - contraction_fd
-        max_err = np.max(np.abs(diff))
-        rel_err = max_err / (np.max(np.abs(contraction_fd)) + 1e-10)
-        
         print(f"Analytic contraction norm: {np.linalg.norm(contraction_analytic):.6e}")
-        print(f"Max absolute error: {max_err:.6e}")
-        print(f"Relative error: {rel_err:.6e}")
+        print(f"FD contraction norm: {np.linalg.norm(contraction_fd):.6e}")
         
-        assert rel_err < 1e-3, f"{n_sites} sites, d={d} failed: rel_err={rel_err:.3e}"
+        quantum_assert_close(contraction_analytic, contraction_fd, 'fisher_metric',
+                           err_msg=f"{n_sites} sites, d={d}: analytic vs FD third cumulant mismatch")
 
 
 if __name__ == "__main__":

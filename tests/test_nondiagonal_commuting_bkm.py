@@ -18,6 +18,7 @@ import pytest
 from scipy.linalg import eigh, expm
 
 from qig.exponential_family import QuantumExponentialFamily
+from tests.tolerance_framework import quantum_assert_close
 
 
 # ============================================================================
@@ -282,14 +283,9 @@ class TestNonDiagonalCommutingBKM:
                 G_spectral[a, b] = np.real(np.sum(k * (A_a_tilde * np.conj(A_b_tilde))))
         
         # Compare
-        G_diff = np.linalg.norm(G_analytic - G_spectral, 'fro')
-        G_norm = np.linalg.norm(G_analytic, 'fro')
-        rel_error = G_diff / G_norm if G_norm > 0 else G_diff
-        
-        assert rel_error < 1e-6, (
-            f"Rotated family (n={n_sites}, d={d}): spectral ≠ analytic\n"
-            f"Relative error: {rel_error:.2e}"
-        )
+        # Check agreement (Category D: analytical derivatives)
+        quantum_assert_close(G_spectral, G_analytic, 'fisher_metric',
+                           err_msg=f"Rotated family (n={n_sites}, d={d}): spectral ≠ analytic")
     
     @pytest.mark.parametrize("n_sites,d", [(1, 2), (1, 3), (2, 2)])
     def test_positive_semidefinite_rotated(self, n_sites, d):
@@ -382,7 +378,7 @@ class TestPartiallyCommutingBKM:
         """
         family = PartiallyCommutingFamily()
         
-        np.random.seed(42)
+        np.random.seed(24)
         # Use only θ_1 and θ_3 (the commuting operators)
         theta = np.array([0.5, 0.0, 0.3])  # θ_2 = 0
         
@@ -424,16 +420,15 @@ class TestPartiallyCommutingBKM:
         G_13 = G[0, 2]
         G_31 = G[2, 0]
         
-        # For commuting operators, G should be symmetric
-        assert np.abs(G_13 - G_31) < 1e-10, (
-            f"BKM not symmetric for commuting block: G[1,3]={G_13:.6f}, G[3,1]={G_31:.6f}"
-        )
+        # For commuting operators, G should be symmetric (Category D: analytical derivatives)
+        quantum_assert_close(G_13, G_31, 'fisher_metric',
+                           err_msg=f"BKM not symmetric for commuting block: G[1,3]={G_13:.6f}, G[3,1]={G_31:.6f}")
         
-        # The (1,3) block should be small (F_1 and F_3 act on different qubits)
-        # Actually, for product operators on independent subsystems, the covariance should be zero!
-        assert np.abs(G_13) < 0.1, (
-            f"Expected small covariance for independent operators, got {G_13:.6f}"
-        )
+        # The (1,3) block should be zero (F_1 and F_3 act on different qubits)
+        # For product operators on independent subsystems, the covariance should be exactly zero!
+        # With θ_2=0, ρ is a product state, so Cov(F_1, F_3) = 0 (Category D: analytical derivatives)
+        quantum_assert_close(G_13, 0.0, 'fisher_metric',
+                           err_msg=f"Expected zero covariance for independent operators, got {G_13:.6e}")
 
 
 if __name__ == "__main__":

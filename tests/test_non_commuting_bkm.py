@@ -23,6 +23,7 @@ from scipy.linalg import expm, eigh
 
 from qig.exponential_family import QuantumExponentialFamily
 from tests.fd_helpers import finite_difference_fisher
+from tests.tolerance_framework import quantum_assert_close
 
 
 # ============================================================================
@@ -125,25 +126,9 @@ class TestSimpleNonCommuting:
         
         # Compute finite-difference Hessian using shared helper
         G_fd = finite_difference_fisher(restricted, theta, eps=1e-5)
-        
-        # Compare
-        diff = G_spectral - G_fd
-        max_abs_err = np.max(np.abs(diff))
-        rel_err = max_abs_err / (np.max(np.abs(G_fd)) + 1e-10)
-        
-        print(f"\nSingle qubit X-Y test:")
-        print(f"Spectral BKM:\n{G_spectral}")
-        print(f"Finite-diff Hessian:\n{G_fd}")
-        print(f"Difference:\n{diff}")
-        print(f"Max absolute error: {max_abs_err:.6e}")
-        print(f"Relative error: {rel_err:.6e}")
-        
-        # This should pass if the implementation is correct
-        assert rel_err < 1e-4, (
-            f"Non-commuting case (X,Y) fails: rel_err={rel_err:.3e}\n"
-            f"Spectral:\n{G_spectral}\n"
-            f"Finite-diff:\n{G_fd}"
-        )
+                
+        quantum_assert_close(G_spectral, G_fd, 'fisher_metric',
+                           err_msg="Non-commuting case (X,Y): spectral vs FD mismatch")
     
     def test_single_qubit_all_paulis(self):
         """
@@ -163,21 +148,15 @@ class TestSimpleNonCommuting:
             # Finite-difference Hessian using shared helper
             G_fd = finite_difference_fisher(family, theta, eps=1e-5)
             
-            diff = G_spectral - G_fd
-            max_abs_err = np.max(np.abs(diff))
-            rel_err = max_abs_err / (np.max(np.abs(G_fd)) + 1e-10)
-            
             if trial == 0:
                 print(f"\nSingle qubit all Paulis (trial {trial}):")
                 print(f"Spectral BKM:\n{G_spectral}")
                 print(f"Finite-diff Hessian:\n{G_fd}")
-                print(f"Difference:\n{diff}")
-                print(f"Max absolute error: {max_abs_err:.6e}")
-                print(f"Relative error: {rel_err:.6e}")
+                print(f"Difference:\n{G_spectral - G_fd}")
             
-            assert rel_err < 1e-4, (
-                f"Trial {trial}: Non-commuting Paulis fail: rel_err={rel_err:.3e}"
-            )
+            # Category D: analytical derivatives
+            quantum_assert_close(G_spectral, G_fd, 'fisher_metric',
+                               err_msg=f"Trial {trial}: Non-commuting Paulis: spectral vs FD mismatch")
     
     def test_two_qubits_local_paulis(self):
         """
@@ -212,10 +191,9 @@ class TestSimpleNonCommuting:
             print(f"\n⚠️  EXPECTED FAILURE: rel_err={rel_err:.3e} >> 1e-4")
             print("This confirms the non-commuting case has fundamental issues.")
         
-        assert rel_err < 1e-4, (
-            f"Two-qubit case fails: rel_err={rel_err:.3e}\n"
-            f"This is the known issue we're trying to diagnose."
-        )
+        # Category D: analytical derivatives
+        quantum_assert_close(G_spectral, G_fd, 'fisher_metric',
+                           err_msg=f"Two-qubit case: spectral vs FD mismatch (known issue)")
 
 
 if __name__ == "__main__":

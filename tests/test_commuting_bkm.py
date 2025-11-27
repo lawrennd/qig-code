@@ -21,6 +21,7 @@ from scipy.linalg import eigh
 
 from qig.exponential_family import QuantumExponentialFamily
 from tests.fd_helpers import finite_difference_fisher
+from tests.tolerance_framework import quantum_assert_close, quantum_assert_symmetric
 
 
 # ============================================================================
@@ -249,15 +250,19 @@ class TestCommutingBKMMetric:
         
         # Check that all operators are diagonal
         for F_a in family.operators:
-            assert np.allclose(F_a, np.diag(np.diag(F_a)))
+            quantum_assert_close(F_a, np.diag(np.diag(F_a)), 'quantum_state',
+                               err_msg="Operator not diagonal")
         
         # Check that all operators are Hermitian
         for F_a in family.operators:
-            assert np.allclose(F_a, F_a.conj().T)
+            quantum_assert_close(F_a, F_a.conj().T, 'quantum_state',
+                               err_msg="Operator not Hermitian")
         
         # Check that all operators are traceless
         for F_a in family.operators:
-            assert np.abs(np.trace(F_a)) < 1e-10
+            trace_val = np.trace(F_a)
+            quantum_assert_close(trace_val, 0.0, 'information_metric',
+                               err_msg="Operator not traceless")
     
     @pytest.mark.parametrize("n_sites,d", [
         (1, 2),
@@ -276,14 +281,16 @@ class TestCommutingBKMMetric:
         rho = family.rho_from_theta(theta)
         
         # Check diagonal
-        assert np.allclose(rho, np.diag(np.diag(rho)))
+        quantum_assert_close(rho, np.diag(np.diag(rho)), 'quantum_state',
+                           err_msg="ρ(θ) not diagonal")
         
         # Check positive semidefinite
         eigvals = np.linalg.eigvalsh(rho)
-        assert np.all(eigvals >= -1e-10)
+        assert np.all(eigvals >= -1e-10), "ρ(θ) not positive semidefinite"
         
         # Check normalised
-        assert np.abs(np.trace(rho) - 1.0) < 1e-10
+        quantum_assert_close(np.trace(rho), 1.0, 'quantum_state',
+                           err_msg="ρ(θ) not normalized")
     
     @pytest.mark.parametrize("n_sites,d", [
         (1, 2),
@@ -308,17 +315,9 @@ class TestCommutingBKMMetric:
             G_analytic = family.analytic_fisher_information(theta)
             G_spectral = family.spectral_fisher_information(theta)
             
-            # Check agreement
-            max_diff = np.max(np.abs(G_analytic - G_spectral))
-            rel_diff = max_diff / (np.max(np.abs(G_analytic)) + 1e-10)
-            
-            assert rel_diff < 1e-6, (
-                f"Trial {trial}: Analytic and spectral BKM metrics disagree.\n"
-                f"Max absolute difference: {max_diff:.3e}\n"
-                f"Max relative difference: {rel_diff:.3e}\n"
-                f"Analytic:\n{G_analytic}\n"
-                f"Spectral:\n{G_spectral}"
-            )
+            # Check agreement (Category D: analytical derivatives)
+            quantum_assert_close(G_spectral, G_analytic, 'fisher_metric',
+                               err_msg=f"Trial {trial}: Analytic and spectral BKM metrics disagree")
     
     @pytest.mark.parametrize("n_sites,d", [
         (1, 2),
@@ -364,9 +363,11 @@ class TestCommutingBKMMetric:
         G_analytic = family.analytic_fisher_information(theta)
         G_spectral = family.spectral_fisher_information(theta)
         
-        # Check symmetry
-        assert np.allclose(G_analytic, G_analytic.T)
-        assert np.allclose(G_spectral, G_spectral.T)
+        # Check symmetry (Category D: analytical derivatives)
+        quantum_assert_symmetric(G_analytic, 'fisher_metric',
+                                err_msg="Analytic BKM not symmetric")
+        quantum_assert_symmetric(G_spectral, 'fisher_metric',
+                                err_msg="Spectral BKM not symmetric")
     
     @pytest.mark.parametrize("n_sites,d", [
         (1, 2),
@@ -398,21 +399,11 @@ class TestCommutingBKMMetric:
             family.psi = family.log_partition
         H = finite_difference_fisher(family, theta, eps=1e-5)
         
-        # Check agreement
-        max_diff_analytic = np.max(np.abs(G_analytic - H))
-        max_diff_spectral = np.max(np.abs(G_spectral - H))
-        
-        rel_diff_analytic = max_diff_analytic / (np.max(np.abs(H)) + 1e-10)
-        rel_diff_spectral = max_diff_spectral / (np.max(np.abs(H)) + 1e-10)
-        
-        assert rel_diff_analytic < 1e-4, (
-            f"Analytic BKM does not match Hessian.\n"
-            f"Max relative difference: {rel_diff_analytic:.3e}"
-        )
-        assert rel_diff_spectral < 1e-4, (
-            f"Spectral BKM does not match Hessian.\n"
-            f"Max relative difference: {rel_diff_spectral:.3e}"
-        )
+        # Check agreement (Category D: analytical derivatives)
+        quantum_assert_close(G_analytic, H, 'fisher_metric',
+                           err_msg="Analytic BKM does not match FD Hessian")
+        quantum_assert_close(G_spectral, H, 'fisher_metric',
+                           err_msg="Spectral BKM does not match FD Hessian")
 
 
 # ============================================================================
@@ -503,14 +494,9 @@ class TestQuantumExponentialFamilyCommutingCase:
         prod = A_tilde * A_tilde.T.conj()
         G_spectral = np.array([[float(np.real(np.sum(k * prod)))]])
         
-        # Check agreement
-        rel_diff = np.abs(G_analytic[0, 0] - G_spectral[0, 0]) / G_analytic[0, 0]
-        assert rel_diff < 1e-6, (
-            f"Single-qubit Z-only family: spectral BKM does not match analytic.\n"
-            f"Analytic: {G_analytic[0, 0]:.6f}\n"
-            f"Spectral: {G_spectral[0, 0]:.6f}\n"
-            f"Relative difference: {rel_diff:.3e}"
-        )
+        # Check agreement (Category D: analytical derivatives)
+        quantum_assert_close(G_spectral, G_analytic, 'fisher_metric',
+                           err_msg="Single-qubit Z-only: spectral BKM does not match analytic")
 
 
 if __name__ == "__main__":
