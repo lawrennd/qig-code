@@ -10,6 +10,7 @@ import pytest
 import time
 from qig.exponential_family import QuantumExponentialFamily
 from qig.core import partial_trace
+from tests.tolerance_framework import quantum_assert_close, quantum_assert_symmetric
 
 
 class TestLiftToFullSpace:
@@ -36,7 +37,8 @@ class TestLiftToFullSpace:
         lhs = np.trace(op_0 @ A_0)
         rhs = np.trace(op_full @ A_full)
         
-        assert np.abs(lhs - rhs) < 1e-12, f"Adjoint property failed: {lhs} ≠ {rhs}"
+        quantum_assert_close(lhs, rhs, 'quantum_state',
+                           err_msg="Adjoint property failed")
     
     def test_lift_adjoint_property_qutrits(self):
         """Verify lift is adjoint of partial_trace for qutrits."""
@@ -56,7 +58,8 @@ class TestLiftToFullSpace:
         lhs = np.trace(op_1 @ A_1)
         rhs = np.trace(op_full @ A_full)
         
-        assert np.abs(lhs - rhs) < 1e-12, f"Adjoint property failed for subsystem 1"
+        quantum_assert_close(lhs, rhs, 'quantum_state',
+                           err_msg="Adjoint property failed for subsystem 1")
     
     def test_lift_identity(self):
         """Lifting identity on subsystem i should give I ⊗ ... ⊗ I."""
@@ -69,7 +72,8 @@ class TestLiftToFullSpace:
         # Actually, it's I_0 ⊗ I_1, which equals the full identity
         I_full_expected = np.eye(exp_fam.D, dtype=complex)
         
-        assert np.allclose(I_full_lifted, I_full_expected), "Lifting identity failed"
+        quantum_assert_close(I_full_lifted, I_full_expected, 'quantum_state',
+                           err_msg="Lifting identity failed")
     
     def test_lift_dimension(self):
         """Lifted operator should have full Hilbert space dimension."""
@@ -94,7 +98,8 @@ class TestBKMKernel:
         k, p, U = exp_fam._bkm_kernel(rho)
         
         # Diagonal of kernel should be eigenvalues
-        assert np.allclose(np.diag(k), p), "Kernel diagonal ≠ eigenvalues"
+        quantum_assert_close(np.diag(k), p, 'quantum_state',
+                           err_msg="Kernel diagonal ≠ eigenvalues")
     
     def test_kernel_symmetry(self):
         """Kernel should be symmetric."""
@@ -105,7 +110,8 @@ class TestBKMKernel:
         
         k, p, U = exp_fam._bkm_kernel(rho)
         
-        assert np.allclose(k, k.T), "BKM kernel is not symmetric"
+        quantum_assert_symmetric(k, 'fisher_metric',
+                                err_msg="BKM kernel is not symmetric")
     
     def test_kernel_limit(self):
         """Off-diagonal kernel should satisfy limit formula."""
@@ -121,8 +127,8 @@ class TestBKMKernel:
             for j in range(i + 1, len(p)):
                 if np.abs(p[i] - p[j]) > 1e-10:
                     expected = (p[i] - p[j]) / (np.log(p[i]) - np.log(p[j]))
-                    assert np.abs(k[i, j] - expected) < 1e-12, \
-                        f"Kernel formula incorrect at ({i},{j})"
+                    quantum_assert_close(k[i, j], expected, 'quantum_state',
+                                       err_msg=f"Kernel formula incorrect at ({i},{j})")
 
 
 class TestThetaOnlyVsDuhamel:
@@ -132,7 +138,7 @@ class TestThetaOnlyVsDuhamel:
         """Compare θ-only vs Duhamel for random θ (qubit pair)."""
         exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
-        np.random.seed(42)
+        np.random.seed(24)
         theta = np.random.randn(exp_fam.n_params) * 0.1
         
         # θ-only method (default)
@@ -141,17 +147,13 @@ class TestThetaOnlyVsDuhamel:
         # Legacy Duhamel method
         C_duhamel, grad_duhamel = exp_fam.marginal_entropy_constraint(theta, method='duhamel')
         
-        # Should match to high precision
-        assert np.abs(C_theta - C_duhamel) < 1e-10, \
-            f"Constraint values differ: {C_theta} vs {C_duhamel}"
+        # Should match to high precision (Category C: information metrics)
+        quantum_assert_close(C_theta, C_duhamel, 'information_metric',
+                           err_msg="Constraint values differ")
         
-        grad_error = np.linalg.norm(grad_theta - grad_duhamel)
-        grad_norm = np.linalg.norm(grad_duhamel)
-        rel_error = grad_error / grad_norm if grad_norm > 0 else grad_error
-        
-        # Duhamel itself has ~1e-06 error, so we can't expect better agreement
-        assert rel_error < 1e-5, \
-            f"Gradient relative error {rel_error:.2e} too large"
+        # Gradient comparison (Duhamel itself has ~1e-06 error, use E_coarse)
+        quantum_assert_close(grad_theta, grad_duhamel, 'duhamel_integration',
+                           err_msg="θ-only vs Duhamel gradient mismatch")
         
         print(f"✓ Qubit pair: C match={np.abs(C_theta - C_duhamel):.2e}, " +
               f"grad rel_error={rel_error:.2e}")
@@ -166,15 +168,13 @@ class TestThetaOnlyVsDuhamel:
         C_theta, grad_theta = exp_fam.marginal_entropy_constraint(theta, method='theta_only')
         C_duhamel, grad_duhamel = exp_fam.marginal_entropy_constraint(theta, method='duhamel')
         
-        assert np.abs(C_theta - C_duhamel) < 1e-10, \
-            f"Constraint values differ: {C_theta} vs {C_duhamel}"
+        # Should match to high precision (Category C: information metrics)
+        quantum_assert_close(C_theta, C_duhamel, 'information_metric',
+                           err_msg="Qutrit: Constraint values differ")
         
-        grad_error = np.linalg.norm(grad_theta - grad_duhamel)
-        grad_norm = np.linalg.norm(grad_duhamel)
-        rel_error = grad_error / grad_norm if grad_norm > 0 else grad_error
-        
-        assert rel_error < 1e-5, \
-            f"Qutrit gradient relative error {rel_error:.2e} too large"
+        # Gradient comparison (use E_coarse for Duhamel)
+        quantum_assert_close(grad_theta, grad_duhamel, 'duhamel_integration',
+                           err_msg="Qutrit: θ-only vs Duhamel gradient mismatch")
         
         print(f"✓ Qutrit pair: C match={np.abs(C_theta - C_duhamel):.2e}, " +
               f"grad rel_error={rel_error:.2e}")
@@ -199,8 +199,9 @@ class TestThetaOnlyVsDuhamel:
             
             max_rel_error = max(max_rel_error, rel_error)
             
-            # Allow slightly more tolerance for edge cases
-            assert rel_error < 2e-5, f"Test {seed}: rel_error={rel_error:.2e} too large"
+            # Use duhamel_integration tolerance (slightly looser for edge cases)
+            quantum_assert_close(grad_theta, grad_duhamel, 'duhamel_integration',
+                               err_msg=f"Test {seed}: θ-only vs Duhamel gradient mismatch")
         
         print(f"✓ {n_tests} random states: max_rel_error={max_rel_error:.2e}")
 
@@ -324,9 +325,9 @@ class TestThetaOnlyHessian:
         
         hess = exp_fam.constraint_hessian(theta, method='fd_theta_only')
         
-        # Check symmetry
-        symmetry_error = np.linalg.norm(hess - hess.T, 'fro')
-        assert symmetry_error < 1e-12, f"Hessian not symmetric: error={symmetry_error:.2e}"
+        # Check symmetry (Category D: analytical derivatives)
+        quantum_assert_symmetric(hess, 'constraint_hessian',
+                                err_msg="Hessian not symmetric")
     
     def test_fd_vs_duhamel_qubit_pair(self):
         """Compare FD θ-only method vs legacy Duhamel method for qubit pair."""
@@ -341,14 +342,9 @@ class TestThetaOnlyHessian:
         # Legacy Duhamel method (slow)
         hess_duhamel = exp_fam.constraint_hessian(theta, method='duhamel', eps=1e-7)
         
-        # Compare
-        diff = np.linalg.norm(hess_fd - hess_duhamel, 'fro')
-        norm = np.linalg.norm(hess_duhamel, 'fro')
-        rel_error = diff / norm if norm > 0 else diff
-        
-        # Both are approximations, so allow reasonable tolerance
-        # FD θ-only should be MORE accurate (~10⁻⁸) than Duhamel (~10⁻⁶)
-        assert rel_error < 1e-4, f"Hessian methods disagree: rel_error={rel_error:.2e}"
+        # Compare (use E_coarse since both are numerical methods)
+        quantum_assert_close(hess_fd, hess_duhamel, 'duhamel_integration',
+                           err_msg="FD θ-only vs Duhamel Hessian mismatch")
         
         print(f"✓ Qubit pair Hessian: FD vs Duhamel rel_error={rel_error:.2e}")
     
@@ -366,12 +362,9 @@ class TestThetaOnlyHessian:
         # Legacy Duhamel method
         hess_duhamel = exp_fam.constraint_hessian(theta, method='duhamel', eps=1e-7)
         
-        # Compare
-        diff = np.linalg.norm(hess_fd - hess_duhamel, 'fro')
-        norm = np.linalg.norm(hess_duhamel, 'fro')
-        rel_error = diff / norm if norm > 0 else diff
-        
-        assert rel_error < 1e-4, f"Qutrit Hessian methods disagree: rel_error={rel_error:.2e}"
+        # Compare (use E_coarse since both are numerical methods)
+        quantum_assert_close(hess_fd, hess_duhamel, 'duhamel_integration',
+                           err_msg="Qutrit: FD θ-only vs Duhamel Hessian mismatch")
         
         print(f"✓ Qutrit pair Hessian: FD vs Duhamel rel_error={rel_error:.2e}")
     

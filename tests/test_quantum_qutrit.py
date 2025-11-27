@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 from qig.exponential_family import QuantumExponentialFamily
 from qig.core import create_lme_state, von_neumann_entropy
+from tests.tolerance_framework import quantum_assert_close, quantum_assert_symmetric
 
 
 def test_qutrit_lme_state():
@@ -30,8 +31,11 @@ def test_qutrit_lme_state():
     print(f"Trace(ρ) = {np.trace(rho_lme):.6f} (should be 1.0)")
     print(f"Purity Tr(ρ²) = {np.real(np.trace(rho_lme @ rho_lme)):.6f}")
     
-    assert np.abs(np.trace(rho_lme) - 1.0) < 1e-10, "Trace should be 1"
-    assert np.abs(np.trace(rho_lme @ rho_lme) - 1.0) < 1e-10, "Should be pure state"
+    # Check quantum state properties (Category B: quantum_state)
+    quantum_assert_close(np.trace(rho_lme), 1.0, 'quantum_state',
+                       err_msg="Trace should be 1")
+    quantum_assert_close(np.trace(rho_lme @ rho_lme), 1.0, 'quantum_state',
+                       err_msg="Should be pure state")
 
     # Check marginal entropies
     from qig.core import marginal_entropies
@@ -42,9 +46,11 @@ def test_qutrit_lme_state():
     print(f"Target (2 log 3): {2*np.log(3):.6f}")
     
     # For maximally entangled qutrit pair, each marginal is maximally mixed
-    # So h_i = log(3) for each site
-    assert np.abs(h[0] - np.log(3)) < 1e-6, "Marginal should be log(3)"
-    assert np.abs(h[1] - np.log(3)) < 1e-6, "Marginal should be log(3)"
+    # So h_i = log(3) for each site (Category C: information metrics)
+    quantum_assert_close(h[0], np.log(3), 'information_metric',
+                       err_msg="Marginal entropy should be log(3)")
+    quantum_assert_close(h[1], np.log(3), 'information_metric',
+                       err_msg="Marginal entropy should be log(3)")
     
     print("✓ LME state construction verified")
 
@@ -71,9 +77,10 @@ def test_qutrit_fisher_information():
     eigenvalues = np.linalg.eigvalsh(G)
     print(f"Eigenvalues: min={np.min(eigenvalues):.2e}, max={np.max(eigenvalues):.2e}")
 
-    # Fisher information should be positive semidefinite
+    # Fisher information should be positive semidefinite (Category D)
     assert np.all(eigenvalues >= -1e-10), "Fisher information should be PSD"
-    assert np.linalg.norm(G - G.T) < 1e-10, "Fisher information should be symmetric"
+    quantum_assert_symmetric(G, 'fisher_metric',
+                            err_msg="Fisher information should be symmetric")
     
     print("✓ Fisher information computation verified")
 
@@ -112,11 +119,10 @@ def test_qutrit_constraint_gradient():
         C_plus = np.sum(h_plus)
         a_numerical[i] = (C_plus - C_base) / eps
 
-# Compare sampled entries
-    max_error = np.max(np.abs(a_analytic[:10] - a_numerical[:10]))
-    print(f"Max error vs finite differences: {max_error:.2e}")
-    
-    assert max_error < 1e-4, f"Constraint gradient error too large: {max_error}"
+# Compare sampled entries (use duhamel_integration for coarse validation)
+    print(f"Comparing first 10 parameters...")
+    quantum_assert_close(a_analytic[:10], a_numerical[:10], 'duhamel_integration',
+                       err_msg="Constraint gradient vs FD mismatch")
     
     print("✓ Constraint gradient verified")
 
@@ -170,7 +176,9 @@ def test_qutrit_mutual_information():
     # Mutual information should be non-negative (allow tiny numerical error)
     assert I_lme >= -1e-10, "Mutual information should be non-negative"
     assert I_zero >= -1e-10, "Mutual information should be non-negative"
-    assert abs(I_zero) < 0.1, "Product state should have near-zero mutual information"
+    # Product state should have near-zero mutual information (Category C)
+    quantum_assert_close(I_zero, 0.0, 'information_metric',
+                       err_msg="Product state should have near-zero mutual information")
     
     print("✓ Mutual information computation verified")
 
