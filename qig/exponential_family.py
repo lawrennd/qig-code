@@ -401,7 +401,7 @@ class QuantumExponentialFamily:
         ✅ Respect Hilbert space structure: Preserves Hermiticity
         """
         method = kwargs.get('method', 'sld')
-        n_points = kwargs.get('n_points', 100)
+        n_points = kwargs.get('n_points', 200)  # n=200 gives ~3.6e-06 error; n=100→1.5e-05
         
         rho = self.rho_from_theta(theta)
         F_a = self.operators[a]
