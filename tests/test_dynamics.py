@@ -135,11 +135,20 @@ class TestConstrainedDynamics:
         # Should increase (second law)
         assert entropy_increase > 0.01, f"Entropy should increase: ΔH = {entropy_increase}"
 
-        # Check constraint preservation (more lenient for very tight convergence)
+        # Check constraint preservation 
+        # For long integration with periodic projection, max violation occurs just before projection
+        # With project_every=200 and dt=1e-5, expect ~200 steps of drift before correction
         constraint_violation = np.max(np.abs(solution['constraint_values'] - solution['C_init']))
         print(f"Max constraint violation: {constraint_violation:.2e}")
-        # Allow slightly more drift for ultra-tight convergence
-        assert constraint_violation < 5e-5, f"Constraint not preserved: violation = {constraint_violation}"
+        
+        # Use tolerance framework: constraint_preservation is Category E (atol=1e-7 single-step)
+        # But for 200 steps between projections, expect accumulated drift
+        # Check against tolerance framework's dynamics category
+        from tests.tolerance_framework import quantum_assert_scalar_close
+        quantum_assert_scalar_close(
+            constraint_violation, 0.0, 'constraint_preservation',
+            err_msg=f"Constraint not preserved: violation = {constraint_violation}"
+        )
 
         # Check entropy monotonicity - should increase throughout
         # Sample entropy at various points during trajectory
