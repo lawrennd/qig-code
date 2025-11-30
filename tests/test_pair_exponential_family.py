@@ -466,7 +466,8 @@ class TestFisherMetricNumerical:
         # Test at maximally mixed state
         theta = np.zeros(exp_fam.n_params)
         G_analytical = exp_fam.fisher_information(theta)
-        G_numerical = finite_difference_fisher(exp_fam, theta)
+        # Use eps=1e-5 to match tolerance framework assumptions (see D_numerical)
+        G_numerical = finite_difference_fisher(exp_fam, theta, eps=1e-5)
 
         # Compare with numerical validation tolerance (Category D_numerical: analytical vs FD)
         quantum_assert_close(G_analytical, G_numerical, 'numerical_validation',
@@ -708,10 +709,12 @@ class TestBellStateParameters:
         rho_target = (1 - epsilon) * rho_bell + epsilon * rho_mixed
         
         # Check fidelity (Category E - numerical precision for parameter reconstruction)
-        # Fidelity Tr(ρ(θ)·ρ_target) should be close to 1
+        # For perfect reconstruction: Tr(ρ_target @ ρ_target) = Tr(ρ_target²) = purity
+        # Note: For a mixed state, this is NOT 1.0, but equals the purity of the state
         fidelity = np.real(np.trace(rho_from_theta @ rho_target))
-        assert fidelity > 0.999, \
-            f"Bell state fidelity too low for d={d}: {fidelity}"
+        purity = np.real(np.trace(rho_target @ rho_target))
+        quantum_assert_scalar_close(fidelity, purity, 'duhamel_integration',
+                                   f"Bell state fidelity mismatch for d={d}")
         
         # Check marginal entropies are log(d) (maximally mixed)
         marginals = marginal_entropies(rho_from_theta, [d, d])

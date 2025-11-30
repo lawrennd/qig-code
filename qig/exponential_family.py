@@ -548,11 +548,16 @@ class QuantumExponentialFamily:
         # This is the standard Kubo–Mori / BKM kernel. In the diagonal
         # (commuting) case it reduces to the classical covariance weight p_i.
         k = np.zeros_like(diff)
-        off_diag = np.abs(diff) > 1e-14
-        k[off_diag] = diff[off_diag] / log_diff[off_diag]
-        # Diagonal terms: limit (λ-μ)/(log λ - log μ) → λ as μ→λ
-        diag_mask = np.eye(len(p), dtype=bool)
-        k[diag_mask] = p
+        
+        # For non-degenerate eigenvalues: k(p_i, p_j) = (p_i - p_j)/(log p_i - log p_j)
+        non_degenerate = np.abs(diff) > 1e-14
+        k[non_degenerate] = diff[non_degenerate] / log_diff[non_degenerate]
+        
+        # For degenerate or near-degenerate eigenvalues: k(p_i, p_j) → p_i = p_j
+        # This includes both diagonal (i==j) and off-diagonal (i≠j but p_i ≈ p_j)
+        # Use the average (p_i + p_j)/2 which equals p_i (or p_j) when they're equal
+        degenerate = np.abs(diff) <= 1e-14
+        k[degenerate] = 0.5 * (p_i + p_j)[degenerate]
 
         # Step 4: assemble G_ab = Σ_{i,j} k(p_i, p_j) A_a[i,j] conj(A_b[i,j])
         G = np.zeros((n, n))
