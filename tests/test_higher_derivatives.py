@@ -196,8 +196,8 @@ class TestJacobianAnalytic:
         hessian_analytic = exp_family.constraint_hessian(theta)
         hessian_fd = finite_difference_constraint_hessian(exp_family, theta, eps=1e-6)
         
-        # Compare (Category D: analytical derivatives)
-        quantum_assert_close(hessian_analytic, hessian_fd, 'constraint_hessian',
+        # Compare (Category D_numerical: analytical vs FD)
+        quantum_assert_close(hessian_analytic, hessian_fd, 'numerical_validation',
                            err_msg=f"{n_sites} sites d={d}: Constraint Hessian mismatch")
     
     @pytest.mark.parametrize("n_pairs,d", [
@@ -216,7 +216,7 @@ class TestJacobianAnalytic:
         # Finite-difference Jacobian
         M_fd = finite_difference_jacobian(exp_family, theta, eps=1e-6)
         
-        # Compare (Category D: analytical derivatives)
+        # Compare (Category D_numerical: analytical vs FD)
         # Note: This test is known to fail for entangled systems - analytical Jacobian has bugs
         quantum_assert_close(M_analytic, M_fd, 'jacobian',
                            err_msg=f"Jacobian test ({n_pairs} pair(s), d={d}) - known analytical bug")

@@ -468,8 +468,8 @@ class TestFisherMetricNumerical:
         G_analytical = exp_fam.fisher_information(theta)
         G_numerical = finite_difference_fisher(exp_fam, theta)
 
-        # Compare with analytical derivative precision (Category D)
-        quantum_assert_close(G_analytical, G_numerical, 'fisher_metric',
+        # Compare with numerical validation tolerance (Category D_numerical: analytical vs FD)
+        quantum_assert_close(G_analytical, G_numerical, 'numerical_validation',
                            "Single pair Fisher metric analytical vs numerical mismatch")
 
     def test_fisher_block_structure_numerically(self, two_pair_family):
@@ -517,8 +517,8 @@ class TestConstraintHessianPairBasis:
         # Get numerical Hessian
         hessian_numerical = finite_difference_constraint_hessian(exp_fam, theta)
 
-        # Compare with analytical derivative precision (Category D)
-        quantum_assert_close(hessian_analytical, hessian_numerical, 'constraint_hessian',
+        # Compare with numerical validation tolerance (Category D_numerical: analytical vs FD)
+        quantum_assert_close(hessian_analytical, hessian_numerical, 'numerical_validation',
                            "Single pair constraint Hessian analytical vs numerical mismatch")
 
 
@@ -566,8 +566,8 @@ class TestConstraintGradient:
         # Compare with finite difference
         grad_numerical = finite_difference_constraint_gradient(exp_fam, theta)
 
-        # Compare with analytical derivative precision (Category D)
-        quantum_assert_close(grad_analytical, grad_numerical, 'constraint_gradient',
+        # Compare with numerical validation tolerance (Category D_numerical: analytical vs FD)
+        quantum_assert_close(grad_analytical, grad_numerical, 'numerical_validation',
                            "Single pair constraint gradient analytical vs numerical mismatch")
 
     def test_constraint_gradient_two_pairs(self, two_pair_family):

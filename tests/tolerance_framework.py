@@ -52,6 +52,8 @@ class QuantumTolerances:
 
     # Category D: Analytical Derivatives (≤ 1e-8)
     # Gradient and Hessian computations with error propagation
+    # USE THIS FOR: Comparing two analytical implementations
+    # (e.g., spectral_fisher vs analytic_fisher, duhamel vs theta_only)
     D = {
         'rtol': 1e-8,
         'atol': 1e-9,
@@ -67,11 +69,30 @@ class QuantumTolerances:
     }
     
     # Category E_coarse: Coarse Numerical Integration (≤ 1e-4)
-    # Duhamel integrals and other finite-point quadrature methods
+    # Duhamel integrals with n_points=200 (default) and other finite-point quadrature
+    # Duhamel convergence: n=100→1.5e-05, n=200→3.6e-06, n=500→5.7e-07
+    # Using n=200 gives reliable ~1e-05 accuracy
     E_coarse = {
         'rtol': 1e-4,
-        'atol': 1e-5,
+        'atol': 1e-5,  # Achievable with n_points=200 (default)
         'description': 'Coarse numerical integration (Duhamel, finite quadrature)'
+    }
+    
+    # Category D_numerical: Analytical vs Finite Difference (≤ 1e-5)
+    # USE THIS FOR: Validating analytical code against finite differences
+    # (e.g., fisher_information vs finite_difference_fisher)
+    #
+    # Error analysis for 4-point FD stencil with eps=1e-5:
+    # - Truncation error: O(eps²) ~ 1e-10 (what we'd ideally achieve)
+    # - Rounding error: O(ε_machine/eps²) ~ 1e-15/1e-10 = 1e-5 (dominates!)
+    #
+    # Each ψ(θ) evaluation has ~1e-15 error. Computing Hessian via
+    # (ψ_++ - ψ_+- - ψ_-+ + ψ_--)/(4·eps²) amplifies this by 1/eps².
+    # Therefore atol=1e-5 is the expected limitation, not a fudge factor.
+    D_numerical = {
+        'rtol': 1e-5,  # Relative error for large matrix elements
+        'atol': 1e-5,  # Absolute error dominated by rounding amplification
+        'description': 'Numerical validation (analytical vs finite difference)'
     }
 
     # Category F: Physical Validation (≤ 1e-4)
@@ -138,6 +159,10 @@ def select_tolerance_category(operation_type: str) -> dict:
         # Category E_coarse: Coarse numerical integration
         'duhamel_integration': QuantumTolerances.E_coarse,
         'finite_quadrature': QuantumTolerances.E_coarse,
+        
+        # Category D_numerical: Analytical vs numerical comparison
+        'numerical_validation': QuantumTolerances.D_numerical,
+        'analytical_vs_fd': QuantumTolerances.D_numerical,
 
         # Category F: Validation
         'optimality': QuantumTolerances.F,

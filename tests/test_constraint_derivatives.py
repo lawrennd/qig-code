@@ -76,8 +76,8 @@ class TestMarginalEntropyGradient:
             # Finite-difference gradient
             grad_fd = finite_difference_constraint_gradient(exp_family, theta, eps=1e-6)
             
-            # Compare gradients (Category D: analytical derivatives)
-            quantum_assert_close(grad_impl, grad_fd, 'constraint_gradient',
+            # Compare gradients (Category D_numerical: analytical vs FD)
+            quantum_assert_close(grad_impl, grad_fd, 'numerical_validation',
                                err_msg=f"{n_sites} sites d={d} trial {trial}: Gradients mismatch")
     
     def test_gradient_chain_rule(self):
@@ -88,8 +88,8 @@ class TestMarginalEntropyGradient:
         C_impl, grad_impl = exp_family.marginal_entropy_constraint(theta)
         grad_numerical = finite_difference_constraint_gradient(exp_family, theta, eps=1e-6)
         
-        # Compare (Category D: analytical derivatives)
-        quantum_assert_close(grad_impl, grad_numerical, 'constraint_gradient',
+        # Compare (Category D_numerical: analytical vs FD)
+        quantum_assert_close(grad_impl, grad_numerical, 'numerical_validation',
                            err_msg="Chain rule gradient doesn't match numerical")
 
 
