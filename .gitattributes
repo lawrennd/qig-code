@@ -1,0 +1,3 @@
+# Automatically strip output from Jupyter notebooks
+*.ipynb filter=nbstripout
+
