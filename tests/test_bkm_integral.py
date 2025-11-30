@@ -145,11 +145,11 @@ def test_single_qubit_x_y():
     
     print(f"\nBKM kernel k:\n{k}")
     
-    # Assemble metric
-    G_XX_spectral = np.sum(k * F_X_eig * F_X_eig.T.conj()).real
-    G_XY_spectral = np.sum(k * F_X_eig * F_Y_eig.T.conj()).real
-    G_YX_spectral = np.sum(k * F_Y_eig * F_X_eig.T.conj()).real
-    G_YY_spectral = np.sum(k * F_Y_eig * F_Y_eig.T.conj()).real
+    # Assemble metric using element-wise conjugate (not Hermitian conjugate)
+    G_XX_spectral = np.sum(k * F_X_eig * np.conj(F_X_eig)).real
+    G_XY_spectral = np.sum(k * F_X_eig * np.conj(F_Y_eig)).real
+    G_YX_spectral = np.sum(k * F_Y_eig * np.conj(F_X_eig)).real
+    G_YY_spectral = np.sum(k * F_Y_eig * np.conj(F_Y_eig)).real
     
     G_spectral = np.array([
         [G_XX_spectral, G_XY_spectral],

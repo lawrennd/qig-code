@@ -211,13 +211,14 @@ class DiagonalQuantumExponentialFamily:
         diag_mask = np.eye(len(p), dtype=bool)
         k[diag_mask] = p
         
-        # Step 4: assemble G_ab
+        # Step 4: assemble G_ab = Σ_{i,j} k(p_i, p_j) A_a[i,j] conj(A_b[i,j])
         G = np.zeros((n, n))
         for a in range(n):
             A_a = A_tilde[a]
             for b in range(a, n):
                 A_b = A_tilde[b]
-                prod = A_a * A_b.T.conj()
+                # BKM inner product uses element-wise conjugate, not Hermitian conjugate
+                prod = A_a * np.conj(A_b)
                 Gab = np.sum(k * prod)
                 Gab_real = float(np.real(Gab))
                 G[a, b] = Gab_real
@@ -399,10 +400,10 @@ class TestCommutingBKMMetric:
             family.psi = family.log_partition
         H = finite_difference_fisher(family, theta, eps=1e-5)
         
-        # Check agreement (Category D: analytical derivatives)
-        quantum_assert_close(G_analytic, H, 'fisher_metric',
+        # Check agreement (Category D_numerical: analytical vs FD)
+        quantum_assert_close(G_analytic, H, 'numerical_validation',
                            err_msg="Analytic BKM does not match FD Hessian")
-        quantum_assert_close(G_spectral, H, 'fisher_metric',
+        quantum_assert_close(G_spectral, H, 'numerical_validation',
                            err_msg="Spectral BKM does not match FD Hessian")
 
 
@@ -486,7 +487,7 @@ class TestQuantumExponentialFamilyCommutingCase:
         diag_mask = np.eye(len(p), dtype=bool)
         k[diag_mask] = p
         
-        prod = A_tilde * A_tilde.T.conj()
+        prod = A_tilde * np.conj(A_tilde)
         G_spectral = np.array([[float(np.real(np.sum(k * prod)))]])
         
         # Check agreement (Category D: analytical derivatives)
@@ -657,7 +658,8 @@ class RotatedDiagonalFamily:
             A_a = A_tilde[a]
             for b in range(a, n):
                 A_b = A_tilde[b]
-                prod = A_a * A_b.T.conj()
+                # BKM inner product uses element-wise conjugate
+                prod = A_a * np.conj(A_b)
                 Gab = np.sum(k * prod)
                 Gab_real = float(np.real(Gab))
                 G[a, b] = Gab_real
@@ -840,7 +842,8 @@ class TestPartiallyCommutingBKM:
                 A_a = A_tilde[a]
                 for b in range(a, n):
                     A_b = A_tilde[b]
-                    prod = A_a * A_b.T.conj()
+                    # BKM inner product uses element-wise conjugate
+                    prod = A_a * np.conj(A_b)
                     Gab = np.sum(k * prod)
                     Gab_real = float(np.real(Gab))
                     G[a, b] = Gab_real
@@ -996,7 +999,8 @@ class TestSimpleNonCommuting:
                     A_a = A_tilde[a]
                     for b in range(a, n):
                         A_b = A_tilde[b]
-                        prod = A_a * A_b.T.conj()
+                        # BKM inner product uses element-wise conjugate
+                        prod = A_a * np.conj(A_b)
                         Gab = np.sum(k * prod)
                         Gab_real = float(np.real(Gab))
                         G[a, b] = Gab_real
@@ -1022,7 +1026,7 @@ class TestSimpleNonCommuting:
         print(f"Finite-diff Hessian:\n{G_fd}")
         print(f"Difference:\n{G_spectral - G_fd}")
         
-        quantum_assert_close(G_spectral, G_fd, 'fisher_metric',
+        quantum_assert_close(G_spectral, G_fd, 'numerical_validation',
                            err_msg="Non-commuting case (X,Y): spectral vs FD mismatch")
     
     def test_single_qubit_all_paulis(self):
@@ -1049,8 +1053,8 @@ class TestSimpleNonCommuting:
                 print(f"Finite-diff Hessian:\n{G_fd}")
                 print(f"Difference:\n{G_spectral - G_fd}")
             
-            # Category D: analytical derivatives
-            quantum_assert_close(G_spectral, G_fd, 'fisher_metric',
+            # Category D_numerical: analytical vs finite difference
+            quantum_assert_close(G_spectral, G_fd, 'numerical_validation',
                                err_msg=f"Trial {trial}: Non-commuting Paulis: spectral vs FD mismatch")
     
     def test_two_qubits_local_paulis(self):
@@ -1086,8 +1090,8 @@ class TestSimpleNonCommuting:
             print(f"\n⚠️  EXPECTED FAILURE: rel_err={rel_err:.3e} >> 1e-4")
             print("This confirms the non-commuting case has fundamental issues.")
         
-        # Category D: analytical derivatives
-        quantum_assert_close(G_spectral, G_fd, 'fisher_metric',
+        # Category D_numerical: analytical vs finite difference
+        quantum_assert_close(G_spectral, G_fd, 'numerical_validation',
                            err_msg=f"Two-qubit case: spectral vs FD mismatch (known issue)")
 
 
