@@ -1439,11 +1439,13 @@ class QuantumExponentialFamily:
         rho_mixed = np.eye(self.D) / self.D
         rho_target = (1 - epsilon) * rho_bell + epsilon * rho_mixed
         
-        # Find parameters by least squares (simplified approach)
-        # In practice, this requires solving the exponential family inverse problem
-        # For now, return small random perturbation (placeholder)
-        # TODO: Implement proper inverse exponential family map
-        theta = np.random.randn(self.n_params) * 0.1
+        # For exponential family, parameters are expectation values:
+        # θ_a = Tr(ρ_target F_a)
+        # This works for small epsilon; for pure states we'd need to solve
+        # the exponential family equation properly, but regularization makes it tractable.
+        theta = np.zeros(self.n_params)
+        for a, F_a in enumerate(self.operators):
+            theta[a] = np.real(np.trace(rho_target @ F_a))
         
         return theta
 
