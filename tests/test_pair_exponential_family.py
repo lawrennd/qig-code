@@ -438,11 +438,13 @@ class TestRhoDerivativeNumerical:
 
         for a in range(min(5, exp_fam.n_params)):  # Test first 5 parameters for speed
             rho_deriv_analytical = exp_fam.rho_derivative(theta, a, method='duhamel')
-            rho_deriv_numerical = finite_difference_rho_derivative(exp_fam, theta, a)
+            # Use eps=1e-5 for finite differences to match tolerance framework
+            rho_deriv_numerical = finite_difference_rho_derivative(exp_fam, theta, a, eps=1e-5)
 
-            # Compare with analytical derivative precision (Category D)
+            # Compare with numerical validation tolerance (analytical Duhamel vs FD)
+            # Duhamel has inherent accuracy ~1e-8 due to quadrature integration
             quantum_assert_close(rho_deriv_analytical, rho_deriv_numerical,
-                               'jacobian',  # ρ derivatives are Jacobian-like
+                               'numerical_validation',  # Category D_numerical for analytical vs FD
                                f"Two-pair ρ derivative parameter {a} mismatch")
 
 
