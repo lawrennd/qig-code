@@ -578,11 +578,13 @@ class TestConstraintGradient:
         # Test at zero (simpler case)
         theta = np.zeros(exp_fam.n_params)
 
-        grad_analytical = finite_difference_constraint_gradient(exp_fam, theta, eps=1e-6)
-        grad_numerical = finite_difference_constraint_gradient(exp_fam, theta, eps=1e-7)
+        # Use eps=1e-5 and eps=5e-6 for convergence check
+        # Avoid eps=1e-7 which has rounding error O(ε_machine/eps) ~ 1e-9
+        grad_analytical = finite_difference_constraint_gradient(exp_fam, theta, eps=1e-5)
+        grad_numerical = finite_difference_constraint_gradient(exp_fam, theta, eps=5e-6)
 
-        # Compare different epsilons for convergence check
-        quantum_assert_close(grad_analytical, grad_numerical, 'constraint_gradient',
+        # Compare with numerical validation tolerance (allows ~1e-5 error)
+        quantum_assert_close(grad_analytical, grad_numerical, 'numerical_validation',
                            "Two pair constraint gradient convergence test failed")
 
 
@@ -598,17 +600,20 @@ class TestJacobianNumerical:
         """Test Jacobian analytical vs finite difference."""
         exp_fam = single_pair_family
 
-        # Test at maximally mixed state
-        theta = np.zeros(exp_fam.n_params)
+        # Test away from θ=0 to avoid singularity where a=0
+        # At θ=0 (maximally mixed state), the constraint gradient a=0
+        # which makes the Lagrange multiplier ν=0 singular
+        np.random.seed(42)  # For reproducibility
+        theta = np.random.randn(exp_fam.n_params) * 0.1
 
         # Analytical Jacobian
         M_analytical = exp_fam.jacobian(theta)
 
-        # Numerical Jacobian
-        M_numerical = finite_difference_jacobian(exp_fam, theta)
+        # Numerical Jacobian (use eps=1e-5 to match tolerance framework)
+        M_numerical = finite_difference_jacobian(exp_fam, theta, eps=1e-5)
 
-        # Compare with analytical derivative precision (Category D)
-        quantum_assert_close(M_analytical, M_numerical, 'jacobian',
+        # Compare with numerical validation tolerance (Category D_numerical)
+        quantum_assert_close(M_analytical, M_numerical, 'numerical_validation',
                            "Jacobian analytical vs numerical mismatch")
 
     def test_jacobian_dynamics_nonzero(self, single_pair_family):

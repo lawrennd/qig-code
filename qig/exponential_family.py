@@ -324,9 +324,12 @@ class QuantumExponentialFamily:
         log_diff = np.log(p_i) - np.log(p_j)
         
         k = np.zeros_like(diff)
-        off_diag = np.abs(diff) > 1e-14
-        k[off_diag] = diff[off_diag] / log_diff[off_diag]
-        k[np.diag_indices(len(p))] = p
+        # For non-degenerate eigenvalues: k(p_i, p_j) = (p_i - p_j)/(log p_i - log p_j)
+        non_degenerate = np.abs(diff) > 1e-14
+        k[non_degenerate] = diff[non_degenerate] / log_diff[non_degenerate]
+        # For degenerate or near-degenerate eigenvalues: k(p_i, p_j) → (p_i + p_j)/2 ≈ p
+        degenerate = np.abs(diff) <= 1e-14
+        k[degenerate] = 0.5 * (p_i + p_j)[degenerate]
         
         return k, p, U
 
