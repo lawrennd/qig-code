@@ -1,8 +1,64 @@
-# Testing and CI/CD for CIP-0002 Migration
+# Testing Documentation
 
-This document describes the testing infrastructure for the CIP-0002 migration validation.
+This document describes the testing infrastructure for the QIG codebase.
 
 ## Overview
+
+The QIG project has multiple testing layers:
+1. **Unit Tests**: `tests/test_*.py` - Core functionality tests
+2. **Notebook Tests**: `tests/test_notebook.py` - Jupyter notebook validation
+3. **Integration Tests**: Various validation scripts
+4. **GitHub Actions CI/CD**: Automated testing workflows
+
+## Notebook Testing
+
+### Available Notebooks
+
+- `examples/generate-origin-paper-figures.ipynb` - Paper figure generation and validation
+
+### Running Notebook Tests
+
+#### Option 1: Via pytest (recommended)
+
+```bash
+# Run the notebook test (marked as slow)
+pytest tests/test_notebook.py::test_default_notebook -v
+
+# Skip slow tests in regular test runs
+pytest -m "not slow"
+
+# Run only slow tests
+pytest -m slow
+```
+
+#### Option 2: Direct execution
+
+```bash
+# Test default notebook
+python tests/test_notebook.py
+
+# Test specific notebook
+python tests/test_notebook.py examples/generate-origin-paper-figures.ipynb
+
+# Test all notebooks
+python tests/test_notebook.py --all
+```
+
+### Notebook Test Configuration
+
+The notebook test script supports environment variables for configuration:
+
+```bash
+# With custom configuration
+QUTRIT_DIM=4 DYNAMICS_POINTS=10 python tests/test_notebook.py
+
+# Quick test mode
+DYNAMICS_POINTS=5 DYNAMICS_T_MAX=0.5 python tests/test_notebook.py
+```
+
+See the script header in `tests/test_notebook.py` for all available environment variables.
+
+## CIP-0002 Migration Testing
 
 The migration from LOCAL to PAIR operators is validated through:
 1. **Interactive Jupyter Notebook**: `CIP-0002_Migration_Validation.ipynb`

@@ -2,17 +2,17 @@
 """
 Test script for Jupyter Notebooks
 
-This script executes Jupyter notebooks from the project root and validates they 
-complete successfully. It can be run with different configurations via environment variables.
+This script executes Jupyter notebooks and validates they complete successfully. 
+It can be run with different configurations via environment variables.
 
 Usage:
-    # Test default notebook (generate-paper-figures.ipynb)
+    # Test default notebook (examples/generate-origin-paper-figures.ipynb)
     python tests/test_notebook.py
     
-    # Test specific notebook
-    python tests/test_notebook.py quantum_qutrit_experiments.ipynb
+    # Test specific notebook (relative to project root)
+    python tests/test_notebook.py examples/generate-origin-paper-figures.ipynb
     
-    # Test all notebooks in root directory
+    # Test all notebooks in root directory and examples/
     python tests/test_notebook.py --all
     
     # With custom configuration
@@ -33,7 +33,7 @@ Environment Variables:
     THETA_SCALE: Parameter scaling (default: 0.5)
     TOLERANCE: Numerical tolerance (default: 1e-6)
 
-Note: All notebooks are located in the project root directory.
+Note: Notebooks may be located in the project root directory or in examples/.
 """
 
 import os
@@ -42,6 +42,20 @@ import subprocess
 import tempfile
 import json
 from pathlib import Path
+
+try:
+    import pytest
+    HAS_PYTEST = True
+except ImportError:
+    pytest = None
+    HAS_PYTEST = False
+
+# Decorator that applies pytest.mark.slow if pytest is available
+def slow_test(func):
+    """Mark test as slow if pytest is available."""
+    if HAS_PYTEST:
+        return pytest.mark.slow(func)
+    return func
 
 def run_notebook(notebook_path, output_path=None):
     """
@@ -117,7 +131,7 @@ def run_notebook(notebook_path, output_path=None):
         print("❌ jupyter not found. Install with: pip install jupyter nbconvert")
         return False, None
 
-def check_notebook_outputs(notebook_path):
+def check_notebook_outputs(notebook_path, require_pass_markers=False):
     """
     Check that notebook contains expected success markers.
     
@@ -125,16 +139,36 @@ def check_notebook_outputs(notebook_path):
     ----------
     notebook_path : str or Path
         Path to executed notebook
+    require_pass_markers : bool, optional
+        If True, require specific ✅ PASSED markers in outputs.
+        If False, just check that notebook executed without errors.
         
     Returns
     -------
     success : bool
-        True if all expected outputs found
+        True if validation criteria met
     """
     with open(notebook_path, 'r') as f:
         notebook = json.load(f)
     
-    # Look for "PASSED" in outputs
+    # Check for execution errors
+    error_count = 0
+    for cell in notebook['cells']:
+        if cell['cell_type'] == 'code' and 'outputs' in cell:
+            for output in cell['outputs']:
+                if output.get('output_type') == 'error':
+                    error_count += 1
+                    print(f"\n❌ Error in cell: {output.get('ename', 'Unknown')}: {output.get('evalue', '')}")
+    
+    if error_count > 0:
+        print(f"\n❌ Found {error_count} error(s) in notebook execution")
+        return False
+    
+    if not require_pass_markers:
+        print(f"\n✅ Notebook executed successfully with no errors")
+        return True
+    
+    # Look for "PASSED" markers in outputs
     passed_count = 0
     failed_count = 0
     
@@ -175,22 +209,23 @@ def main():
     # Check if specific notebook requested via command line
     if len(sys.argv) > 1:
         if sys.argv[1] == '--all':
-            # Test all notebooks in root directory
+            # Test all notebooks in root directory and examples/
             notebooks = sorted(project_root.glob('*.ipynb'))
+            notebooks.extend(sorted((project_root / 'examples').glob('*.ipynb')))
             if not notebooks:
-                print("❌ No notebooks found in project root")
+                print("❌ No notebooks found in project root or examples/")
                 sys.exit(1)
             print(f"Found {len(notebooks)} notebook(s) to test:")
             for nb in notebooks:
-                print(f"  - {nb.name}")
+                print(f"  - {nb.relative_to(project_root)}")
             print()
         else:
             # Test specific notebook
             notebook_path = project_root / sys.argv[1]
             notebooks = [notebook_path]
     else:
-        # Default: test the main validation notebook
-        notebook_path = project_root / "generate-paper-figures.ipynb"
+        # Default: test the main validation notebook in examples/
+        notebook_path = project_root / "examples" / "generate-origin-paper-figures.ipynb"
         notebooks = [notebook_path]
     
     # Run all notebooks
@@ -209,8 +244,10 @@ def main():
             continue
 
         # Check outputs
-        if not check_notebook_outputs(output_path):
-            print(f"\n❌ TEST FAILED: Not all experiments passed in {notebook_path.name}")
+        # Figure generation notebooks don't need PASSED markers
+        require_markers = 'test' in notebook_path.name.lower() or 'validation' in notebook_path.name.lower()
+        if not check_notebook_outputs(output_path, require_pass_markers=require_markers):
+            print(f"\n❌ TEST FAILED: Validation failed for {notebook_path.name}")
             all_success = False
             continue
 
@@ -226,6 +263,33 @@ def main():
         print("❌ SOME TESTS FAILED")
         print("="*70)
         sys.exit(1)
+
+@slow_test
+def test_default_notebook():
+    """Pytest-compatible test for the default notebook.
+    
+    This test is marked as 'slow' because notebook execution can take several minutes.
+    Run with: pytest tests/test_notebook.py::test_default_notebook -v
+    Skip with: pytest -m "not slow"
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+    
+    # Find notebook - look in project root (parent of tests/)
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "generate-origin-paper-figures.ipynb"
+    
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+    
+    # Execute notebook
+    success, output_path = run_notebook(notebook_path)
+    assert success, f"Notebook execution failed: {notebook_path.name}"
+    
+    # Check outputs (figure generation notebook, no pass markers required)
+    assert check_notebook_outputs(output_path, require_pass_markers=False), \
+        f"Notebook validation failed: {notebook_path.name}"
 
 if __name__ == "__main__":
     main()
