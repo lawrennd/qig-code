@@ -1,0 +1,10 @@
+include README.md
+include LICENSE
+include requirements.txt
+include pytest.ini
+recursive-include qig *.py
+recursive-include tests *.py
+recursive-include examples *.py *.ipynb
+prune examples/diagrams
+prune examples/fig_*.pdf
+

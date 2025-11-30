@@ -1,58 +1,46 @@
-# The Inaccessible Game (Quantum Implementation)
+# QIG - Quantum Information Geometry
 
-[![CI/CD Tests](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/tests.yml/badge.svg)](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/tests.yml)
+[![Tests](https://github.com/lawrennd/qig-code/actions/workflows/tests.yml/badge.svg)](https://github.com/lawrennd/qig-code/actions/workflows/tests.yml)
+[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A Python implementation of simulations from the quantum inaccessible game: a constrained information geometry framework for studying maximum entropy production with marginal entropy constraints.
+A Python package for quantum information geometry: constrained dynamics in quantum exponential families, featuring the "inaccessible game" framework for studying maximum entropy production with marginal entropy constraints.
 
 ## 🎯 Overview
 
-This codebase implements the quantum version of the "inaccessible game" described in the paper *"The Origin of the Inaccessible Game"*. The game studies the evolution of quantum states under the constraint that marginal entropies remain constant, revealing connections between:
+`qig` implements quantum systems evolving under marginal entropy constraints, revealing connections between:
 
 - **Quantum information geometry** (Fisher information, BKM metric)
 - **Maximum entropy production** (GENERIC framework)
 - **Entanglement dynamics** (mutual information evolution)
 - **Optimal quantum systems** (qutrit optimality)
 
+## 🚀 Installation
 
-## 🚀 Quick Start
-
-### Installation
-
+### From PyPI (when published)
 ```bash
-# Clone the repository
-git clone https://github.com/lawrennd/the-inaccessible-game-orgin.git
-cd the-inaccessible-game-orgin
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run tests to verify installation
-pytest tests/
-python tests/test_notebook.py
+pip install qig
 ```
 
-### Development Setup
-
-For contributors, set up notebook filtering to automatically strip outputs:
-
+### Development Installation
 ```bash
-# Install nbstripout (included in requirements.txt)
-pip install nbstripout
-
-# Install git filter (one-time setup)
-nbstripout --install
+git clone https://github.com/lawrennd/qig-code.git
+cd qig-code
+pip install -e .
 ```
 
-This automatically strips notebook outputs, execution counts, and metadata on commit, preventing merge conflicts and keeping the repository clean.
+### With Development Tools
+```bash
+pip install -e ".[dev]"
+```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for complete development guidelines.
-
-### Basic Usage
+## 📖 Quick Start
 
 ```python
 from qig.exponential_family import QuantumExponentialFamily
 from qig.dynamics import InaccessibleGameDynamics
 from qig.core import create_lme_state
+import numpy as np
 
 # Create a system with 1 qutrit pair (genuine entanglement!)
 exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
@@ -62,7 +50,6 @@ dynamics = InaccessibleGameDynamics(exp_fam)
 rho_lme, dims = create_lme_state(n_sites=2, d=3)
 
 # Integrate constrained dynamics
-import numpy as np
 theta_0 = np.random.randn(exp_fam.n_params) * 0.1
 solution = dynamics.integrate(theta_0, (0, 5.0), n_points=100)
 
@@ -72,67 +59,9 @@ I_final = exp_fam.mutual_information(solution['theta'][-1])
 print(f"Mutual information: {I_initial:.3f} → {I_final:.3f}")
 ```
 
-### Run Validation Experiments
+## 🔬 The Inaccessible Game
 
-```bash
-# Run all 4 validation experiments (interactive notebook)
-jupyter notebook generate-paper-figures.ipynb
-
-# Or run on Google Colab (no local installation needed!)
-# Click the "Open in Colab" badge in the notebook
-
-# Or run programmatically
-python tests/test_notebook.py
-
-# Run comprehensive Python suite
-python run_all_migrated_experiments.py
-```
-
-## Project Structure
-
-```
-the-inaccessible-game-orgin/
-├── qig/                                    # Core quantum information geometry library
-│   ├── exponential_family.py              # Quantum exponential family (pair operators)
-│   ├── dynamics.py                         # Constrained dynamics integration
-│   ├── core.py                             # Basic quantum operations
-│   ├── pair_operators.py                   # su(d²) generators for entangled pairs
-│   └── duhamel.py                          # High-precision quantum derivatives
-│
-├── generate-paper-figures.ipynb            # Interactive validation notebook
-├── run_all_migrated_experiments.py        # Unified validation suite
-│
-├── quantum_qutrit_n3.py                    # Backward-compatible wrapper (migrated)
-├── inaccessible_game_quantum.py           # Core game implementation
-├── validate_qutrit_optimality.py          # Qutrit optimality tests
-├── advanced_analysis.py                    # GENERIC decomposition, time parametrizations
-├── run_qutrit_experiment.py               # Full qutrit experiments
-├── run_qutrit_quick.py                     # Quick qutrit tests
-│
-├── tests/                                  # Test suite
-│   ├── test_notebook.py                   # Automated notebook testing
-│   ├── test_pair_exponential_family.py    # Pair operator tests
-│   ├── test_pair_numerical_validation.py  # Numerical gradient validation
-│   ├── test_jacobian_analytic.py          # Analytic Jacobian tests
-│   └── ...                                 # Additional test files
-│
-├── cip/                                    # Code Improvement Plans
-│   ├── cip0001.md                         # Consolidation & documentation
-│   └── cip0002.md                         # LOCAL → PAIR migration (COMPLETED)
-│
-├── backlog/                                # Task tracking
-├── .github/workflows/                      # CI/CD pipelines
-│   ├── tests.yml                          # Main test suite
-│   └── notebook-tests.yml                 # Notebook validation tests
-├── TESTING.md                              # Testing guide
-└── README.md                               # This file
-```
-
-## 🔬 The Quantum Inaccessible Game
-
-### What is it?
-
-The inaccessible game studies quantum systems evolving under a **marginal entropy constraint**:
+The package implements quantum systems under **marginal entropy constraints**:
 
 ```
 Constraint: C(θ) = Σᵢ hᵢ(θ) = constant
@@ -141,198 +70,107 @@ Dynamics:   θ̇ = -Π∥(G·θ)
 
 where:
 - `θ` are natural parameters of a quantum exponential family
-- `hᵢ` are marginal von Neumann entropies
+- `hᵢ` are marginal von Neumann entropies  
 - `G` is the BKM metric (quantum Fisher information)
 - `Π∥` projects onto the constraint manifold
 
-### Why "Inaccessible"?
+### Key Results
 
-The constraint makes the *underlying variables inaccessible* to direct control. An information relaxation principle triggers the system to maximise H while keeping marginal entropies fixed, revealing:
+1. **Maximum entropy production**: Systems evolve to maximize joint entropy H while preserving marginal entropies
+2. **Qutrit optimality**: Qutrits (d=3) are optimal under certain resource constraints
+3. **GENERIC structure**: Dynamics decompose into dissipative + Hamiltonian parts
+4. **Block-diagonal Fisher metric**: Non-interacting pairs enable computational tractability
 
-- Maximum entropy production (dH/dt ≥ 0)
-- Entanglement-entropy tradeoffs
-- GENERIC structure (dissipative + Hamiltonian)
-- Qutrit optimality under resource constraints
+## 📚 API Documentation
 
-## 🧪 Testing
-
-### Local Testing
-
-```bash
-# Run pytest suite
-pytest tests/
-
-# Quick smoke test
-DYNAMICS_POINTS=5 DYNAMICS_T_MAX=0.5 python tests/test_notebook.py
-
-# Full validation
-python tests/test_notebook.py
-
-# All migrated experiments
-python run_all_migrated_experiments.py
-```
-
-### CI/CD
-
-[![Tests](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/tests.yml/badge.svg)](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/tests.yml)
-[![Notebook Tests](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/notebook-tests.yml/badge.svg)](https://github.com/lawrennd/the-inaccessible-game-orgin/actions/workflows/notebook-tests.yml)
-
-GitHub Actions workflows **automatically run** on every push/PR:
-
-#### Main Test Suite (`tests.yml`)
-- **Pytest Suite** - All unit tests in `tests/` directory
-- **Migrated Experiments** - `run_all_migrated_experiments.py`
-- **Phase 3 Validation** - `validate_phase3_entanglement.py`
-- Runtime: ~30-40 seconds
-
-#### Notebook Tests (`notebook-tests.yml`)
-Three parameterized configurations:
-
-1. **Default Config** - Full validation (20 integration points, d=3)
-   - Tests: 4/4 experiments (entanglement, dynamics, comparison, API)
-   - Runtime: ~30-40 seconds
-   
-2. **Quick Config** - Fast smoke test (5 points, 0.5s)
-   - Same tests with reduced parameters
-   - Runtime: ~15-20 seconds
-   
-3. **Custom Config** - Manual workflow dispatch
-   - Specify custom `QUTRIT_DIM`, `DYNAMICS_POINTS`
-   - Useful for edge case testing
-
-**View Results**: Repository → Actions → "Tests" or "Notebook Tests"
-
-See [TESTING.md](TESTING.md) for complete testing guide.
-
-### Parameterized Testing
-
-Use environment variables to customize tests:
-
-```bash
-# Test with 2 qutrit pairs
-N_PAIRS=2 python tests/test_notebook.py
-
-# Test with ququarts (d=4)
-QUTRIT_DIM=4 python tests/test_notebook.py
-
-# Stricter numerical tolerance
-TOLERANCE=1e-8 python tests/test_notebook.py
-```
-
-## 📚 Documentation
-
-### Core Documentation
-
-- **[TESTING.md](TESTING.md)**: Complete testing guide with examples
-- **[CIP-0001](cip/cip0001.md)**: Code consolidation & documentation
-- **[CIP-0002](cip/cip0002.md)**: LOCAL → PAIR migration (critical!)
-- **[Backlog](backlog/)**: Task tracking and feature planning
-
-### Interactive Notebooks
-
-- **[generate-paper-figures.ipynb](generate-paper-figures.ipynb)**: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lawrennd/the-inaccessible-game-orgin/blob/main/generate-paper-figures.ipynb)
-  - 4 experiments validating the migration (entanglement, dynamics, comparison, API)
-  - Markdown explanations between code
-  - Parameterizable via environment variables
-  - **Run in Google Colab with zero setup!**
-
-- **[quantum_qutrit_experiments.ipynb](quantum_qutrit_experiments.ipynb)**:
-  - Qutrit system experiments
-  - Visualization and analysis
-
-### Key Modules
+### Core Modules
 
 #### `qig.exponential_family.QuantumExponentialFamily`
+
 Quantum exponential family with pair operators:
+
 ```python
-exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
-rho = exp_fam.density_matrix(theta)
-G = exp_fam.fisher_information(theta)
-I = exp_fam.mutual_information(theta)
+exp_fam = QuantumExponentialFamily(
+    n_pairs=1,      # Number of entangled pairs
+    d=3,            # Local dimension (qubits: d=2, qutrits: d=3)
+    pair_basis=True # Use su(d²) generators per pair
+)
+
+# Compute quantum properties
+rho = exp_fam.density_matrix(theta)          # Density matrix
+G = exp_fam.fisher_information(theta)        # BKM metric
+H = exp_fam.entropy(theta)                   # von Neumann entropy
+I = exp_fam.mutual_information(theta)        # Mutual information
+h = exp_fam.marginal_entropies(theta)        # Marginal entropies
 ```
 
 #### `qig.dynamics.InaccessibleGameDynamics`
+
 Constrained dynamics integration:
+
 ```python
 dynamics = InaccessibleGameDynamics(exp_fam)
-solution = dynamics.integrate(theta_0, (0, 5.0), n_points=100)
-# solution contains: theta, H, constraint, time, success
+
+solution = dynamics.integrate(
+    theta_0,           # Initial parameters
+    (0, 5.0),         # Time span
+    n_points=100,     # Number of points
+    method='RK45'     # Integration method
+)
+
+# Solution contains:
+# - theta: parameter trajectory
+# - H: entropy evolution
+# - constraint: constraint satisfaction
+# - time: time points
+# - success: integration status
 ```
 
 #### `qig.pair_operators`
+
 Operator basis generation:
+
 ```python
 from qig.pair_operators import bell_state, gell_mann_generators
-rho_bell = bell_state(d=2)  # Qubit Bell state
-su9_ops = gell_mann_generators(d=3)  # 80 su(9) generators
+
+# Qubit Bell state
+rho_bell = bell_state(d=2)
+
+# su(9) generators for qutrit pairs
+su9_ops = gell_mann_generators(d=3)  # 80 generators
 ```
 
-## 🎓 Paper & Theory
+#### `qig.duhamel`
 
-### Key Results
+High-precision quantum derivatives using Duhamel's formula:
 
-1. **Maximum entropy production**: Systems evolve to maximise joint entropy H while preserving marginal entropies
-2. **Qutrit optimality**: Qutrits (d=3) are optimal under certain level based resource constraints
-3. **GENERIC structure**: Dynamics decompose into dissipative (symmetric) + Hamiltonian (antisymmetric) parts
-4. **Block-diagonal Fisher metric**: Non-interacting pairs → sparse structure → computational tractability
+```python
+from qig.duhamel import duhamel_derivative
 
-### Theoretical Framework
-
-The quantum exponential family:
-```
-ρ(θ) = exp(Σₐ θₐFₐ - ψ(θ)) 
+# Precise derivatives for quantum exponential families
+dH_dtheta = duhamel_derivative(rho, drho_dtheta, order=10)
 ```
 
-where `Fₐ` are su(d²) generators for each pair and ψ(θ) is the cumulant generating function (log partition function).
+## 🧪 Testing
 
-**BKM Metric** (quantum Fisher information):
-```
-Gₐᵦ = ∂ₐ∂ᵦψ(θ)
-```
+```bash
+# Run full test suite
+pytest tests/
 
-**Marginal entropy constraint**:
-```
-C(θ) = Σᵢ hᵢ(θ) = constant
-hᵢ = -Tr[ρᵢ log ρᵢ]
-```
+# Run with coverage
+pytest tests/ --cov=qig --cov-report=html
 
-**Projected dynamics**:
-```
-θ̇ = -Π∥(G·θ) = -(I - a(aᵀa)⁻¹aᵀ)·G·θ
+# Quick smoke test
+DYNAMICS_POINTS=5 DYNAMICS_T_MAX=0.5 pytest tests/
 ```
 
-where `a = ∇C` is the constraint gradient.
+## 📓 Examples
 
-## 🤝 Contributing
+See the `examples/` directory:
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+- **`generate-origin-paper-figures.ipynb`**: Interactive demonstration notebook with validation experiments [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lawrennd/qig-code/blob/main/examples/generate-origin-paper-figures.ipynb)
 
-### Quick Start for Contributors
-
-1. Fork and clone the repository
-2. Install dependencies: `pip install -r requirements.txt`
-3. **Set up notebook filtering**: `nbstripout --install` (prevents merge conflicts)
-4. Create a feature branch: `git checkout -b feature/your-feature`
-5. Make changes and add tests
-6. Run test suite: `pytest tests/ && python test_notebook.py`
-7. Commit with clear messages (reference CIPs/backlog when applicable)
-8. Push and create pull request
-
-**Important**: Use surgical `git add` for specific files, not `git add -A`. See [CONTRIBUTING.md](CONTRIBUTING.md) for VibeSafe workflow guidelines.
-
-### Project Management (VibeSafe)
-
-This project uses [VibeSafe](https://github.com/lawrennd/vibesafe) for structured project management:
-- **Tenets**: `tenets/` - Guiding principles
-- **Backlog**: `backlog/` - Task tracking
-- **CIPs**: `cip/` - Code improvement plans (see [CIP-0002](cip/cip0002.md) for example)
-- **AI-Requirements**: `ai-requirements/` - Requirements framework
-
-Run `./whats-next` to see current project status, pending tasks, and next steps.
-
-
-
-## 📝 Citation
+## 🎓 Citation
 
 If you use this code in your research, please cite:
 
@@ -340,26 +178,43 @@ If you use this code in your research, please cite:
 @article{Lawrence-origin25,
   title={The Origin of the Inaccessible Game},
   author={Lawrence, Neil D.},
-  journal={TBD},
+  journal={arXiv preprint},
   year={2025}
 }
 ```
 
 ## 📄 License
 
-[License information to be added]
+MIT License - see [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## 🤝 Contributing
 
-- VibeSafe project management framework
-- NumPy/SciPy for numerical computation
-- Jupyter for interactive notebooks
-- pytest for testing infrastructure
+Contributions welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+### Development Setup
+
+```bash
+# Clone and install
+git clone https://github.com/lawrennd/qig-code.git
+cd qig-code
+pip install -e ".[dev]"
+
+# Set up pre-commit hooks
+nbstripout --install
+
+# Run tests
+pytest tests/
+```
+
+## 🔗 Links
+
+- **Paper Repository**: [the-inaccessible-game-origin](https://github.com/lawrennd/the-inaccessible-game-origin)
+- **Documentation**: [README](https://github.com/lawrennd/qig-code#readme)
+- **Issues**: [GitHub Issues](https://github.com/lawrennd/qig-code/issues)
 
 ## 📬 Contact
 
-For questions about the code or paper:
-- GitHub Issues: [Link to issues]
-- Email: [Contact email]
-
+For questions or collaboration:
+- GitHub Issues: [qig-code/issues](https://github.com/lawrennd/qig-code/issues)
+- Email: [Contact information]
 
