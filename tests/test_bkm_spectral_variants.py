@@ -71,7 +71,8 @@ class TestLieClosedOperators:
             theta = np.array(theta_vals)
             
             G_qig = exp_fam.fisher_information(theta)
-            G_hessian = finite_difference_fisher(exp_fam, theta)
+            # Use eps=1e-5 to match tolerance framework and avoid rounding errors
+            G_hessian = finite_difference_fisher(exp_fam, theta, eps=1e-5)
             
             quantum_assert_close(G_qig, G_hessian, 'numerical_validation',
                                 err_msg=f"Single qubit: qig ≠ Hessian at θ={theta_vals}")
@@ -84,7 +85,8 @@ class TestLieClosedOperators:
         theta = np.random.randn(exp_fam.n_params)
         
         G_qig = exp_fam.fisher_information(theta)
-        G_hessian = finite_difference_fisher(exp_fam, theta)
+        # Use eps=1e-5 to match tolerance framework and avoid rounding errors
+        G_hessian = finite_difference_fisher(exp_fam, theta, eps=1e-5)
         
         quantum_assert_close(G_qig, G_hessian, 'numerical_validation',
                             err_msg="Single qutrit: qig ≠ Hessian")
@@ -97,7 +99,8 @@ class TestLieClosedOperators:
         theta = np.random.randn(exp_fam.n_params) 
         
         G_qig = exp_fam.fisher_information(theta)
-        G_hessian = finite_difference_fisher(exp_fam, theta)
+        # Use eps=1e-5 to match tolerance framework and avoid rounding errors
+        G_hessian = finite_difference_fisher(exp_fam, theta, eps=1e-5)
         
         quantum_assert_close(G_qig, G_hessian, 'numerical_validation',
                             err_msg="Two qubits: qig ≠ Hessian")
@@ -158,7 +161,8 @@ class TestPairBasisBKM:
         theta = np.random.randn(exp_fam.n_params) * 0.1
         
         G_qig = exp_fam.fisher_information(theta)
-        G_hessian = finite_difference_fisher(exp_fam, theta)
+        # Use eps=1e-5 to match tolerance framework and avoid rounding errors
+        G_hessian = finite_difference_fisher(exp_fam, theta, eps=1e-5)
         
         quantum_assert_close(G_qig, G_hessian, 'numerical_validation',
                             err_msg="Qubit pair: qig ≠ Hessian")
@@ -171,7 +175,8 @@ class TestPairBasisBKM:
         theta = np.random.randn(exp_fam.n_params) * 0.05
         
         G_qig = exp_fam.fisher_information(theta)
-        G_hessian = finite_difference_fisher(exp_fam, theta)
+        # Use eps=1e-5 to match tolerance framework and avoid rounding errors
+        G_hessian = finite_difference_fisher(exp_fam, theta, eps=1e-5)
         
         quantum_assert_close(G_qig, G_hessian, 'numerical_validation',
                             err_msg="Qutrit pair: qig ≠ Hessian")
