@@ -6,7 +6,7 @@
 
 A Python package for quantum information geometry: constrained dynamics in quantum exponential families, featuring the "inaccessible game" framework for studying maximum entropy production with marginal entropy constraints.
 
-## 🎯 Overview
+## Overview
 
 `qig` implements quantum systems evolving under marginal entropy constraints, revealing connections between:
 
@@ -15,7 +15,7 @@ A Python package for quantum information geometry: constrained dynamics in quant
 - **Entanglement dynamics** (mutual information evolution)
 - **Optimal quantum systems** (qutrit optimality)
 
-## 🚀 Installation
+## Installation
 
 ### From GitHub
 ```bash
@@ -34,7 +34,7 @@ pip install -e .
 pip install -e ".[dev]"
 ```
 
-## 📖 Quick Start
+## Quick Start
 
 ```python
 from qig.exponential_family import QuantumExponentialFamily
@@ -66,7 +66,7 @@ I_final = exp_fam.mutual_information(solution['theta'][-1])
 print(f"Mutual information: {I_initial:.3f} → {I_final:.3f}")
 ```
 
-## 🔬 The Inaccessible Game
+## The Inaccessible Game
 
 The package implements quantum systems under *marginal entropy constraints*:
 
@@ -88,7 +88,7 @@ where:
 3. **GENERIC structure**: Dynamics decompose into dissipative + Hamiltonian parts
 4. **Block-diagonal Fisher metric**: Non-interacting pairs enable computational tractability
 
-## 📚 API Documentation
+## API Documentation
 
 ### Core Modules
 
