@@ -11,7 +11,7 @@ This module contains:
 from typing import Tuple, List, Optional
 
 import numpy as np
-from scipy.linalg import expm, eigh
+from scipy.linalg import expm, eigh, logm
 
 from qig.core import marginal_entropies, partial_trace
 from qig.pair_operators import (
@@ -1405,47 +1405,79 @@ class QuantumExponentialFamily:
         rho = self.rho_from_theta(theta)
         return np.trace(rho @ rho).real
     
-    def get_bell_state_parameters(self, epsilon: float = 0.0) -> np.ndarray:
+    def get_bell_state_parameters(self, epsilon: float = 1e-6) -> np.ndarray:
         """
-        Get parameters θ* corresponding to a (regularized) Bell state.
+        Get natural parameters θ corresponding to a regularized Bell state.
         
-        For pure Bell state (epsilon=0), θ → ∞ (singular).
-        For regularized: ρ_ε = (1-ε)|Φ⟩⟨Φ| + ε I/D
+        A Bell state is a pure state (rank 1), which lies at the boundary
+        of the exponential family where natural parameters θ → -∞.
+        
+        For regularized state: ρ_ε = (1-ε)|Φ⟩⟨Φ| + ε I/D
+        
+        We compute θ by solving: ρ_ε = exp(Σ θₐFₐ - ψ(θ))
+        
+        This gives: θₐ ∝ Tr(log(ρ_ε) Fₐ)
         
         Parameters
         ----------
-        epsilon : float, default=0.0
-            Regularization parameter (0 = pure Bell state)
+        epsilon : float, default=1e-6
+            Regularization parameter: ρ_ε = (1-ε)|Φ⟩⟨Φ| + ε I/D
+            Smaller epsilon → closer to pure Bell state (more negative θ)
+            Must be > 0 to avoid singularities.
             
         Returns
         -------
         theta : ndarray
-            Parameters close to Bell state
+            Natural parameters for the regularized Bell state.
+            Many components will be large and negative (approaching -∞
+            for pure state).
             
         Notes
         -----
-        Only works for pair_basis=True systems.
-        For epsilon > 0, we return finite parameters approximating the state.
-        For epsilon = 0, raises ValueError (pure state is singular).
+        Only works for pair_basis=True systems (n_pairs=1).
+        
+        The regularization makes the state full rank, allowing finite
+        natural parameters. As epsilon → 0, parameters θ → -∞ 
+        (pure state is at the boundary).
+        
+        For the exponential family ρ(θ) = exp(H(θ))/Z where H = Σ θₐFₐ,
+        we have: log(ρ) = H - log(Z)·I
+        
+        Since Tr(Fₐ) = 0 for our operators, we get:
+        θₐ = Tr(log(ρ) Fₐ) / Tr(FₐFₐ)
         """
         if not self.pair_basis:
             raise ValueError("Bell states only defined for pair_basis=True")
         
-        if epsilon == 0.0:
-            raise ValueError("Pure Bell state is singular (θ → ∞). Use epsilon > 0.")
+        if self.n_pairs != 1:
+            raise ValueError("Bell state parameters only defined for single pair (n_pairs=1)")
         
-        # Create regularized Bell state
-        rho_bell = bell_state_density_matrix(self.d)
-        rho_mixed = np.eye(self.D) / self.D
-        rho_target = (1 - epsilon) * rho_bell + epsilon * rho_mixed
+        if epsilon <= 0:
+            raise ValueError("epsilon must be > 0 (pure Bell state has θ → -∞)")
         
-        # For exponential family, parameters are expectation values:
-        # θ_a = Tr(ρ_target F_a)
-        # This works for small epsilon; for pure states we'd need to solve
-        # the exponential family equation properly, but regularization makes it tractable.
+        # Create regularized Bell state: mix with maximally mixed state
+        rho_bell = bell_state_density_matrix(self.d)  # Pure Bell state (rank 1)
+        rho_mixed = np.eye(self.D) / self.D            # Maximally mixed (full rank)
+        rho_eps = (1 - epsilon) * rho_bell + epsilon * rho_mixed
+        
+        # Compute matrix logarithm
+        # For ρ_ε approaching a pure state, eigenvalues → (1, 0, 0, ...)
+        # and log eigenvalues → (0, -∞, -∞, ...)
+        log_rho = logm(rho_eps)
+        
+        # Extract natural parameters by projection onto operator basis
+        # Since our operators have Tr(Fₐ) = 0 (traceless), we use:
+        # θₐ = Tr(log(ρ) Fₐ) / Tr(FₐFₐ)
         theta = np.zeros(self.n_params)
         for a, F_a in enumerate(self.operators):
-            theta[a] = np.real(np.trace(rho_target @ F_a))
+            numerator = np.real(np.trace(log_rho @ F_a))
+            # For our basis, typically Tr(FₐFₐ) = constant (e.g., 2 for Pauli, GellMann)
+            # But we compute it to be safe
+            denominator = np.real(np.trace(F_a @ F_a))
+            if denominator > 0:
+                theta[a] = numerator / denominator
+            else:
+                theta[a] = 0.0  # Should not happen for proper basis
         
         return theta
 

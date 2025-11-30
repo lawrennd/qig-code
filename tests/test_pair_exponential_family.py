@@ -672,3 +672,138 @@ class TestComparisonWithLocalBasis:
         from tests.tolerance_framework import QuantumTolerances
         assert np.all(eig_local > -QuantumTolerances.D['atol']), "Local Fisher not positive semidefinite"
         assert np.all(eig_pair > -QuantumTolerances.D['atol']), "Pair Fisher not positive semidefinite"
+
+
+class TestBellStateParameters:
+    """Test get_bell_state_parameters() for regularized Bell states.
+    
+    Bell states are pure states (rank 1) that lie at the boundary of the
+    exponential family where natural parameters θ → -∞. The regularization
+    ρ_ε = (1-ε)|Φ⟩⟨Φ| + ε I/D makes them full rank with finite parameters.
+    """
+    
+    @pytest.mark.parametrize("d", [2, 3, 4])
+    def test_bell_state_different_dimensions(self, d):
+        """Test Bell state parameters for different local dimensions."""
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+        epsilon = 1e-4
+        
+        # Get Bell state parameters
+        theta = exp_fam.get_bell_state_parameters(epsilon=epsilon)
+        
+        # Check shape
+        assert theta.shape == (exp_fam.n_params,), \
+            f"Wrong shape: {theta.shape} vs {(exp_fam.n_params,)}"
+        
+        # Parameters should have significant magnitude (approaching boundary)
+        assert np.max(np.abs(theta)) > 1.0, \
+            "Parameters should have significant magnitude for regularized pure state"
+        
+        # Verify the density matrix matches target
+        rho_from_theta = exp_fam.rho_from_theta(theta)
+        
+        from qig.pair_operators import bell_state_density_matrix
+        rho_bell = bell_state_density_matrix(d)
+        rho_mixed = np.eye(d**2) / (d**2)
+        rho_target = (1 - epsilon) * rho_bell + epsilon * rho_mixed
+        
+        # Check fidelity (Category E - numerical precision for parameter reconstruction)
+        # Fidelity Tr(ρ(θ)·ρ_target) should be close to 1
+        fidelity = np.real(np.trace(rho_from_theta @ rho_target))
+        assert fidelity > 0.999, \
+            f"Bell state fidelity too low for d={d}: {fidelity}"
+        
+        # Check marginal entropies are log(d) (maximally mixed)
+        marginals = marginal_entropies(rho_from_theta, [d, d])
+        expected_marginal = np.log(d)
+        for h in marginals:
+            quantum_assert_scalar_close(h, expected_marginal, 'entropy',
+                                       f"Marginal entropy mismatch for d={d}")
+    
+    def test_bell_state_epsilon_scaling(self):
+        """Test that parameters grow as epsilon → 0 (approaching pure state)."""
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        
+        # Test with decreasing epsilon
+        epsilon_values = [1e-2, 1e-3, 1e-4, 1e-5]
+        max_params = []
+        min_params = []
+        
+        for eps in epsilon_values:
+            theta = exp_fam.get_bell_state_parameters(epsilon=eps)
+            max_params.append(np.max(theta))
+            min_params.append(np.min(theta))
+        
+        # As epsilon decreases, parameters should spread toward ±∞
+        # Max should increase, min should decrease
+        for i in range(len(epsilon_values) - 1):
+            assert max_params[i+1] > max_params[i], \
+                f"Max parameter should increase as epsilon decreases: {max_params}"
+            assert min_params[i+1] < min_params[i], \
+                f"Min parameter should decrease as epsilon decreases: {min_params}"
+    
+    def test_bell_state_high_entanglement(self):
+        """Test that Bell state parameters produce high mutual information."""
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        theta = exp_fam.get_bell_state_parameters(epsilon=1e-4)
+        
+        # Mutual information should be high (approaching log(d))
+        I = exp_fam.mutual_information(theta)
+        
+        # For nearly pure Bell state, I should be close to log(d)
+        # but the exact value depends on the definition used
+        assert I > 0.5, \
+            f"Mutual information too low for Bell state: {I}"
+    
+    def test_bell_state_low_entropy(self):
+        """Test that regularized Bell state has low total entropy."""
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        epsilon = 1e-4
+        theta = exp_fam.get_bell_state_parameters(epsilon=epsilon)
+        
+        # von Neumann entropy should be small (pure state has H=0)
+        H = exp_fam.von_neumann_entropy(theta)
+        
+        # With small epsilon, entropy should be roughly -epsilon log(epsilon)
+        expected_order = -epsilon * np.log(epsilon)
+        assert H < 0.1, \
+            f"Total entropy too high for regularized pure state: {H}"
+        assert H > 0, \
+            "Entropy should be positive for regularized state"
+    
+    def test_bell_state_raises_for_zero_epsilon(self):
+        """Test that pure Bell state (epsilon=0) raises ValueError."""
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        
+        with pytest.raises(ValueError, match="epsilon must be > 0"):
+            exp_fam.get_bell_state_parameters(epsilon=0.0)
+    
+    def test_bell_state_raises_for_multiple_pairs(self):
+        """Test that Bell state only works for single pairs."""
+        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        
+        with pytest.raises(ValueError, match="single pair"):
+            exp_fam.get_bell_state_parameters(epsilon=1e-4)
+    
+    def test_bell_state_raises_for_local_basis(self):
+        """Test that Bell state only works for pair basis."""
+        exp_fam = QuantumExponentialFamily(n_sites=2, d=2, pair_basis=False)
+        
+        with pytest.raises(ValueError, match="pair_basis=True"):
+            exp_fam.get_bell_state_parameters(epsilon=1e-4)
+    
+    def test_bell_state_hermitian_and_unit_trace(self):
+        """Test that Bell state parameters produce valid density matrix."""
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        theta = exp_fam.get_bell_state_parameters(epsilon=1e-4)
+        
+        rho = exp_fam.rho_from_theta(theta)
+        
+        # Check Hermiticity and unit trace (Category A - exact properties)
+        quantum_assert_hermitian(rho, "Bell state density matrix not Hermitian")
+        quantum_assert_unit_trace(rho, "Bell state density matrix trace ≠ 1")
+        
+        # Check positive semidefinite (eigenvalues ≥ 0)
+        eigs = np.real(np.linalg.eigvalsh(rho))
+        assert np.all(eigs > -QuantumTolerances.A['atol']), \
+            f"Bell state has negative eigenvalues: {eigs[eigs < 0]}"
