@@ -17,9 +17,9 @@ A Python package for quantum information geometry: constrained dynamics in quant
 
 ## 🚀 Installation
 
-### From PyPI (when published)
+### From GitHub
 ```bash
-pip install qig
+pip install -q git+https://github.com/lawrennd/qig-code.git
 ```
 
 ### Development Installation
@@ -50,8 +50,15 @@ dynamics = InaccessibleGameDynamics(exp_fam)
 rho_lme, dims = create_lme_state(n_sites=2, d=3)
 
 # Integrate constrained dynamics
-theta_0 = np.random.randn(exp_fam.n_params) * 0.1
-solution = dynamics.integrate(theta_0, (0, 5.0), n_points=100)
+theta_0 = np.random.randn(exp_fam.n_params)
+solution = dynamics.solve_constrained_maxent(
+    theta_init, 
+    n_steps=500,
+    dt=0.005,
+    convergence_tol=1e-5,
+    project=True,
+    project_every=10
+)
 
 # Check entanglement evolution
 I_initial = exp_fam.mutual_information(theta_0)
@@ -61,7 +68,7 @@ print(f"Mutual information: {I_initial:.3f} → {I_final:.3f}")
 
 ## 🔬 The Inaccessible Game
 
-The package implements quantum systems under **marginal entropy constraints**:
+The package implements quantum systems under *marginal entropy constraints*:
 
 ```
 Constraint: C(θ) = Σᵢ hᵢ(θ) = constant
@@ -151,7 +158,7 @@ from qig.duhamel import duhamel_derivative
 dH_dtheta = duhamel_derivative(rho, drho_dtheta, order=10)
 ```
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Run full test suite
@@ -164,13 +171,13 @@ pytest tests/ --cov=qig --cov-report=html
 DYNAMICS_POINTS=5 DYNAMICS_T_MAX=0.5 pytest tests/
 ```
 
-## 📓 Examples
+## Examples
 
 See the `examples/` directory:
 
 - **`generate-origin-paper-figures.ipynb`**: Interactive demonstration notebook with validation experiments [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lawrennd/qig-code/blob/main/examples/generate-origin-paper-figures.ipynb)
 
-## 🎓 Citation
+## Citation
 
 If you use this code in your research, please cite:
 
