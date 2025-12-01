@@ -2,6 +2,8 @@
 
 [![Tests](https://github.com/lawrennd/qig-code/actions/workflows/tests.yml/badge.svg)](https://github.com/lawrennd/qig-code/actions/workflows/tests.yml)
 [![Notebook Tests](https://github.com/lawrennd/qig-code/actions/workflows/notebook-tests.yml/badge.svg)](https://github.com/lawrennd/qig-code/actions/workflows/notebook-tests.yml)
+[![Documentation](https://github.com/lawrennd/qig-code/actions/workflows/docs.yml/badge.svg)](https://github.com/lawrennd/qig-code/actions/workflows/docs.yml)
+[![Documentation Status](https://readthedocs.org/projects/qig/badge/?version=latest)](https://qig.readthedocs.io/en/latest/?badge=latest)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -15,6 +17,25 @@ A Python package for quantum information geometry: constrained dynamics in quant
 - **Maximum entropy production** (GENERIC framework)
 - **Entanglement dynamics** (mutual information evolution)
 - **Optimal quantum systems** (qutrit optimality)
+
+## Documentation
+
+📚 **Full documentation is available at [qig.readthedocs.io](https://qig.readthedocs.io/)**
+
+The documentation includes:
+- **Getting Started**: Installation and quick start guide
+- **User Guide**: Detailed usage examples and tutorials
+- **API Reference**: Complete API documentation with examples
+- **Theory**: Mathematical background and derivations
+- **Development Guide**: Contributing guidelines and testing documentation
+
+You can also build the documentation locally:
+```bash
+cd docs
+pip install -r requirements.txt
+make html
+# Open docs/build/html/index.html in your browser
+```
 
 ## Installation
 
