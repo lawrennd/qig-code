@@ -18,17 +18,22 @@ The QIG project has multiple testing layers:
 
 ### Running Notebook Tests
 
+**Note:** Notebook tests are marked as "slow" and **excluded from default test runs**.
+
 #### Option 1: Via pytest (recommended)
 
 ```bash
-# Run the notebook test (marked as slow)
+# Run ALL tests (default - excludes slow tests)
+pytest
+
+# Explicitly run the notebook test
 pytest tests/test_notebook.py::test_default_notebook -v
 
-# Skip slow tests in regular test runs
-pytest -m "not slow"
-
-# Run only slow tests
+# Run ALL slow tests (including notebooks)
 pytest -m slow
+
+# Run tests WITHOUT slow tests (explicit)
+pytest -m "not slow"
 ```
 
 #### Option 2: Direct execution
@@ -43,6 +48,20 @@ python tests/test_notebook.py examples/generate-origin-paper-figures.ipynb
 # Test all notebooks
 python tests/test_notebook.py --all
 ```
+
+### Requirements
+
+Notebook tests require `jupyter nbconvert`:
+
+```bash
+# Install all dependencies including nbconvert
+pip install -r requirements.txt
+
+# Or install nbconvert separately
+pip install nbconvert
+```
+
+If `nbconvert` is not installed, the notebook test will be automatically skipped.
 
 ### Notebook Test Configuration
 

@@ -50,11 +50,27 @@ except ImportError:
     pytest = None
     HAS_PYTEST = False
 
-# Decorator that applies pytest.mark.slow if pytest is available
+# Check if jupyter nbconvert is available
+import subprocess
+try:
+    subprocess.run(['jupyter', 'nbconvert', '--version'], 
+                   capture_output=True, check=True)
+    HAS_NBCONVERT = True
+except (subprocess.CalledProcessError, FileNotFoundError):
+    HAS_NBCONVERT = False
+
+# Decorator that marks test as slow and skips if nbconvert not available
 def slow_test(func):
-    """Mark test as slow if pytest is available."""
-    if HAS_PYTEST:
-        return pytest.mark.slow(func)
+    """Mark test as slow and skip if nbconvert not available."""
+    if not HAS_PYTEST:
+        return func
+    
+    # Apply both slow marker and skip condition
+    func = pytest.mark.slow(func)
+    func = pytest.mark.skipif(
+        not HAS_NBCONVERT,
+        reason="jupyter nbconvert not installed (install with: pip install nbconvert)"
+    )(func)
     return func
 
 def run_notebook(notebook_path, output_path=None):
@@ -128,7 +144,8 @@ def run_notebook(notebook_path, output_path=None):
             print(f"\nStdout:\n{e.stdout}")
         return False, None
     except FileNotFoundError:
-        print("❌ jupyter not found. Install with: pip install jupyter nbconvert")
+        print("❌ jupyter nbconvert not found. Install with: pip install nbconvert")
+        print("   Or: pip install jupyter[nbconvert]")
         return False, None
 
 def check_notebook_outputs(notebook_path, require_pass_markers=False):
@@ -268,12 +285,22 @@ def main():
 def test_default_notebook():
     """Pytest-compatible test for the default notebook.
     
-    This test is marked as 'slow' because notebook execution can take several minutes.
-    Run with: pytest tests/test_notebook.py::test_default_notebook -v
-    Skip with: pytest -m "not slow"
+    This test is SKIPPED BY DEFAULT because:
+    - It requires jupyter nbconvert
+    - It takes several minutes to run
+    - It's primarily for CI/CD validation
+    
+    To run this test:
+      pytest tests/test_notebook.py::test_default_notebook -v
+    
+    Or run the standalone script:
+      python tests/test_notebook.py
     """
     if not HAS_PYTEST:
         raise ImportError("pytest is required to run this test")
+    
+    if not HAS_NBCONVERT:
+        pytest.skip("jupyter nbconvert not installed")
     
     # Find notebook - look in project root (parent of tests/)
     script_dir = Path(__file__).parent
