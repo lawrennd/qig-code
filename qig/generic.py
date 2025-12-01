@@ -345,3 +345,292 @@ def cross_validate_hamiltonian_coefficients(A: np.ndarray,
     
     return report
 
+
+# ============================================================================
+# Diffusion Operator (Irreversible Dynamics)
+# ============================================================================
+
+
+def kubo_mori_derivatives(theta: np.ndarray,
+                         operators: List[np.ndarray],
+                         exp_fam) -> List[np.ndarray]:
+    """
+    Compute Kubo-Mori derivatives ∂ρ/∂θ_a for all parameters.
+    
+    The Kubo-Mori derivative is:
+        ∂ρ/∂θ_a = ∫_0^1 ρ^s F_a ρ^{1-s} ds
+    
+    where ρ = exp(K - ψ) and K = Σ θ_b F_b.
+    
+    This uses the Duhamel formula from qig.duhamel for high precision.
+    
+    Parameters
+    ----------
+    theta : np.ndarray
+        Natural parameters
+    operators : List[np.ndarray]
+        Operator basis {F_a}
+    exp_fam : QuantumExponentialFamily
+        Exponential family instance (for using duhamel method)
+        
+    Returns
+    -------
+    drho_dtheta : List[np.ndarray]
+        List of ∂ρ/∂θ_a matrices, one for each parameter
+        
+    Notes
+    -----
+    The Kubo-Mori derivative is the "quantum derivative" that maintains
+    Hermiticity and provides the correct mapping from parameter space to
+    density matrix space.
+    
+    For machine precision, we use the Duhamel integral from qig.duhamel.
+    """
+    drho_dtheta = []
+    
+    for a in range(len(operators)):
+        # Use the exponential family's rho_derivative method
+        # which implements the Duhamel formula
+        drho = exp_fam.rho_derivative(theta, a, method='duhamel')
+        drho_dtheta.append(drho)
+    
+    return drho_dtheta
+
+
+def diffusion_operator(S: np.ndarray,
+                      theta: np.ndarray,
+                      exp_fam,
+                      method: str = 'duhamel') -> np.ndarray:
+    """
+    Construct diffusion operator D[ρ] from symmetric flow.
+    
+    The diffusion operator generates the irreversible (dissipative) dynamics:
+        D[ρ] = Σ_a (S⋅q)_a ∂ρ/∂θ_a
+    
+    where S is the symmetric part, q are mean parameters (tangent to constraint),
+    and ∂ρ/∂θ_a are Kubo-Mori derivatives.
+    
+    Parameters
+    ----------
+    S : np.ndarray, shape (n, n)
+        Symmetric part of flow Jacobian
+    theta : np.ndarray, shape (n,)
+        Natural parameters
+    exp_fam : QuantumExponentialFamily
+        Exponential family instance
+    method : str
+        Method for computing Kubo-Mori derivatives
+        
+    Returns
+    -------
+    D_rho : np.ndarray
+        Diffusion operator D[ρ] acting on density matrix
+        
+    Notes
+    -----
+    The dissipative flow is:
+        ρ̇_dissipative = D[ρ]
+    
+    Key properties that should be verified:
+    - D[ρ] is Hermitian
+    - Tr(D[ρ]) = 0 (trace preservation)
+    - Entropy production: -Tr(ρ log ρ D[ρ]) ≥ 0
+    
+    The flow is in the tangent space to the constraint manifold,
+    so we need the mean parameters q = ∇ψ.
+    """
+    # Get mean parameters (tangent to constraint)
+    # For exponential families: q = ∇ψ(θ)
+    q = exp_fam._grad_psi(theta)
+    
+    # Compute Kubo-Mori derivatives
+    drho_dtheta = kubo_mori_derivatives(theta, exp_fam.operators, exp_fam)
+    
+    # Compute flow in parameter space: S⋅q
+    S_q = S @ q
+    
+    # Map to density matrix space
+    D_rho = sum(S_q[a] * drho_dtheta[a] for a in range(len(theta)))
+    
+    return D_rho
+
+
+def milburn_approximation(H_eff: np.ndarray,
+                         rho: np.ndarray,
+                         gamma: float = 1.0) -> np.ndarray:
+    """
+    Compute Milburn approximation to diffusion operator.
+    
+    Near equilibrium, the diffusion operator can be approximated as:
+        D[ρ] ≈ -γ/2 [H_eff, [H_eff, ρ]]
+    
+    where γ is an effective decoherence rate.
+    
+    Parameters
+    ----------
+    H_eff : np.ndarray
+        Effective Hamiltonian
+    rho : np.ndarray
+        Density matrix
+    gamma : float
+        Decoherence rate (typically ~ 1)
+        
+    Returns
+    -------
+    D_rho_milburn : np.ndarray
+        Milburn approximation to D[ρ]
+        
+    Notes
+    -----
+    This is a useful approximation near equilibrium and provides
+    a simple form for comparison with the full Kubo-Mori construction.
+    
+    The double commutator -[H, [H, ρ]] is a standard form in
+    quantum master equations (Lindblad form with H as the Lindblad operator).
+    
+    For comparison with the full diffusion operator:
+    - Near equilibrium: Should agree within ~10^-4
+    - Far from equilibrium: May differ significantly
+    """
+    # First commutator: [H_eff, ρ]
+    comm1 = H_eff @ rho - rho @ H_eff
+    
+    # Second commutator: [H_eff, [H_eff, ρ]]
+    comm2 = H_eff @ comm1 - comm1 @ H_eff
+    
+    # Milburn form: -γ/2 [H, [H, ρ]]
+    D_rho_milburn = -0.5 * gamma * comm2
+    
+    return D_rho_milburn
+
+
+def verify_diffusion_operator(D_rho: np.ndarray,
+                              rho: np.ndarray,
+                              tol_hermiticity: float = 1e-10,
+                              tol_trace: float = 1e-12,
+                              tol_entropy_production: float = 1e-14) -> ValidationReport:
+    """
+    Verify properties of the diffusion operator.
+    
+    Checks:
+    1. D[ρ] is Hermitian
+    2. Tr(D[ρ]) = 0 (trace preservation)
+    3. Entropy production -Tr(ρ log ρ D[ρ]) ≥ 0
+    4. Positivity preservation (eigenvalues)
+    
+    Parameters
+    ----------
+    D_rho : np.ndarray
+        Diffusion operator
+    rho : np.ndarray
+        Density matrix
+    tol_hermiticity : float
+        Tolerance for Hermiticity
+    tol_trace : float
+        Tolerance for trace preservation
+    tol_entropy_production : float
+        Tolerance for entropy production (allowing small numerical error)
+        
+    Returns
+    -------
+    report : ValidationReport
+        Validation report with all checks
+    """
+    from qig.validation import check_hermitian
+    from scipy.linalg import logm
+    
+    report = ValidationReport("Diffusion Operator Verification")
+    
+    # Check Hermiticity
+    is_hermitian, herm_error = check_hermitian(D_rho, tol=tol_hermiticity)
+    report.add_check("Hermiticity D[ρ] = D[ρ]†", is_hermitian, 
+                    herm_error, tol_hermiticity)
+    
+    # Check trace preservation
+    trace = np.abs(np.trace(D_rho))
+    trace_preserved = trace < tol_trace
+    report.add_check("Trace preservation Tr(D[ρ]) = 0",
+                    trace_preserved, trace, tol_trace)
+    
+    # Check entropy production
+    # dS/dt = -Tr(ρ log ρ D[ρ]) should be ≥ 0
+    log_rho = logm(rho)
+    entropy_production_rate = -np.trace(rho @ log_rho @ D_rho).real
+    
+    # Allow small negative values due to numerical error
+    non_negative = entropy_production_rate >= -tol_entropy_production
+    report.add_check("Entropy production ≥ 0",
+                    non_negative, entropy_production_rate, tol_entropy_production,
+                    f"dS/dt = {entropy_production_rate:.4e}")
+    
+    # Check positivity preservation (at least for small timestep)
+    # ρ + ε D[ρ] should have non-negative eigenvalues for small ε
+    eps = 1e-6
+    rho_evolved = rho + eps * D_rho
+    eigvals = np.linalg.eigvalsh(rho_evolved.real)
+    min_eigval = np.min(eigvals)
+    
+    positivity_preserved = min_eigval >= -tol_entropy_production
+    report.add_check("Positivity preservation (ε=1e-6)",
+                    positivity_preserved, min_eigval, -tol_entropy_production,
+                    f"min(λ) = {min_eigval:.4e}")
+    
+    return report
+
+
+def compare_diffusion_methods(S: np.ndarray,
+                              theta: np.ndarray,
+                              H_eff: np.ndarray,
+                              exp_fam,
+                              gamma: float = 1.0,
+                              tol: float = 1e-4) -> ValidationReport:
+    """
+    Compare Kubo-Mori diffusion with Milburn approximation.
+    
+    Near equilibrium, these should agree reasonably well.
+    
+    Parameters
+    ----------
+    S : np.ndarray
+        Symmetric part
+    theta : np.ndarray
+        Natural parameters
+    H_eff : np.ndarray
+        Effective Hamiltonian
+    exp_fam : QuantumExponentialFamily
+        Exponential family
+    gamma : float
+        Decoherence rate for Milburn approximation
+    tol : float
+        Tolerance for agreement
+        
+    Returns
+    -------
+    report : ValidationReport
+        Comparison report
+    """
+    report = ValidationReport("Diffusion Operator Comparison")
+    
+    rho = exp_fam.rho_from_theta(theta)
+    
+    # Method A: Full Kubo-Mori construction
+    D_rho_full = diffusion_operator(S, theta, exp_fam)
+    report.add_check("Kubo-Mori method computed", True, 
+                    np.linalg.norm(D_rho_full), np.inf)
+    
+    # Method B: Milburn approximation
+    D_rho_milburn = milburn_approximation(H_eff, rho, gamma)
+    report.add_check("Milburn approximation computed", True,
+                    np.linalg.norm(D_rho_milburn), np.inf)
+    
+    # Compare
+    diff = np.linalg.norm(D_rho_full - D_rho_milburn)
+    relative_diff = diff / (np.linalg.norm(D_rho_full) + 1e-16)
+    
+    agree = relative_diff < tol
+    report.add_check("Methods agree (near equilibrium)",
+                    agree, relative_diff, tol,
+                    f"Relative diff = {relative_diff:.4e}")
+    
+    return report
+
