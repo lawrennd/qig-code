@@ -16,6 +16,11 @@ from qig.symbolic.su9_pair import (
     symbolic_cumulant_generating_function_su9_pair,
     symbolic_fisher_information_su9_pair,
     symbolic_von_neumann_entropy_su9_pair,
+    symbolic_partial_trace_su9_pair,
+    symbolic_marginal_entropies_su9_pair,
+    symbolic_constraint_gradient_su9_pair,
+    symbolic_lagrange_multiplier_su9_pair,
+    symbolic_grad_lagrange_multiplier_su9_pair,
 )
 
 __all__ = [
@@ -26,5 +31,10 @@ __all__ = [
     "symbolic_cumulant_generating_function_su9_pair",
     "symbolic_fisher_information_su9_pair",
     "symbolic_von_neumann_entropy_su9_pair",
+    "symbolic_partial_trace_su9_pair",
+    "symbolic_marginal_entropies_su9_pair",
+    "symbolic_constraint_gradient_su9_pair",
+    "symbolic_lagrange_multiplier_su9_pair",
+    "symbolic_grad_lagrange_multiplier_su9_pair",
 ]
 

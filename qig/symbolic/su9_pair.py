@@ -374,6 +374,124 @@ def symbolic_von_neumann_entropy_su9_pair(
 
 
 # Phase 3: Constraint geometry
+
+def symbolic_partial_trace_su9_pair(rho: Matrix, subsystem: int) -> Matrix:
+    """
+    Symbolic partial trace over one subsystem of a qutrit pair.
+    
+    Parameters
+    ----------
+    rho : sp.Matrix, shape (9, 9)
+        Density matrix for the pair (3⊗3 system)
+    subsystem : int (1 or 2)
+        Which subsystem to trace out
+        
+    Returns
+    -------
+    rho_reduced : sp.Matrix, shape (3, 3)
+        Reduced density matrix for the remaining subsystem
+        
+    Notes
+    -----
+    For a 3⊗3 system with basis |ij⟩ for i,j ∈ {0,1,2}:
+    - Ordering: |00⟩, |01⟩, |02⟩, |10⟩, |11⟩, |12⟩, |20⟩, |21⟩, |22⟩
+    - Matrix indices: 0-8 corresponding to the above
+    
+    Partial trace formulas:
+    - Trace out subsystem 2: ρ_1[i,j] = Σ_k ρ[3i+k, 3j+k]
+    - Trace out subsystem 1: ρ_2[i,j] = Σ_k ρ[i+3k, j+3k]
+    
+    Examples
+    --------
+    >>> import sympy as sp
+    >>> theta = sp.symbols('theta1:81', real=True)
+    >>> rho = symbolic_density_matrix_su9_pair(theta, order=2)
+    >>> rho_1 = symbolic_partial_trace_su9_pair(rho, subsystem=2)
+    >>> rho_1.shape
+    (3, 3)
+    """
+    if rho.shape != (9, 9):
+        raise ValueError(f"Expected 9×9 density matrix, got {rho.shape}")
+    
+    rho_reduced = sp.zeros(3, 3)
+    
+    if subsystem == 2:
+        # Trace out subsystem 2
+        # ρ_1[i,j] = Σ_k ρ[3i+k, 3j+k]
+        for i in range(3):
+            for j in range(3):
+                for k in range(3):
+                    rho_reduced[i, j] += rho[3*i + k, 3*j + k]
+    elif subsystem == 1:
+        # Trace out subsystem 1
+        # ρ_2[i,j] = Σ_k ρ[i+3k, j+3k]
+        for i in range(3):
+            for j in range(3):
+                for k in range(3):
+                    rho_reduced[i, j] += rho[i + 3*k, j + 3*k]
+    else:
+        raise ValueError(f"subsystem must be 1 or 2, got {subsystem}")
+    
+    return simplify(rho_reduced)
+
+
+def symbolic_marginal_entropies_su9_pair(
+    theta_symbols: Tuple[Symbol, ...],
+    order: int = 2
+) -> Tuple[sp.Expr, sp.Expr]:
+    """
+    Marginal von Neumann entropies for each subsystem using partial traces.
+    
+    Computes h_1 = -Tr(ρ_1 log ρ_1) and h_2 = -Tr(ρ_2 log ρ_2)
+    where ρ_i is the reduced density matrix for subsystem i.
+    
+    Parameters
+    ----------
+    theta_symbols : tuple of sp.Symbol
+        80 symbolic parameters
+    order : int, default=2
+        Order of expansion
+        
+    Returns
+    -------
+    h1, h2 : sp.Expr, sp.Expr
+        Marginal entropies for subsystems 1 and 2
+        
+    Notes
+    -----
+    Uses actual symbolic partial traces followed by order-2 entropy expansion.
+    
+    For a 3×3 reduced density matrix ρ_i with eigenvalues close to 1/3:
+        H(ρ_i) ≈ log(3) - (1/2)Tr[(ρ_i - I/3)²]
+        
+    This captures the correct directional dependence on θ, unlike the
+    simplified ||θ||² approximation.
+    """
+    if len(theta_symbols) != 80:
+        raise ValueError(f"Expected 80 parameters, got {len(theta_symbols)}")
+    
+    # Get full density matrix
+    rho = symbolic_density_matrix_su9_pair(theta_symbols, order)
+    
+    # Compute reduced density matrices via partial trace
+    rho_1 = symbolic_partial_trace_su9_pair(rho, subsystem=2)  # Trace out subsystem 2
+    rho_2 = symbolic_partial_trace_su9_pair(rho, subsystem=1)  # Trace out subsystem 1
+    
+    # Compute entropies using order-2 expansion
+    # H(ρ) ≈ log(3) - (1/2)Tr[(ρ - I/3)²] for ρ near I/3
+    I3 = sp.eye(3) / 3
+    
+    # For ρ_1
+    delta_1 = rho_1 - I3
+    h1 = log(3) - sp.trace(delta_1 * delta_1) / 2
+    
+    # For ρ_2  
+    delta_2 = rho_2 - I3
+    h2 = log(3) - sp.trace(delta_2 * delta_2) / 2
+    
+    return simplify(h1), simplify(h2)
+
+
 def symbolic_constraint_gradient_su9_pair(
     theta_symbols: Tuple[Symbol, ...],
     order: int = 2
@@ -381,9 +499,127 @@ def symbolic_constraint_gradient_su9_pair(
     """
     Constraint gradient for su(9) pair: a = ∇(h_1 + h_2).
     
-    Will be implemented in Phase 3.
+    Parameters
+    ----------
+    theta_symbols : tuple of sp.Symbol
+        80 symbolic parameters
+    order : int, default=2
+        Order of expansion
+        
+    Returns
+    -------
+    a : sp.Matrix, shape (80, 1)
+        Constraint gradient
+        
+    Notes
+    -----
+    For local basis: a = -(2/9)θ (structural identity)
+    For su(9) basis: a has more complex structure, depends on
+    how parameters couple to marginal entropies.
+    
+    Order-2 expansion: a ≈ -∇(||θ||²)/18 = -θ/9
+    (Same form as local, but NO structural identity Gθ = -a!)
     """
-    raise NotImplementedError("Phase 3: To be implemented")
+    if len(theta_symbols) != 80:
+        raise ValueError(f"Expected 80 parameters, got {len(theta_symbols)}")
+    
+    h1, h2 = symbolic_marginal_entropies_su9_pair(theta_symbols, order)
+    constraint = h1 + h2
+    
+    # Gradient
+    a = sp.zeros(80, 1)
+    for i, theta_i in enumerate(theta_symbols):
+        # Only differentiate w.r.t. symbols, not constants
+        if isinstance(theta_i, sp.Symbol):
+            a[i] = sp.diff(constraint, theta_i)
+        else:
+            a[i] = 0  # Derivative w.r.t. constant is 0
+    
+    return simplify(a)
+
+
+def symbolic_lagrange_multiplier_su9_pair(
+    theta_symbols: Tuple[Symbol, ...],
+    order: int = 2
+) -> sp.Expr:
+    """
+    Lagrange multiplier: ν = (aᵀGθ) / (aᵀa).
+    
+    Parameters
+    ----------
+    theta_symbols : tuple of sp.Symbol
+        80 symbolic parameters
+    order : int, default=2
+        Order of expansion
+        
+    Returns
+    -------
+    nu : sp.Expr
+        Lagrange multiplier
+        
+    Notes
+    -----
+    For local basis: ν = -1 exactly (structural identity)
+    For su(9) basis: ν ≠ -1 in general!
+    
+    This is a KEY difference that leads to non-zero A.
+    """
+    if len(theta_symbols) != 80:
+        raise ValueError(f"Expected 80 parameters, got {len(theta_symbols)}")
+    
+    a = symbolic_constraint_gradient_su9_pair(theta_symbols, order)
+    G = symbolic_fisher_information_su9_pair(theta_symbols, order)
+    
+    # Construct θ as column vector
+    theta_vec = sp.Matrix([[theta_a] for theta_a in theta_symbols])
+    
+    # Numerator: aᵀGθ
+    numerator = (a.T * G * theta_vec)[0, 0]
+    
+    # Denominator: aᵀa
+    denominator = (a.T * a)[0, 0]
+    
+    nu = simplify(numerator / denominator)
+    return nu
+
+
+def symbolic_grad_lagrange_multiplier_su9_pair(
+    theta_symbols: Tuple[Symbol, ...],
+    order: int = 2
+) -> Matrix:
+    """
+    Gradient of Lagrange multiplier: ∇ν.
+    
+    Parameters
+    ----------
+    theta_symbols : tuple of sp.Symbol
+        80 symbolic parameters
+    order : int, default=2
+        Order of expansion
+        
+    Returns
+    -------
+    grad_nu : sp.Matrix, shape (80, 1)
+        Gradient of Lagrange multiplier
+        
+    Notes
+    -----
+    For local basis: ∇ν = 0 (ν is constant)
+    For su(9) basis: ∇ν ≠ 0 in general!
+    
+    This non-zero gradient is what gives A ≠ 0.
+    """
+    if len(theta_symbols) != 80:
+        raise ValueError(f"Expected 80 parameters, got {len(theta_symbols)}")
+    
+    nu = symbolic_lagrange_multiplier_su9_pair(theta_symbols, order)
+    
+    # Gradient
+    grad_nu = sp.zeros(80, 1)
+    for i, theta_i in enumerate(theta_symbols):
+        grad_nu[i] = sp.diff(nu, theta_i)
+    
+    return simplify(grad_nu)
 
 
 # Phase 4: Antisymmetric part
