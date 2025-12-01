@@ -16,6 +16,8 @@ Core Modules
    duhamel
    analysis
    structure_constants
+   generic
+   generic_decomposition
    validation
    reference_data
 

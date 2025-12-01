@@ -9,6 +9,7 @@ Comprehensive guide to using **qig** for quantum information geometry.
    exponential_families
    dynamics
    constraints
+   generic_decomposition
    advanced
 
 Quantum Exponential Families
