@@ -8,7 +8,7 @@ This module contains:
   Fisher/BKM metric G(θ), and the marginal-entropy constraint.
 """
 
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Dict, Any
 
 import numpy as np
 from scipy.linalg import expm, eigh, logm
@@ -1298,6 +1298,209 @@ class QuantumExponentialFamily:
         M = -G - third_cumulant + nu * hessian_C + np.outer(a, grad_nu)
         
         return M
+    
+    def symmetric_part(self, theta: np.ndarray,
+                      method: str = 'duhamel',
+                      n_points: int = 100) -> np.ndarray:
+        """
+        Compute symmetric part S of the flow Jacobian M.
+        
+        The GENERIC decomposition splits M into symmetric and antisymmetric parts:
+        M = S + A, where S = (M + M^T)/2
+        
+        The symmetric part S generates the irreversible (dissipative) dynamics.
+        
+        Parameters
+        ----------
+        theta : np.ndarray
+            Natural parameters
+        method : str
+            Method for computing Jacobian
+        n_points : int
+            Number of points for numerical integration
+            
+        Returns
+        -------
+        S : np.ndarray, shape (n_params, n_params)
+            Symmetric part of Jacobian, satisfies S = S^T
+            
+        Notes
+        -----
+        The symmetric part satisfies key degeneracy conditions:
+        - S @ a ≈ 0, where a = ∇C is the constraint gradient
+        - θ^T S θ ≥ 0 (entropy production non-negative on tangent space)
+        
+        See Also
+        --------
+        antisymmetric_part : Antisymmetric part of Jacobian
+        verify_degeneracy_conditions : Verify GENERIC structure
+        """
+        M = self.jacobian(theta, method=method, n_points=n_points)
+        S = 0.5 * (M + M.T)
+        return S
+    
+    def antisymmetric_part(self, theta: np.ndarray,
+                          method: str = 'duhamel',
+                          n_points: int = 100) -> np.ndarray:
+        """
+        Compute antisymmetric part A of the flow Jacobian M.
+        
+        The GENERIC decomposition splits M into symmetric and antisymmetric parts:
+        M = S + A, where A = (M - M^T)/2
+        
+        The antisymmetric part A generates the reversible (Hamiltonian) dynamics.
+        
+        Parameters
+        ----------
+        theta : np.ndarray
+            Natural parameters
+        method : str
+            Method for computing Jacobian
+        n_points : int
+            Number of points for numerical integration
+            
+        Returns
+        -------
+        A : np.ndarray, shape (n_params, n_params)
+            Antisymmetric part of Jacobian, satisfies A = -A^T
+            
+        Notes
+        -----
+        The antisymmetric part satisfies key degeneracy conditions:
+        - A @ (-G @ theta) ≈ 0, where -G @ theta = ∇H is the entropy gradient
+        
+        The antisymmetric part encodes the effective Hamiltonian through:
+        A_ab θ_b = Σ_c f_abc η_c, where η are the Hamiltonian coefficients.
+        
+        See Also
+        --------
+        symmetric_part : Symmetric part of Jacobian
+        verify_degeneracy_conditions : Verify GENERIC structure
+        """
+        M = self.jacobian(theta, method=method, n_points=n_points)
+        A = 0.5 * (M - M.T)
+        return A
+    
+    def verify_degeneracy_conditions(self, theta: np.ndarray,
+                                    method: str = 'duhamel',
+                                    n_points: int = 100,
+                                    tol: float = 1e-6) -> Dict[str, Any]:
+        """
+        Verify degeneracy conditions for GENERIC structure.
+        
+        The GENERIC structure requires that the symmetric and antisymmetric
+        parts satisfy specific degeneracy conditions related to the constraint
+        and entropy gradients.
+        
+        Parameters
+        ----------
+        theta : np.ndarray
+            Natural parameters
+        method : str
+            Method for computing Jacobian
+        n_points : int
+            Number of points for numerical integration
+        tol : float
+            Tolerance for degeneracy conditions
+            
+        Returns
+        -------
+        diagnostics : dict
+            Dictionary containing:
+            - 'S': Symmetric part
+            - 'A': Antisymmetric part
+            - 'constraint_gradient': a = ∇C
+            - 'entropy_gradient': ∇H = -G @ theta
+            - 'S_annihilates_constraint': ||S @ a||
+            - 'A_annihilates_entropy_gradient': ||A @ (-G @ theta)||
+            - 'entropy_production': θ^T S θ
+            - 'S_symmetric_error': ||S - S^T||
+            - 'A_antisymmetric_error': ||A + A^T||
+            - 'reconstruction_error': ||M - (S + A)||
+            - 'all_passed': bool indicating if all checks passed
+            
+        Notes
+        -----
+        Degeneracy conditions (should hold within tolerance):
+        1. S @ a ≈ 0: Symmetric part annihilates constraint gradient
+        2. A @ ∇H ≈ 0: Antisymmetric part annihilates entropy gradient
+        3. θ^T S θ ≥ 0: Entropy production non-negative
+        4. S = S^T: Symmetry (machine precision)
+        5. A = -A^T: Antisymmetry (machine precision)
+        6. M = S + A: Reconstruction (machine precision)
+        """
+        from qig.validation import ValidationReport
+        
+        # Compute components
+        M = self.jacobian(theta, method=method, n_points=n_points)
+        S = self.symmetric_part(theta, method=method, n_points=n_points)
+        A = self.antisymmetric_part(theta, method=method, n_points=n_points)
+        
+        # Get constraint gradient (using marginal entropies constraint)
+        marginals = marginal_entropies(self.rho_from_theta(theta), 
+                                      [self.d] * (self.n_pairs if self.pair_basis else self.n_sites))
+        
+        # Gradient of constraint C(θ) = Σ h_i
+        # Use finite differences for gradient
+        eps = 1e-7
+        a = np.zeros(len(theta))
+        C0 = np.sum(marginals)
+        for i in range(len(theta)):
+            theta_plus = theta.copy()
+            theta_plus[i] += eps
+            rho_plus = self.rho_from_theta(theta_plus)
+            marginals_plus = marginal_entropies(rho_plus,
+                                               [self.d] * (self.n_pairs if self.pair_basis else self.n_sites))
+            C_plus = np.sum(marginals_plus)
+            a[i] = (C_plus - C0) / eps
+        
+        # Entropy gradient: ∇H = -G @ theta
+        G = self.fisher_information(theta)
+        entropy_gradient = -G @ theta
+        
+        # Compute degeneracy violations
+        S_a = S @ a
+        A_entropy_grad = A @ entropy_gradient
+        
+        S_annihilates_constraint = np.linalg.norm(S_a)
+        A_annihilates_entropy_gradient = np.linalg.norm(A_entropy_grad)
+        
+        # Entropy production
+        entropy_production = theta @ S @ theta
+        
+        # Symmetry/antisymmetry errors
+        S_symmetric_error = np.max(np.abs(S - S.T))
+        A_antisymmetric_error = np.max(np.abs(A + A.T))
+        
+        # Reconstruction error
+        reconstruction_error = np.max(np.abs(M - (S + A)))
+        
+        # Check all conditions
+        all_passed = (
+            S_annihilates_constraint < tol and
+            A_annihilates_entropy_gradient < tol and
+            entropy_production >= -tol and
+            S_symmetric_error < 1e-14 and
+            A_antisymmetric_error < 1e-14 and
+            reconstruction_error < 1e-14
+        )
+        
+        diagnostics = {
+            'S': S,
+            'A': A,
+            'constraint_gradient': a,
+            'entropy_gradient': entropy_gradient,
+            'S_annihilates_constraint': S_annihilates_constraint,
+            'A_annihilates_entropy_gradient': A_annihilates_entropy_gradient,
+            'entropy_production': entropy_production,
+            'S_symmetric_error': S_symmetric_error,
+            'A_antisymmetric_error': A_antisymmetric_error,
+            'reconstruction_error': reconstruction_error,
+            'all_passed': all_passed,
+            'tolerance': tol
+        }
+        
+        return diagnostics
     
     def _grad_psi(self, theta: np.ndarray) -> np.ndarray:
         """
