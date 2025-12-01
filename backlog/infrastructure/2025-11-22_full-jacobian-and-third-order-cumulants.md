@@ -1,10 +1,10 @@
 ---
 id: "2025-11-22_full-jacobian-and-third-order-cumulants"
 title: "Implement analytic full Jacobian and third-order Kubo–Mori cumulants"
-status: "Proposed"
+status: "Completed"
 priority: "Medium"
 created: "2025-11-22"
-last_updated: "2025-11-22"
+last_updated: "2025-12-01"
 owner: "Neil D. Lawrence"
 github_issue: ""
 dependencies: ""
@@ -94,8 +94,33 @@ principled, reusable implementation that integrates cleanly with `qig.*`.
 
 ### 2025-11-22
 
-Task created with Proposed status. Separates the “full Jacobian / third-order
-cumulants” work from the more general “remove numerical gradients” task, and
+Task created with Proposed status. Separates the "full Jacobian / third-order
+cumulants" work from the more general "remove numerical gradients" task, and
 anchors it to existing exploratory scripts and tests.
+
+### 2025-12-01 - COMPLETED ✅
+
+**Status**: All acceptance criteria met
+
+**Implementation Complete**:
+- ✅ Analytic Jacobian implemented in `qig.exponential_family.jacobian()` (line 1241-1298)
+  - Full formula: M = -G - (∇G)[θ] + ν∇²C + a(∇ν)^T
+  - Handles both local operators (ν=-1) and entangled pairs (general ν)
+  - Uses Duhamel method by default for high precision
+  
+- ✅ Third cumulant implemented in `qig.exponential_family.third_cumulant_contraction()` (line 727-810)
+  - Both finite-difference and analytic methods available
+  - Totally symmetric tensor (∇G = ∇³ψ) contracted with θ
+  
+- ✅ Comprehensive tests in `tests/test_higher_derivatives.py`
+  - Jacobian tests (local and entangled cases)
+  - Third cumulant symmetry validation
+  - Uses tolerance framework with Categories D/E
+  
+- ✅ Legacy `compute_jacobian()` in `inaccessible_game_quantum.py` remains for backward compatibility
+  - Uses finite differences
+  - Not used by core qig module
+  
+**Result**: Clean analytic API fully integrated into qig module, well-tested, and used throughout the codebase.
 
 
