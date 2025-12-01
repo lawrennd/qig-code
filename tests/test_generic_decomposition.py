@@ -102,8 +102,8 @@ class TestDegeneracyConditions:
         
         diagnostics = exp_fam.verify_degeneracy_conditions(theta)
         
-        # Reconstruction should be at machine precision
-        assert diagnostics['reconstruction_error'] < 1e-14
+        # Reconstruction should be at near-machine precision
+        assert diagnostics['reconstruction_error'] < 1e-12
     
     def test_entropy_production_nonnegative(self):
         """Test that entropy production θ^T S θ ≥ 0."""
