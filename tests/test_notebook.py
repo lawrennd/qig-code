@@ -59,14 +59,14 @@ try:
 except (subprocess.CalledProcessError, FileNotFoundError):
     HAS_NBCONVERT = False
 
-# Decorator that marks test as slow and skips if nbconvert not available
-def slow_test(func):
-    """Mark test as slow and skip if nbconvert not available."""
+# Decorator that marks test as integration and skips if nbconvert not available
+def integration_test(func):
+    """Mark test as integration test and skip if nbconvert not available."""
     if not HAS_PYTEST:
         return func
     
-    # Apply both slow marker and skip condition
-    func = pytest.mark.slow(func)
+    # Apply both integration marker and skip condition
+    func = pytest.mark.integration(func)
     func = pytest.mark.skipif(
         not HAS_NBCONVERT,
         reason="jupyter nbconvert not installed (install with: pip install nbconvert)"
@@ -281,16 +281,19 @@ def main():
         print("="*70)
         sys.exit(1)
 
-@slow_test
+@integration_test
 def test_default_notebook():
     """Pytest-compatible test for the default notebook.
     
-    This test is SKIPPED BY DEFAULT because:
-    - It requires jupyter nbconvert
-    - It takes several minutes to run
-    - It's primarily for CI/CD validation
+    This test is SKIPPED BY DEFAULT because it's an integration test that:
+    - Requires jupyter nbconvert
+    - Takes several minutes to run
+    - Is primarily for CI/CD validation
     
-    To run this test:
+    To run integration tests:
+      pytest -m integration
+    
+    To run this specific test:
       pytest tests/test_notebook.py::test_default_notebook -v
     
     Or run the standalone script:

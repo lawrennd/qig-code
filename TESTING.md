@@ -10,6 +10,41 @@ The QIG project has multiple testing layers:
 3. **Integration Tests**: Various validation scripts
 4. **GitHub Actions CI/CD**: Automated testing workflows
 
+## Test Organization
+
+### Test Markers
+
+The test suite uses pytest markers to organize different types of tests:
+
+- **`integration`**: Integration tests (notebooks, end-to-end scenarios)
+  - **Excluded by default** to keep regular test runs fast
+  - Run with: `pytest -m integration`
+  - Example: Notebook execution tests
+
+- **`slow`**: Performance and validation tests that take longer
+  - **Included by default** (these are important for correctness)
+  - Skip with: `pytest -m "not slow"`
+  - Example: Full validation tests, performance benchmarks
+
+### Running Different Test Subsets
+
+```bash
+# Default: All tests except integration (includes slow tests)
+pytest                              # 197/198 tests
+
+# Only integration tests (notebooks, etc.)
+pytest -m integration               # 1 test
+
+# Only slow tests (performance, validation)
+pytest -m slow                      # 7 tests
+
+# Exclude both slow and integration
+pytest -m "not slow and not integration"  # 190 tests
+
+# Only fast unit tests
+pytest -m "not slow and not integration"
+```
+
 ## Notebook Testing
 
 ### Available Notebooks
@@ -18,22 +53,22 @@ The QIG project has multiple testing layers:
 
 ### Running Notebook Tests
 
-**Note:** Notebook tests are marked as "slow" and **excluded from default test runs**.
+**Note:** Notebook tests are marked as "integration" and **excluded from default test runs**.
 
 #### Option 1: Via pytest (recommended)
 
 ```bash
-# Run ALL tests (default - excludes slow tests)
+# Run ALL tests (default - excludes integration tests)
 pytest
+
+# Run ALL integration tests (including notebooks)
+pytest -m integration
 
 # Explicitly run the notebook test
 pytest tests/test_notebook.py::test_default_notebook -v
 
-# Run ALL slow tests (including notebooks)
-pytest -m slow
-
-# Run tests WITHOUT slow tests (explicit)
-pytest -m "not slow"
+# Run tests WITHOUT integration tests (explicit)
+pytest -m "not integration"
 ```
 
 #### Option 2: Direct execution
