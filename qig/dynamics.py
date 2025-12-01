@@ -342,7 +342,264 @@ class InaccessibleGameDynamics:
             'n_steps': n_steps
         }
 
-__all__ = ["InaccessibleGameDynamics"]
+class GenericDynamics(InaccessibleGameDynamics):
+    """
+    GENERIC-aware dynamics for the quantum inaccessible game.
+    
+    Extends InaccessibleGameDynamics to track the GENERIC decomposition:
+    - Effective Hamiltonian H_eff(θ) from antisymmetric flow
+    - Diffusion operator D[ρ](θ) from symmetric flow
+    - Entropy production rate
+    - GENERIC structure preservation
+    """
+    
+    def __init__(self, exp_family: QuantumExponentialFamily, 
+                 structure_constants: np.ndarray = None,
+                 method: str = 'duhamel'):
+        """
+        Initialize GENERIC-aware dynamics.
+        
+        Parameters
+        ----------
+        exp_family : QuantumExponentialFamily
+            The exponential family
+        structure_constants : np.ndarray, optional
+            Lie algebra structure constants f_abc
+            If None, will be computed from operators
+        method : str, optional
+            Method for derivatives: 'duhamel' or 'sld'
+        """
+        super().__init__(exp_family, method)
+        
+        # Store structure constants
+        if structure_constants is None:
+            from qig.structure_constants import compute_structure_constants
+            self.f_abc = compute_structure_constants(exp_family.operators)
+        else:
+            self.f_abc = structure_constants
+            
+        # Storage for GENERIC decomposition along trajectory
+        self.H_eff_traj = []
+        self.D_rho_traj = []
+        self.entropy_production_traj = []
+        self.S_norm_traj = []
+        self.A_norm_traj = []
+        
+    def compute_generic_decomposition(self, theta: np.ndarray) -> Dict[str, Any]:
+        """
+        Compute full GENERIC decomposition at given θ.
+        
+        Returns
+        -------
+        dict with keys:
+            'M' : Jacobian matrix
+            'S' : Symmetric part
+            'A' : Antisymmetric part
+            'H_eff' : Effective Hamiltonian
+            'eta' : Hamiltonian coefficients
+            'D_rho' : Diffusion operator (if compute_diffusion=True)
+            'entropy_production' : dS/dt
+        """
+        from qig.generic import (
+            effective_hamiltonian_coefficients,
+            effective_hamiltonian_operator
+        )
+        
+        # Get Jacobian and decomposition
+        M = self.exp_family.jacobian(theta, method=self.method)
+        S = self.exp_family.symmetric_part(theta, method=self.method)
+        A = self.exp_family.antisymmetric_part(theta, method=self.method)
+        
+        # Extract effective Hamiltonian
+        eta, info = effective_hamiltonian_coefficients(A, theta, self.f_abc)
+        H_eff = effective_hamiltonian_operator(eta, self.exp_family.operators)
+        
+        # Compute entropy production rate
+        # dS/dt = -Tr(ρ̇ log ρ) where ρ̇ comes from dissipative part
+        # For now, use simplified form: θ^T G Π_∥ G θ
+        G = self.exp_family.fisher_information(theta)
+        _, a = self.exp_family.marginal_entropy_constraint(theta, method=self.method)
+        a_norm_sq = float(np.dot(a, a))
+        if a_norm_sq > 1e-12:
+            Pi = np.eye(len(theta)) - np.outer(a, a) / a_norm_sq
+        else:
+            Pi = np.eye(len(theta))
+        entropy_production = float(theta @ G @ Pi @ G @ theta)
+        
+        return {
+            'M': M,
+            'S': S,
+            'A': A,
+            'H_eff': H_eff,
+            'eta': eta,
+            'entropy_production': entropy_production,
+            'S_norm': np.linalg.norm(S, 'fro'),
+            'A_norm': np.linalg.norm(A, 'fro'),
+        }
+    
+    def integrate_reversible(
+        self, theta_0: np.ndarray, t_span: Tuple[float, float], n_points: int = 100
+    ) -> Dict[str, Any]:
+        """
+        Integrate reversible (Hamiltonian) part only: -i[H_eff, ρ].
+        
+        This integrates the antisymmetric flow in parameter space,
+        which corresponds to unitary evolution in density matrix space.
+        """
+        # Use only the antisymmetric part of the Jacobian
+        def reversible_flow(t: float, theta: np.ndarray) -> np.ndarray:
+            A = self.exp_family.antisymmetric_part(theta, method=self.method)
+            # For reversible flow: θ̇ = A θ (linearized)
+            # But we need the full nonlinear flow, so use constraint structure
+            G = self.exp_family.fisher_information(theta)
+            _, a = self.exp_family.marginal_entropy_constraint(theta, method=self.method)
+            
+            # Get Lagrange multiplier gradient
+            grad_nu = self.exp_family.lagrange_multiplier_gradient(
+                theta, method=self.method
+            )
+            
+            # Antisymmetric contribution: a(∇ν)^T - (∇ν)a^T
+            # Applied to current point
+            reversible_term = np.outer(a, grad_nu) - np.outer(grad_nu, a)
+            return reversible_term @ theta
+            
+        # Integrate
+        t_eval = np.linspace(t_span[0], t_span[1], n_points)
+        sol = solve_ivp(
+            reversible_flow,
+            t_span,
+            theta_0,
+            t_eval=t_eval,
+            method="RK45",
+            rtol=1e-8,
+            atol=1e-10,
+        )
+        
+        return {
+            "time": sol.t,
+            "theta": sol.y.T,
+            "success": sol.success,
+        }
+    
+    def integrate_irreversible(
+        self, theta_0: np.ndarray, t_span: Tuple[float, float], n_points: int = 100
+    ) -> Dict[str, Any]:
+        """
+        Integrate irreversible (dissipative) part only: D[ρ].
+        
+        This integrates the symmetric flow in parameter space,
+        which corresponds to entropy-increasing dissipation.
+        """
+        # Use only the symmetric part
+        def irreversible_flow(t: float, theta: np.ndarray) -> np.ndarray:
+            G = self.exp_family.fisher_information(theta)
+            third_cumulant = self.exp_family.third_cumulant_contraction(theta)
+            hessian_C = self.exp_family.constraint_hessian(theta)
+            _, a = self.exp_family.marginal_entropy_constraint(theta, method=self.method)
+            
+            # Symmetric part: -G - (∇G)[θ] + ν∇²C
+            # (drops the a(∇ν)^T term which is antisymmetric)
+            Gtheta = G @ theta
+            
+            # Lagrange multiplier
+            a_norm_sq = float(np.dot(a, a))
+            if a_norm_sq > 1e-12:
+                nu = -np.dot(Gtheta, a) / a_norm_sq
+            else:
+                nu = 0.0
+                
+            # Symmetric flow
+            return -G @ theta - third_cumulant @ theta + nu * (hessian_C @ theta)
+            
+        # Integrate
+        t_eval = np.linspace(t_span[0], t_span[1], n_points)
+        sol = solve_ivp(
+            irreversible_flow,
+            t_span,
+            theta_0,
+            t_eval=t_eval,
+            method="RK45",
+            rtol=1e-8,
+            atol=1e-10,
+        )
+        
+        return {
+            "time": sol.t,
+            "theta": sol.y.T,
+            "success": sol.success,
+        }
+    
+    def integrate_with_monitoring(
+        self, theta_0: np.ndarray, t_span: Tuple[float, float], n_points: int = 100,
+        compute_diffusion: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Integrate full dynamics with GENERIC structure monitoring.
+        
+        Parameters
+        ----------
+        theta_0 : np.ndarray
+            Initial parameters
+        t_span : Tuple[float, float]
+            Time interval
+        n_points : int
+            Number of evaluation points
+        compute_diffusion : bool
+            Whether to compute D[ρ] at each step (expensive!)
+            
+        Returns
+        -------
+        dict with trajectory and GENERIC monitoring data
+        """
+        # First integrate the full dynamics
+        result = self.integrate(theta_0, t_span, n_points)
+        
+        # Compute GENERIC decomposition at each point
+        theta_traj = result['theta']
+        n_steps = len(theta_traj)
+        
+        # Storage
+        H_eff_traj = []
+        entropy_production = np.zeros(n_steps)
+        S_norms = np.zeros(n_steps)
+        A_norms = np.zeros(n_steps)
+        D_rho_traj = [] if compute_diffusion else None
+        
+        print("Computing GENERIC decomposition along trajectory...")
+        for i, theta in enumerate(theta_traj):
+            if n_steps >= 10 and i % (n_steps // 10) == 0:
+                print(f"  Progress: {i}/{n_steps}")
+            elif n_steps < 10 and i == 0:
+                print(f"  Progress: {i}/{n_steps}")
+                
+            decomp = self.compute_generic_decomposition(theta)
+            H_eff_traj.append(decomp['H_eff'])
+            entropy_production[i] = decomp['entropy_production']
+            S_norms[i] = decomp['S_norm']
+            A_norms[i] = decomp['A_norm']
+            
+            if compute_diffusion:
+                from qig.generic import diffusion_operator
+                D_rho = diffusion_operator(
+                    decomp['S'], theta, self.exp_family, method=self.method
+                )
+                D_rho_traj.append(D_rho)
+        
+        # Add GENERIC data to results
+        result['H_eff'] = H_eff_traj
+        result['entropy_production'] = entropy_production
+        result['S_norm'] = S_norms
+        result['A_norm'] = A_norms
+        result['cumulative_entropy'] = np.cumsum(entropy_production) * np.mean(np.diff(result['time']))
+        
+        if compute_diffusion:
+            result['D_rho'] = D_rho_traj
+            
+        return result
+
+
+__all__ = ["InaccessibleGameDynamics", "GenericDynamics"]
 
 
 
