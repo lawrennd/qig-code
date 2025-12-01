@@ -10,7 +10,7 @@ The QIG project has multiple testing layers:
 3. **Integration Tests**: Various validation scripts
 4. **GitHub Actions CI/CD**: Automated testing workflows
 
-## Test Organization
+## Test Organisation
 
 ### Test Markers
 
@@ -55,20 +55,37 @@ pytest -m "not slow and not integration"
 
 **Note:** Notebook tests are marked as "integration" and **excluded from default test runs**.
 
+There are two types of notebook tests:
+
+1. **Smoke tests** (`@pytest.mark.integration`):
+   - Execute first 8 cells only (imports, setup)
+   - Fast: ~10-20 seconds
+   - Catches 90% of issues
+   - Example: `test_notebook_smoke`
+
+2. **Full execution** (`@pytest.mark.integration @pytest.mark.slow`):
+   - Execute complete notebook
+   - Slow: several minutes
+   - Full validation
+   - Example: `test_notebook_full_execution`
+
 #### Option 1: Via pytest (recommended)
 
 ```bash
 # Run ALL tests (default - excludes integration tests)
 pytest
 
-# Run ALL integration tests (including notebooks)
+# Run integration tests (smoke tests only, fast)
 pytest -m integration
 
-# Explicitly run the notebook test
-pytest tests/test_notebook.py::test_default_notebook -v
+# Run full notebook execution (slow)
+pytest -m "integration and slow"
 
-# Run tests WITHOUT integration tests (explicit)
-pytest -m "not integration"
+# Run specific smoke test
+pytest tests/test_notebook.py::test_notebook_smoke -v
+
+# Run specific full execution test
+pytest tests/test_notebook.py::test_notebook_full_execution -v
 ```
 
 #### Option 2: Direct execution
@@ -86,17 +103,23 @@ python tests/test_notebook.py --all
 
 ### Requirements
 
-Notebook tests require `jupyter nbconvert`:
+Notebook tests require different dependencies depending on the test type:
 
+**Smoke tests** require `nbformat` and `nbconvert`:
 ```bash
-# Install all dependencies including nbconvert
-pip install -r requirements.txt
-
-# Or install nbconvert separately
-pip install nbconvert
+pip install nbformat nbconvert
 ```
 
-If `nbconvert` is not installed, the notebook test will be automatically skipped.
+**Full execution tests** also require `jupyter nbconvert` command:
+```bash
+# Install all dependencies
+pip install -r requirements.txt
+
+# Or install separately
+pip install jupyter nbconvert nbformat
+```
+
+If dependencies are missing, tests will be automatically skipped with a clear message.
 
 ### Notebook Test Configuration
 

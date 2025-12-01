@@ -3,5 +3,6 @@ scipy>=1.7.0
 matplotlib>=3.4.0
 pytest>=7.0.0
 nbstripout>=0.6.0
-nbconvert>=7.0.0  # Optional: for notebook testing (pytest -m slow)
+nbformat>=5.0.0  # Optional: for notebook smoke tests (pytest -m integration)
+nbconvert>=7.0.0  # Optional: for full notebook testing (pytest -m "integration and slow")
 

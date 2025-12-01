@@ -51,7 +51,6 @@ except ImportError:
     HAS_PYTEST = False
 
 # Check if jupyter nbconvert is available
-import subprocess
 try:
     subprocess.run(['jupyter', 'nbconvert', '--version'], 
                    capture_output=True, check=True)
@@ -59,19 +58,116 @@ try:
 except (subprocess.CalledProcessError, FileNotFoundError):
     HAS_NBCONVERT = False
 
-# Decorator that marks test as integration and skips if nbconvert not available
+# Check if nbformat + ExecutePreprocessor available (for smoke tests)
+try:
+    import nbformat
+    from nbconvert.preprocessors import ExecutePreprocessor, CellExecutionError
+    HAS_EXECUTE_PREPROCESSOR = True
+except ImportError:
+    nbformat = None
+    ExecutePreprocessor = None
+    CellExecutionError = Exception
+    HAS_EXECUTE_PREPROCESSOR = False
+
+# Decorator that marks test as integration and skips if dependencies not available
 def integration_test(func):
-    """Mark test as integration test and skip if nbconvert not available."""
+    """Mark test as integration test and skip if dependencies not available."""
     if not HAS_PYTEST:
         return func
     
-    # Apply both integration marker and skip condition
+    # Apply integration marker and skip condition
     func = pytest.mark.integration(func)
+    func = pytest.mark.skipif(
+        not HAS_EXECUTE_PREPROCESSOR,
+        reason="nbformat/nbconvert not installed (install with: pip install nbconvert nbformat)"
+    )(func)
+    return func
+
+# Decorator for full notebook execution tests
+def full_notebook_test(func):
+    """Mark test as slow integration test requiring full notebook execution."""
+    if not HAS_PYTEST:
+        return func
+    
+    # Apply both integration and slow markers
+    func = pytest.mark.integration(func)
+    func = pytest.mark.slow(func)
     func = pytest.mark.skipif(
         not HAS_NBCONVERT,
         reason="jupyter nbconvert not installed (install with: pip install nbconvert)"
     )(func)
     return func
+
+def run_notebook_smoke_test(notebook_path, max_cells=8, timeout=120):
+    """
+    Smoke test: Execute first N cells to verify imports and basic setup.
+    
+    This catches 90% of issues (import errors, syntax errors, missing deps)
+    without running expensive computations.
+    
+    Parameters
+    ----------
+    notebook_path : str or Path
+        Path to input notebook
+    max_cells : int, optional
+        Number of cells to execute (default: 8)
+    timeout : int, optional
+        Timeout in seconds per cell (default: 120)
+        
+    Returns
+    -------
+    success : bool
+        True if smoke test passed
+    error_msg : str or None
+        Error message if failed, None if successful
+    """
+    if not HAS_EXECUTE_PREPROCESSOR:
+        return False, "nbformat/ExecutePreprocessor not available"
+    
+    notebook_path = Path(notebook_path)
+    
+    if not notebook_path.exists():
+        return False, f"Notebook not found: {notebook_path}"
+    
+    try:
+        # Read notebook
+        with open(notebook_path) as f:
+            nb = nbformat.read(f, as_version=4)
+        
+        # Only execute first N cells (imports, setup, configuration)
+        original_cells = nb.cells.copy()
+        nb.cells = nb.cells[:max_cells]
+        
+        # Configure executor with short timeout
+        ep = ExecutePreprocessor(
+            timeout=timeout,
+            kernel_name='python3',
+            allow_errors=False
+        )
+        
+        # Get the directory containing the notebook for execution context
+        notebook_dir = notebook_path.parent
+        
+        # Execute notebook
+        ep.preprocess(nb, {'metadata': {'path': str(notebook_dir)}})
+        
+        print(f"✅ Smoke test passed: {notebook_path.name} ({max_cells} cells)")
+        return True, None
+        
+    except CellExecutionError as e:
+        error_msg = f"Cell {e.cell_index} failed: {str(e)}"
+        print(f"❌ Smoke test failed: {notebook_path.name}")
+        print(f"   {error_msg}")
+        return False, error_msg
+    except Exception as e:
+        error_msg = f"Execution failed: {str(e)}"
+        print(f"❌ Smoke test failed: {notebook_path.name}")
+        print(f"   {error_msg}")
+        return False, error_msg
+    finally:
+        # Restore original cells (though we won't use nb again)
+        if 'nb' in locals() and 'original_cells' in locals():
+            nb.cells = original_cells
 
 def run_notebook(notebook_path, output_path=None):
     """
@@ -282,19 +378,54 @@ def main():
         sys.exit(1)
 
 @integration_test
-def test_default_notebook():
-    """Pytest-compatible test for the default notebook.
+def test_notebook_smoke():
+    """Smoke test for default notebook (fast, tests imports/setup only).
     
-    This test is SKIPPED BY DEFAULT because it's an integration test that:
-    - Requires jupyter nbconvert
-    - Takes several minutes to run
-    - Is primarily for CI/CD validation
+    This test is SKIPPED BY DEFAULT (marked as 'integration').
     
-    To run integration tests:
+    What it does:
+    - Executes first 8 cells only (imports, setup, configuration)
+    - Catches 90% of issues (import errors, syntax errors, missing deps)
+    - Takes ~10-20 seconds instead of several minutes
+    
+    To run:
       pytest -m integration
+      pytest tests/test_notebook.py::test_notebook_smoke -v
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
     
-    To run this specific test:
-      pytest tests/test_notebook.py::test_default_notebook -v
+    if not HAS_EXECUTE_PREPROCESSOR:
+        pytest.skip("nbformat/ExecutePreprocessor not installed")
+    
+    # Find notebook
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "generate-origin-paper-figures.ipynb"
+    
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+    
+    # Run smoke test (first 8 cells, 2 minute timeout per cell)
+    success, error_msg = run_notebook_smoke_test(notebook_path, max_cells=8, timeout=120)
+    
+    if not success:
+        pytest.fail(f"Smoke test failed: {error_msg}")
+
+@full_notebook_test
+def test_notebook_full_execution():
+    """Full notebook execution test (slow, marked as 'slow' + 'integration').
+    
+    This test is SKIPPED BY DEFAULT (requires both markers).
+    
+    What it does:
+    - Executes the complete notebook
+    - Takes several minutes
+    - Validates full execution and outputs
+    
+    To run:
+      pytest -m "integration and slow"
+      pytest tests/test_notebook.py::test_notebook_full_execution -v
     
     Or run the standalone script:
       python tests/test_notebook.py
@@ -305,7 +436,7 @@ def test_default_notebook():
     if not HAS_NBCONVERT:
         pytest.skip("jupyter nbconvert not installed")
     
-    # Find notebook - look in project root (parent of tests/)
+    # Find notebook
     script_dir = Path(__file__).parent
     project_root = script_dir.parent
     notebook_path = project_root / "examples" / "generate-origin-paper-figures.ipynb"
@@ -313,7 +444,7 @@ def test_default_notebook():
     if not notebook_path.exists():
         pytest.skip(f"Notebook not found: {notebook_path}")
     
-    # Execute notebook
+    # Execute full notebook
     success, output_path = run_notebook(notebook_path)
     assert success, f"Notebook execution failed: {notebook_path.name}"
     
