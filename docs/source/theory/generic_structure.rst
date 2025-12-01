@@ -44,19 +44,19 @@ where:
 When Duhamel Integrals Are Needed
 ----------------------------------
 
-A crucial computational insight concerns when the Duhamel integral formula is required.
+One computational insight concerns when the Duhamel integral formula is required.
 
 The Lie Closure Cancellation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When working with a **Lie-closed operator basis** :math:`\{F_a\}` (where :math:`[F_a, F_b] = 2i\sum_c f_{abc} F_c`),
-an algebraic cancellation occurs for **scalar derivatives** in natural parameter space.
+When working with a *Lie-closed operator basis* :math:`\{F_a\}` (where :math:`[F_a, F_b] = 2i\sum_c f_{abc} F_c`),
+an algebraic cancellation occurs for *scalar derivatives* in natural parameter space.
 
 This simplification means the Duhamel integral for differentiating matrix exponentials
 cancels out when computing gradients of scalar functions like :math:`\psi(\theta) = \log \text{Tr}[e^{\sum_a \theta_a F_a}]`.
 
-✅ No Duhamel Required
-~~~~~~~~~~~~~~~~~~~~~~
+No Duhamel Required
+~~~~~~~~~~~~~~~~~~~
 
 **For computations in natural parameter space** :math:`\theta`:
 
@@ -68,20 +68,20 @@ cancels out when computing gradients of scalar functions like :math:`\psi(\theta
 
    - Uses third cumulant :math:`T_{abc} = \partial^3\psi/\partial\theta_a\partial\theta_b\partial\theta_c`
    - This is a **scalar derivative** of :math:`\psi(\theta)`
-   - ✅ Lie closure ensures cancellation
+   - Lie closure ensures cancellation
 
 2. **Entropy gradient** :math:`\partial S/\partial\theta`:
    - Scalar derivative of von Neumann entropy
-   - ✅ Cancellation applies
+   - Cancellation applies
 
 3. **All flow computations in** :math:`\theta`-**space**:
    - :math:`\dot{\theta} = F(\theta) = -\Pi_\parallel G\theta`
    - GENERIC decomposition :math:`M = S + A`
    - Effective Hamiltonian extraction from :math:`A`
-   - ✅ Pure algebraic operations
+   - Pure algebraic operations
 
-❌ Duhamel Required
-~~~~~~~~~~~~~~~~~~~
+Duhamel Required
+~~~~~~~~~~~~~~~~
 
 **For mapping to density matrix space** :math:`\rho`:
 
@@ -92,7 +92,7 @@ cancels out when computing gradients of scalar functions like :math:`\psi(\theta
       \frac{\partial\rho}{\partial\theta_a} = \int_0^1 \rho^s (F_a - \langle F_a \rangle I) \rho^{1-s} \, ds
 
    - This is a **matrix-valued derivative**, not a scalar
-   - ❌ No cancellation - full Duhamel integral required
+   - No cancellation - full Duhamel integral required
    - Implemented in :mod:`qig.duhamel`
 
 2. **Diffusion operator** :math:`\mathcal{D}[\rho]`:
@@ -102,7 +102,7 @@ cancels out when computing gradients of scalar functions like :math:`\psi(\theta
       \mathcal{D}[\rho] = \sum_a (S \cdot q)_a \frac{\partial\rho}{\partial\theta_a}
 
    - Maps parameter space flow to density matrix flow
-   - ❌ Requires Kubo-Mori derivatives
+   - Requires Kubo-Mori derivatives
 
 3. **Full dynamics in density matrix form**:
 
@@ -111,7 +111,7 @@ cancels out when computing gradients of scalar functions like :math:`\psi(\theta
       \dot{\rho} = -i[H_{\text{eff}}, \rho] + \mathcal{D}[\rho]
 
    - Master equation representation
-   - ❌ Requires :math:`\mathcal{D}[\rho]` which needs Duhamel
+   - Requires :math:`\mathcal{D}[\rho]` which needs Duhamel
 
 Practical Implications
 ~~~~~~~~~~~~~~~~~~~~~~
