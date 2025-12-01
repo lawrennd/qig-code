@@ -46,53 +46,67 @@ def random_states(qutrit_pair_family, n_states=100):
 class TestSymbolicInfrastructure:
     """Test basic symbolic computation infrastructure."""
     
-    @pytest.mark.skip(reason="Symbolic module not yet implemented (CIP-0007 Phase 1)")
     def test_symbolic_gell_mann_matrices(self):
         """Test symbolic Gell-Mann matrices match numerical."""
-        # from qig.symbolic import symbolic_gell_mann_matrices
-        # from qig.exponential_family import gell_mann_matrices
-        # 
-        # symbolic_gm = symbolic_gell_mann_matrices()
-        # numerical_gm = gell_mann_matrices()
-        # 
-        # for i, (sym, num) in enumerate(zip(symbolic_gm, numerical_gm)):
-        #     sym_eval = np.array(sym).astype(complex)
-        #     assert_allclose(sym_eval, num, atol=1e-15,
-        #                    err_msg=f"Gell-Mann matrix {i+1} mismatch")
-        pass
+        from qig.symbolic import symbolic_gell_mann_matrices
+        from qig.exponential_family import gell_mann_matrices
+        import sympy as sp
+        
+        symbolic_gm = symbolic_gell_mann_matrices()
+        numerical_gm = gell_mann_matrices()
+        
+        for i, (sym, num) in enumerate(zip(symbolic_gm, numerical_gm)):
+            # Convert symbolic to numpy
+            sym_eval = np.array(sym.tolist()).astype(complex)
+            assert_allclose(sym_eval, num, atol=1e-15,
+                           err_msg=f"Gell-Mann matrix {i+1} mismatch")
     
-    @pytest.mark.skip(reason="Symbolic module not yet implemented (CIP-0007 Phase 1)")
     def test_symbolic_structure_constants(self):
         """Test symbolic structure constants match reference values."""
-        # from qig.symbolic import symbolic_structure_constants
-        # from qig.reference_data import get_su3_structure_constants
-        # 
-        # symbolic_f = symbolic_structure_constants()
-        # reference_f = get_su3_structure_constants()
-        # 
-        # # Evaluate symbolic
-        # f_eval = np.array(symbolic_f).astype(float)
-        # 
-        # assert_allclose(f_eval, reference_f, atol=1e-15,
-        #                err_msg="Structure constants mismatch")
-        pass
+        from qig.symbolic import symbolic_su3_structure_constants
+        from qig.reference_data import get_su3_structure_constants
+        import sympy as sp
+        
+        symbolic_f = symbolic_su3_structure_constants()
+        reference_f = get_su3_structure_constants()
+        
+        # Convert symbolic to numpy (need to evaluate each element)
+        f_eval = np.zeros((8, 8, 8))
+        for i in range(8):
+            for j in range(8):
+                for k in range(8):
+                    f_eval[i, j, k] = float(symbolic_f[i, j, k])
+        
+        assert_allclose(f_eval, reference_f, atol=1e-15,
+                       err_msg="Structure constants mismatch")
     
-    @pytest.mark.skip(reason="Symbolic module not yet implemented (CIP-0007 Phase 1)")
+    def test_gell_mann_properties(self):
+        """Test that Gell-Mann matrices satisfy required properties."""
+        from qig.symbolic import symbolic_gell_mann_matrices
+        from qig.symbolic.gell_mann import verify_gell_mann_properties
+        
+        gm = symbolic_gell_mann_matrices()
+        results = verify_gell_mann_properties(gm)
+        
+        assert results['all_hermitian'], f"Not all Hermitian: {results['details']}"
+        assert results['all_traceless'], f"Not all traceless: {results['details']}"
+        assert results['normalization'], f"Normalization failed: {results['details']}"
+    
+    def test_commutation_relations(self):
+        """Test [λ_a, λ_b] = 2i Σ_c f_abc λ_c."""
+        from qig.symbolic import symbolic_gell_mann_matrices, symbolic_su3_structure_constants
+        from qig.symbolic.gell_mann import verify_structure_constants
+        
+        gm = symbolic_gell_mann_matrices()
+        f = symbolic_su3_structure_constants()
+        
+        results = verify_structure_constants(gm, f)
+        assert results['all_correct'], f"Commutation relations failed: {results['errors']}"
+    
+    @pytest.mark.skip(reason="Symbolic density matrix not yet implemented (CIP-0007 Phase 2)")
     def test_symbolic_density_matrix_properties(self):
         """Test symbolic ρ satisfies quantum state properties."""
-        # from qig.symbolic import symbolic_rho_single_qutrit
-        # import sympy as sp
-        # 
-        # theta_symbols = sp.symbols('theta1:9', real=True)
-        # rho_sym = symbolic_rho_single_qutrit(theta_symbols)
-        # 
-        # # Test trace = 1 symbolically
-        # trace = sp.simplify(sp.trace(rho_sym))
-        # assert trace == 1, "Symbolic ρ should have trace 1"
-        # 
-        # # Test Hermiticity symbolically
-        # diff = sp.simplify(rho_sym - rho_sym.H)
-        # assert diff == sp.zeros(3, 3), "Symbolic ρ should be Hermitian"
+        # This will be implemented in Phase 2
         pass
 
 
