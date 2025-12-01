@@ -13,8 +13,21 @@ from qig.symbolic.gell_mann import (
     symbolic_su3_structure_constants,
 )
 
+from qig.symbolic.single_qutrit import (
+    symbolic_density_matrix_single_qutrit,
+    symbolic_cumulant_generating_function_single_qutrit,
+    symbolic_fisher_information_single_qutrit,
+    symbolic_von_neumann_entropy_single_qutrit,
+    verify_single_qutrit_consistency,
+)
+
 __all__ = [
     "symbolic_gell_mann_matrices",
     "symbolic_su3_structure_constants",
+    "symbolic_density_matrix_single_qutrit",
+    "symbolic_cumulant_generating_function_single_qutrit",
+    "symbolic_fisher_information_single_qutrit",
+    "symbolic_von_neumann_entropy_single_qutrit",
+    "verify_single_qutrit_consistency",
 ]
 

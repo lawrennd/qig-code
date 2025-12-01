@@ -113,22 +113,87 @@ class TestSymbolicInfrastructure:
 class TestSingleQutritAnalytic:
     """Test single-qutrit analytic forms (8 parameters)."""
     
-    @pytest.mark.skip(reason="Single qutrit analytics not yet implemented (CIP-0007 Phase 2)")
-    def test_fisher_metric_single_qutrit(self):
-        """Test analytic Fisher metric for single qutrit matches numerical."""
-        # from qig.analytic import fisher_metric_single_qutrit_analytic
-        # 
-        # exp_fam = QuantumExponentialFamily(n_sites=1, d=3)
-        # 
-        # for _ in range(10):
-        #     theta = np.random.randn(8) * 0.3
-        #     
-        #     G_analytic = fisher_metric_single_qutrit_analytic(theta)
-        #     G_numeric = exp_fam.fisher_information(theta)
-        #     
-        #     assert_allclose(G_analytic, G_numeric, atol=1e-10,
-        #                    err_msg="Fisher metric mismatch")
-        pass
+    def test_symbolic_density_matrix(self):
+        """Test symbolic density matrix has correct properties."""
+        from qig.symbolic import symbolic_density_matrix_single_qutrit
+        import sympy as sp
+        
+        theta = sp.symbols('theta1:9', real=True)
+        
+        # Test order 1
+        rho1 = symbolic_density_matrix_single_qutrit(theta, order=1)
+        assert rho1.shape == (3, 3), "Should be 3×3 matrix"
+        assert sp.simplify(sp.trace(rho1)) == 1, "Trace should be 1"
+        assert (rho1 - rho1.H).is_zero_matrix, "Should be Hermitian"
+        
+        # Test order 2
+        rho2 = symbolic_density_matrix_single_qutrit(theta, order=2)
+        assert rho2.shape == (3, 3)
+        # Note: order 2 is normalized, so trace = 1
+    
+    def test_symbolic_cumulant_function(self):
+        """Test cumulant generating function."""
+        from qig.symbolic import symbolic_cumulant_generating_function_single_qutrit
+        import sympy as sp
+        
+        theta = sp.symbols('theta1:9', real=True)
+        
+        # At origin: ψ(0) = log(3)
+        psi = symbolic_cumulant_generating_function_single_qutrit(theta, order=2)
+        psi_at_origin = psi.subs([(t, 0) for t in theta])
+        assert sp.simplify(psi_at_origin - sp.log(3)) == 0, "ψ(0) should be log(3)"
+        
+        # First derivative (expectation): should be 0 at origin
+        for t in theta:
+            dpsi = sp.diff(psi, t)
+            dpsi_at_origin = dpsi.subs([(t2, 0) for t2 in theta])
+            assert dpsi_at_origin == 0, f"∂ψ/∂{t} should be 0 at origin"
+    
+    def test_symbolic_fisher_metric(self):
+        """Test Fisher information matrix."""
+        from qig.symbolic import symbolic_fisher_information_single_qutrit
+        import sympy as sp
+        
+        theta = sp.symbols('theta1:9', real=True)
+        G = symbolic_fisher_information_single_qutrit(theta, order=2)
+        
+        assert G.shape == (8, 8), "Should be 8×8 matrix"
+        assert (G - G.T).is_zero_matrix, "Should be symmetric"
+        
+        # At order 2 (near origin): G = (2/3)I
+        assert G.is_diagonal(), "Should be diagonal at order 2"
+        for i in range(8):
+            assert G[i, i] == sp.Rational(2, 3), f"G[{i},{i}] should be 2/3"
+    
+    def test_symbolic_entropy(self):
+        """Test von Neumann entropy."""
+        from qig.symbolic import symbolic_von_neumann_entropy_single_qutrit
+        import sympy as sp
+        
+        theta = sp.symbols('theta1:9', real=True)
+        H = symbolic_von_neumann_entropy_single_qutrit(theta, order=2)
+        
+        # At origin: H(0) = log(3) (maximum entropy)
+        H_at_origin = H.subs([(t, 0) for t in theta])
+        assert sp.simplify(H_at_origin - sp.log(3)) == 0, "H(0) should be log(3)"
+        
+        # Entropy should decrease with ||θ||²
+        # H ≈ log(3) - (1/9)Σθ²
+        # So for small θ > 0, H < log(3)
+    
+    def test_consistency_verification(self):
+        """Test overall consistency of single-qutrit symbolic computations."""
+        from qig.symbolic import verify_single_qutrit_consistency
+        import sympy as sp
+        
+        theta = sp.symbols('theta1:9', real=True)
+        results = verify_single_qutrit_consistency(theta)
+        
+        assert results['rho_trace'], f"ρ trace failed: {results['details']}"
+        assert results['rho_hermitian'], f"ρ Hermiticity failed: {results['details']}"
+        assert results['G_symmetric'], f"G symmetry failed: {results['details']}"
+        assert results['G_positive'], f"G positivity failed: {results['details']}"
+        assert results['entropy_max'], f"Entropy bound failed: {results['details']}"
 
 
 class TestTwoQutritConstraintGeometry:
