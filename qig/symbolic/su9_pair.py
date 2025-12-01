@@ -21,6 +21,8 @@ from sympy import Symbol, Matrix, sqrt, log, trace, exp, simplify, Rational
 from typing import Tuple, List
 from functools import lru_cache
 
+from qig.symbolic.cache import cached_symbolic
+
 
 @lru_cache(maxsize=1)
 def symbolic_su9_generators() -> List[Matrix]:
@@ -435,6 +437,7 @@ def symbolic_partial_trace_su9_pair(rho: Matrix, subsystem: int) -> Matrix:
     return simplify(rho_reduced)
 
 
+@cached_symbolic
 def symbolic_marginal_entropies_su9_pair(
     theta_symbols: Tuple[Symbol, ...],
     order: int = 2
@@ -492,6 +495,7 @@ def symbolic_marginal_entropies_su9_pair(
     return simplify(h1), simplify(h2)
 
 
+@cached_symbolic
 def symbolic_constraint_gradient_su9_pair(
     theta_symbols: Tuple[Symbol, ...],
     order: int = 2
@@ -538,6 +542,7 @@ def symbolic_constraint_gradient_su9_pair(
     return simplify(a)
 
 
+@cached_symbolic
 def symbolic_lagrange_multiplier_su9_pair(
     theta_symbols: Tuple[Symbol, ...],
     order: int = 2
@@ -583,6 +588,7 @@ def symbolic_lagrange_multiplier_su9_pair(
     return nu
 
 
+@cached_symbolic
 def symbolic_grad_lagrange_multiplier_su9_pair(
     theta_symbols: Tuple[Symbol, ...],
     order: int = 2
