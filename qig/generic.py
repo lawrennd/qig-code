@@ -21,13 +21,16 @@ def effective_hamiltonian_coefficients(A: np.ndarray,
     Extract effective Hamiltonian coefficients from antisymmetric flow.
     
     The antisymmetric part A encodes the reversible (Hamiltonian) dynamics
-    through the relation:
+    through the relation::
+    
         A_ab θ_b = Σ_c f_abc η_c
     
-    where η_c are the coefficients of the effective Hamiltonian:
+    where η_c are the coefficients of the effective Hamiltonian::
+    
         H_eff = Σ_c η_c F_c
     
-    This function solves the linear system F⋅η = v, where:
+    This function solves the linear system F⋅η = v, where::
+    
         F_rc = Σ_b f_rbc θ_b
         v_r = (A⋅θ)_r
     

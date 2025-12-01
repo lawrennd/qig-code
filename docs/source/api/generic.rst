@@ -33,8 +33,6 @@ Diffusion Operator Construction
 
 .. autofunction:: qig.generic.milburn_approximation
 
-.. autofunction:: qig.generic.cross_validate_diffusion_operator
-
 Examples
 --------
 
