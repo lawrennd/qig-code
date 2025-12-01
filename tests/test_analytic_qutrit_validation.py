@@ -199,60 +199,113 @@ class TestSingleQutritAnalytic:
 class TestTwoQutritConstraintGeometry:
     """Test constraint geometry components: a, ν, ∇ν."""
     
-    @pytest.mark.skip(reason="Constraint geometry analytics not yet implemented (CIP-0007 Phase 3)")
-    def test_constraint_gradient_analytic(self, qutrit_pair_family, random_states):
-        """Test analytic constraint gradient matches numerical."""
-        # from qig.analytic import constraint_gradient_two_qutrit_analytic
-        # 
-        # for theta in random_states[:10]:  # Test subset
-        #     a_analytic = constraint_gradient_two_qutrit_analytic(theta)
-        #     _, a_numeric = qutrit_pair_family.marginal_entropy_constraint(theta)
-        #     
-        #     assert_allclose(a_analytic, a_numeric, atol=1e-10,
-        #                    err_msg=f"Constraint gradient mismatch at theta={theta}")
-        pass
+    def test_two_qutrit_operators(self):
+        """Test two-qutrit operator basis construction."""
+        from qig.symbolic import two_qutrit_operators
+        
+        ops = two_qutrit_operators()
+        assert len(ops) == 16, "Should have 16 operators"
+        assert ops[0].shape == (9, 9), "Should be 9×9 matrices"
+        
+        # Check they're Hermitian
+        for i, op in enumerate(ops):
+            assert (op - op.H).is_zero_matrix, f"Operator {i} should be Hermitian"
     
-    @pytest.mark.skip(reason="Constraint geometry analytics not yet implemented (CIP-0007 Phase 3)")
-    def test_lagrange_multiplier_analytic(self, qutrit_pair_family, random_states):
-        """Test analytic Lagrange multiplier ν matches numerical."""
-        # from qig.analytic import lagrange_multiplier_two_qutrit_analytic
-        # 
-        # for theta in random_states[:10]:
-        #     nu_analytic = lagrange_multiplier_two_qutrit_analytic(theta)
-        #     
-        #     # Compute numerical
-        #     G = qutrit_pair_family.fisher_information(theta)
-        #     _, a = qutrit_pair_family.marginal_entropy_constraint(theta)
-        #     nu_numeric = np.dot(a, G @ theta) / np.dot(a, a)
-        #     
-        #     assert_allclose(nu_analytic, nu_numeric, atol=1e-10,
-        #                    err_msg=f"Lagrange multiplier mismatch at theta={theta}")
-        pass
+    def test_partial_trace(self):
+        """Test partial trace symbolic computation."""
+        from qig.symbolic import partial_trace_symbolic
+        import sympy as sp
+        
+        # Test on maximally mixed state
+        rho = sp.Matrix.eye(9) / 9
+        rho1 = partial_trace_symbolic(rho, keep=0)
+        rho2 = partial_trace_symbolic(rho, keep=1)
+        
+        # Should both be I/3
+        expected = sp.Matrix.eye(3) / 3
+        assert (rho1 - expected).is_zero_matrix, "Tr₂(I/9) should be I/3"
+        assert (rho2 - expected).is_zero_matrix, "Tr₁(I/9) should be I/3"
     
-    @pytest.mark.skip(reason="Constraint geometry analytics not yet implemented (CIP-0007 Phase 3)")
-    def test_grad_nu_analytic(self, qutrit_pair_family, random_states):
-        """Test analytic ∇ν matches numerical (finite differences)."""
-        # from qig.analytic import grad_lagrange_multiplier_two_qutrit_analytic
-        # 
-        # for theta in random_states[:10]:
-        #     grad_nu_analytic = grad_lagrange_multiplier_two_qutrit_analytic(theta)
-        #     
-        #     # Compute numerical via finite differences
-        #     eps = 1e-7
-        #     grad_nu_numeric = np.zeros(len(theta))
-        #     for i in range(len(theta)):
-        #         theta_plus = theta.copy()
-        #         theta_plus[i] += eps
-        #         theta_minus = theta.copy()
-        #         theta_minus[i] -= eps
-        #         
-        #         # ... compute nu at both points ...
-        #         # grad_nu_numeric[i] = (nu_plus - nu_minus) / (2 * eps)
-        #     
-        #     # Allow larger tolerance for numerical derivative
-        #     assert_allclose(grad_nu_analytic, grad_nu_numeric, atol=1e-6,
-        #                    err_msg=f"∇ν mismatch at theta={theta}")
-        pass
+    def test_marginal_entropies_block_structure(self):
+        """Test that marginal entropies respect block structure."""
+        from qig.symbolic import symbolic_marginal_entropies_two_qutrit
+        import sympy as sp
+        
+        theta = sp.symbols('theta1:17', real=True)
+        h1, h2 = symbolic_marginal_entropies_two_qutrit(theta, order=2)
+        
+        # h₁ should depend only on θ₁...θ₈ (site 1)
+        for i in range(8, 16):
+            assert sp.diff(h1, theta[i]) == 0, f"h₁ should not depend on θ_{i+1}"
+        
+        # h₂ should depend only on θ₉...θ₁₆ (site 2)
+        for i in range(8):
+            assert sp.diff(h2, theta[i]) == 0, f"h₂ should not depend on θ_{i+1}"
+        
+        # At origin, both should be log(3)
+        h1_origin = h1.subs([(t, 0) for t in theta])
+        h2_origin = h2.subs([(t, 0) for t in theta])
+        assert sp.simplify(h1_origin - sp.log(3)) == 0
+        assert sp.simplify(h2_origin - sp.log(3)) == 0
+    
+    def test_constraint_gradient_structure(self):
+        """Test constraint gradient has expected structure."""
+        from qig.symbolic import symbolic_constraint_gradient_two_qutrit
+        import sympy as sp
+        
+        theta = sp.symbols('theta1:17', real=True)
+        a = symbolic_constraint_gradient_two_qutrit(theta, order=2)
+        
+        assert a.shape == (16, 1), "Should be 16×1 vector"
+        
+        # Should be a[i] = -(2/9)θᵢ
+        for i in range(16):
+            expected = -sp.Rational(2, 9) * theta[i]
+            assert sp.simplify(a[i] - expected) == 0, f"a[{i}] should be -(2/9)θ_{i+1}"
+    
+    def test_lagrange_multiplier(self):
+        """Test Lagrange multiplier computation."""
+        from qig.symbolic import symbolic_lagrange_multiplier_two_qutrit
+        import sympy as sp
+        
+        theta = sp.symbols('theta1:17', real=True)
+        nu = symbolic_lagrange_multiplier_two_qutrit(theta, order=2)
+        
+        # Should be a symbolic expression
+        assert isinstance(nu, sp.Expr), "ν should be a symbolic expression"
+        
+        # At origin, check if ν is well-defined (not 0/0)
+        # Actually at origin θ=0, so a=0, making ν=0/0 undefined
+        # Test at a non-zero point
+        nu_val = nu.subs([(theta[i], 0.1 if i == 0 else 0) for i in range(16)])
+        assert nu_val != sp.nan, "ν should be well-defined away from origin"
+    
+    def test_grad_lagrange_multiplier(self):
+        """Test gradient of Lagrange multiplier."""
+        from qig.symbolic import symbolic_grad_lagrange_multiplier_two_qutrit
+        import sympy as sp
+        
+        theta = sp.symbols('theta1:17', real=True)
+        grad_nu = symbolic_grad_lagrange_multiplier_two_qutrit(theta, order=2)
+        
+        assert grad_nu.shape == (16, 1), "Should be 16×1 vector"
+        
+        # Each component should be a symbolic expression
+        for i in range(16):
+            assert isinstance(grad_nu[i], sp.Expr), f"∇ν[{i}] should be symbolic"
+    
+    def test_block_structure_verification(self):
+        """Test overall block structure properties."""
+        from qig.symbolic import verify_block_structure_two_qutrit
+        import sympy as sp
+        
+        theta = sp.symbols('theta1:17', real=True)
+        results = verify_block_structure_two_qutrit(theta)
+        
+        assert results['h1_local'], f"h₁ locality failed: {results['details']}"
+        assert results['h2_local'], f"h₂ locality failed: {results['details']}"
+        assert results['a_structure'], f"Constraint gradient structure failed: {results['details']}"
+        assert results['constraint_hessian_block'], f"Constraint Hessian block structure failed: {results['details']}"
 
 
 class TestAntisymmetricPartAnalytic:

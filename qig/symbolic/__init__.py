@@ -21,6 +21,17 @@ from qig.symbolic.single_qutrit import (
     verify_single_qutrit_consistency,
 )
 
+from qig.symbolic.two_qutrit import (
+    two_qutrit_operators,
+    symbolic_density_matrix_two_qutrit,
+    partial_trace_symbolic,
+    symbolic_marginal_entropies_two_qutrit,
+    symbolic_constraint_gradient_two_qutrit,
+    symbolic_lagrange_multiplier_two_qutrit,
+    symbolic_grad_lagrange_multiplier_two_qutrit,
+    verify_block_structure_two_qutrit,
+)
+
 __all__ = [
     "symbolic_gell_mann_matrices",
     "symbolic_su3_structure_constants",
@@ -29,5 +40,13 @@ __all__ = [
     "symbolic_fisher_information_single_qutrit",
     "symbolic_von_neumann_entropy_single_qutrit",
     "verify_single_qutrit_consistency",
+    "two_qutrit_operators",
+    "symbolic_density_matrix_two_qutrit",
+    "partial_trace_symbolic",
+    "symbolic_marginal_entropies_two_qutrit",
+    "symbolic_constraint_gradient_two_qutrit",
+    "symbolic_lagrange_multiplier_two_qutrit",
+    "symbolic_grad_lagrange_multiplier_two_qutrit",
+    "verify_block_structure_two_qutrit",
 ]
 
