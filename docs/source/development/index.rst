@@ -10,6 +10,7 @@ Guidelines for contributing to and developing **qig**.
    testing_tolerances
    contributing
    notebooks
+   notebook_output_filtering
 
 Testing
 -------

@@ -49,18 +49,20 @@ Study dynamics constrained to preserve marginal entropies:
    # Create dynamics object
    dynamics = InaccessibleGameDynamics(exp_fam)
    
-   # Initial state (small perturbation from origin)
+   # An initial state (close to thermal maximum, i.e. small perturbation from origin)
    theta_0 = np.random.randn(exp_fam.n_params) * 0.1
    
-   # Integrate dynamics
-   result = dynamics.integrate(
-       theta_0,
-       t_span=(0.0, 1.0),
-       n_points=100
+   # Solve constrained maximum entropy dynamics
+   result = dynamics.solve_constrained_maxent(
+       theta_init=theta_0,
+       n_steps=1000,
+       dt=0.001,
+       convergence_tol=1e-6
    )
    
-   print(f"Integrated {len(result['theta'])} time steps")
-   print(f"Final constraint value: {result['C'][-1]:.6f}")
+   print(f"Converged: {result['converged']}")
+   print(f"Final entropy: {result['entropy'][-1]:.6f}")
+   print(f"Constraint preserved: {np.abs(result['C_values'][-1] - result['C_values'][0]) < 1e-6}")
 
 Working with Entanglement
 --------------------------
