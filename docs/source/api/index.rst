@@ -15,6 +15,9 @@ Core Modules
    pair_operators
    duhamel
    analysis
+   structure_constants
+   validation
+   reference_data
 
 Module: qig.core
 ----------------
