@@ -12,11 +12,19 @@ from qig.symbolic.su9_pair import (
     symbolic_su9_generators,
     symbolic_su9_structure_constants,
     verify_su9_generators,
+    symbolic_density_matrix_su9_pair,
+    symbolic_cumulant_generating_function_su9_pair,
+    symbolic_fisher_information_su9_pair,
+    symbolic_von_neumann_entropy_su9_pair,
 )
 
 __all__ = [
     "symbolic_su9_generators",
     "symbolic_su9_structure_constants",
     "verify_su9_generators",
+    "symbolic_density_matrix_su9_pair",
+    "symbolic_cumulant_generating_function_su9_pair",
+    "symbolic_fisher_information_su9_pair",
+    "symbolic_von_neumann_entropy_su9_pair",
 ]
 

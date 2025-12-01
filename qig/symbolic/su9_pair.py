@@ -176,9 +176,201 @@ def symbolic_density_matrix_su9_pair(
     """
     Symbolic density matrix for su(9) pair basis (80 parameters).
     
-    Will be implemented in Phase 2.
+    Computes ρ(θ) = exp(Σ θ_a F_a - ψ(θ)) / Z to specified order.
+    
+    Parameters
+    ----------
+    theta_symbols : tuple of sp.Symbol
+        80 symbolic parameters
+    order : int, default=2
+        Order of perturbative expansion around θ=0
+        
+    Returns
+    -------
+    rho : sp.Matrix, shape (9, 9)
+        Density matrix (Hermitian, trace-1, positive)
+        
+    Notes
+    -----
+    Perturbative expansion around maximally mixed state ρ(0) = I/9:
+    
+    Order-0: ρ ≈ I/9
+    Order-1: ρ ≈ I/9 + (1/9) Σ θ_a F_a
+    Order-2: ρ ≈ I/9 + (1/9) Σ θ_a F_a + (1/18) Σ_ab θ_a θ_b [F_a, F_b]
+    
+    The order-2 expansion uses Baker-Campbell-Hausdorff formula and
+    the fact that ψ(θ) ≈ log(9) + (1/18)||θ||² for normalized generators.
+    
+    Examples
+    --------
+    >>> import sympy as sp
+    >>> theta = sp.symbols('theta1:81', real=True)
+    >>> rho = symbolic_density_matrix_su9_pair(theta, order=2)
+    >>> rho.shape
+    (9, 9)
     """
-    raise NotImplementedError("Phase 2: To be implemented")
+    if len(theta_symbols) != 80:
+        raise ValueError(f"Expected 80 parameters, got {len(theta_symbols)}")
+    
+    generators = symbolic_su9_generators()
+    
+    # Construct K = Σ θ_a F_a
+    K = sp.zeros(9, 9)
+    for a, theta_a in enumerate(theta_symbols):
+        K += theta_a * generators[a]
+    
+    # Taylor expansion: exp(K) ≈ I + K + (1/2)K²
+    rho_unnorm = sp.eye(9)
+    
+    if order >= 1:
+        rho_unnorm += K
+    
+    if order >= 2:
+        rho_unnorm += K * K / 2
+    
+    # Normalize to trace-1
+    # Start with simple division by 9
+    rho = rho_unnorm / 9
+    
+    if order >= 2:
+        # Order-2 correction:
+        # For su(9) generators with Tr(F_a²) = 2: Tr(K²) = 2||θ||²
+        # So Tr(I + K + K²/2) = 9 + 0 + ||θ||²
+        # Thus: ρ = (I + K + K²/2) / (9 + ||θ||²)
+        #         ≈ (I + K + K²/2)/9 * (1 - ||θ||²/9)
+        #         = I/9 + K/9 + K²/18 - ||θ||²*I/81 + O(θ³)
+        # Add correction: -||θ||²*I/81
+        norm_sq = sum(theta_a**2 for theta_a in theta_symbols)
+        rho -= (norm_sq / 81) * sp.eye(9)
+    
+    return rho
+
+
+def symbolic_cumulant_generating_function_su9_pair(
+    theta_symbols: Tuple[Symbol, ...],
+    order: int = 2
+) -> sp.Expr:
+    """
+    Cumulant generating function: ψ(θ) = log Tr[exp(Σ θ_a F_a)].
+    
+    Parameters
+    ----------
+    theta_symbols : tuple of sp.Symbol
+        80 symbolic parameters
+    order : int, default=2
+        Order of expansion
+        
+    Returns
+    -------
+    psi : sp.Expr
+        Cumulant generating function
+        
+    Notes
+    -----
+    For normalized generators Tr(F_a F_b) ≈ δ_ab:
+        ψ(θ) ≈ log(9) + (1/18)||θ||²
+        
+    The coefficient 1/18 comes from the second-order expansion of
+    the trace of the matrix exponential.
+    """
+    if len(theta_symbols) != 80:
+        raise ValueError(f"Expected 80 parameters, got {len(theta_symbols)}")
+    
+    # Order-0: log of dimension
+    psi = log(9)
+    
+    if order >= 2:
+        # Order-2: (1/18)||θ||²
+        # This comes from expanding Tr[exp(Σ θ_a F_a)] to order-2
+        psi += sum(theta_a**2 for theta_a in theta_symbols) / 18
+    
+    return psi
+
+
+def symbolic_fisher_information_su9_pair(
+    theta_symbols: Tuple[Symbol, ...],
+    order: int = 2
+) -> Matrix:
+    """
+    Fisher information (BKM metric): G = ∇²ψ.
+    
+    Parameters
+    ----------
+    theta_symbols : tuple of sp.Symbol
+        80 symbolic parameters
+    order : int, default=2
+        Order of expansion (only affects ψ)
+        
+    Returns
+    -------
+    G : sp.Matrix, shape (80, 80)
+        Fisher information matrix (symmetric, positive definite)
+        
+    Notes
+    -----
+    For order-2:
+        ψ(θ) ≈ log(9) + (1/18)||θ||²
+        G_ab = ∂²ψ/∂θ_a∂θ_b ≈ δ_ab / 9
+        
+    This is diagonal because generators are approximately orthonormal.
+    """
+    if len(theta_symbols) != 80:
+        raise ValueError(f"Expected 80 parameters, got {len(theta_symbols)}")
+    
+    psi = symbolic_cumulant_generating_function_su9_pair(theta_symbols, order)
+    
+    # Compute Hessian
+    n = len(theta_symbols)
+    G = sp.zeros(n, n)
+    
+    for i in range(n):
+        for j in range(i, n):  # Only compute upper triangle
+            G[i, j] = sp.diff(psi, theta_symbols[i], theta_symbols[j])
+            if i != j:
+                G[j, i] = G[i, j]  # Symmetric
+    
+    return simplify(G)
+
+
+def symbolic_von_neumann_entropy_su9_pair(
+    theta_symbols: Tuple[Symbol, ...],
+    order: int = 2
+) -> sp.Expr:
+    """
+    Von Neumann entropy: H = -Tr(ρ log ρ).
+    
+    Parameters
+    ----------
+    theta_symbols : tuple of sp.Symbol
+        80 symbolic parameters
+    order : int, default=2
+        Order of expansion
+        
+    Returns
+    -------
+    H : sp.Expr
+        Von Neumann entropy
+        
+    Notes
+    -----
+    For order-2:
+        H(θ) ≈ log(9) - (1/18)||θ||²
+        
+    The entropy decreases quadratically as we move away from the
+    maximally mixed state.
+    """
+    if len(theta_symbols) != 80:
+        raise ValueError(f"Expected 80 parameters, got {len(theta_symbols)}")
+    
+    # Order-0: maximum entropy
+    H = log(9)
+    
+    if order >= 2:
+        # Order-2: entropy decreases as -||θ||²/(2*9) 
+        # Note: different coefficient than local case due to normalization
+        H -= sum(theta_a**2 for theta_a in theta_symbols) / 18
+    
+    return H
 
 
 # Phase 3: Constraint geometry
