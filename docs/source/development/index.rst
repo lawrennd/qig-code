@@ -6,6 +6,7 @@ Guidelines for contributing to and developing **qig**.
 .. toctree::
    :maxdepth: 1
    
+   validation_framework
    testing
    testing_tolerances
    contributing
