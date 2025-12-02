@@ -23,6 +23,17 @@ Key results:
 - **20 block-preserving generators** span the full entangled subspace
 - All eigenvalues are at most **quadratic** (no cubic equations)
 
+Natural Parameter Interpretation
+--------------------------------
+
+The natural parameters θ in the quantum exponential family have specific meanings:
+
+- **θ = 0**: Maximally mixed state (ρ = I/D)
+- **θ → -∞** (large negative): Locally maximally entangled (LME/Bell) states
+
+For LME states, regularization (ε ~ 10⁻³) keeps parameters finite but large:
+||θ|| ~ 3 with some components around -3.
+
 The su(9) Pair Basis
 --------------------
 
@@ -104,8 +115,9 @@ The 8 Gell-Mann matrices :math:`\lambda_1, \ldots, \lambda_8` split as:
 **For the quantum inaccessible game with Gell-Mann basis**, this block structure
 applies to the reduced density matrices obtained by partial trace. Specifically:
 
-- The LME (maximally mixed) starting state: :math:`\rho = I/3`
-- Partial traces of maximally entangled states (Bell-like states)
+- The maximally mixed state: :math:`\rho = I/3` (corresponds to θ = 0)
+- LME (Bell) states: :math:`|\Phi^+\rangle` (corresponds to θ → -∞)
+- Partial traces of maximally entangled states
 - States along the constrained dynamics trajectory
 - Any qutrit state diagonal in the computational basis
 
@@ -140,7 +152,7 @@ Two approaches are available:
    - **No Taylor approximation** - machine precision (~10⁻¹⁵)
    - Works for all 20 block-preserving generators
 
-2. **General su(9)** (``qig.symbolic.su9_pair``):
+2. **General su(9)** (``qig.symbolic.su9_taylor_approximation``):
    
    - Uses Taylor expansion for exp(K)
    - ~1% error at order 2, ~0.0008% at order 6
@@ -192,6 +204,25 @@ Usage Example: LME Exact
    grad_nu = sp.Matrix([sp.diff(nu, t) for t in theta_list])
    A = (a_vec * grad_nu.T - grad_nu * a_vec.T) / 2
 
+Precomputed Expressions
+^^^^^^^^^^^^^^^^^^^^^^^
+
+For fast evaluation, precomputed symbolic expressions are available in
+``qig/symbolic/precomputed/``. These were generated once and saved to Python files:
+
+.. code-block:: python
+
+   from qig.symbolic.precomputed.two_param_chain import (
+       a, c,  # symbolic parameters
+       G, nu, grad_nu,  # intermediate quantities
+       M, S, A,  # Jacobian and its decomposition
+   )
+   
+   # Evaluate at specific values (e.g., LME scale)
+   vals = {a: 2.0, c: 2.0}
+   nu_val = float(nu.subs(vals))
+   A_num = A.subs(vals)
+
 Caching
 ^^^^^^^
 
@@ -217,11 +248,13 @@ Key validations:
 - **A for local params**: equals 0 ✓
 - **A for entangling params**: ≠ 0 (Hamiltonian dynamics!) ✓
 - **A antisymmetry**: A + Aᵀ = 0 ✓
+- **S symmetry**: S = Sᵀ ✓
+- **M decomposition**: M = S + A ✓
 
 Current Status
 --------------
 
-**Complete:**
+**Complete (CIP-0007):**
 
 - EXACT exp(K) for LME dynamics via block decomposition
 - EXACT density matrix ρ and reduced density matrices ρ₁, ρ₂
@@ -231,17 +264,24 @@ Current Status
 - EXACT Lagrange multiplier ν = (aᵀGθ)/(aᵀa)
 - EXACT gradient ∇ν
 - **EXACT antisymmetric part A = (1/2)[a(∇ν)ᵀ - (∇ν)aᵀ]**
+- **EXACT constraint Hessian ∇²C**
+- **EXACT (∇G)[θ] term**
+- **EXACT full Jacobian M = -G - (∇G)[θ] + ν∇²C + a(∇ν)ᵀ**
+- **EXACT symmetric part S = (M + Mᵀ)/2**
 - 20 block-preserving generators identified
+- Precomputed expressions for 2-parameter subset
 
 **Key results:**
 
 - Local parameters only: ν = -1, ∇ν = 0, A = 0 (structural identity holds)
 - With entangling parameters: ν ≠ -1, ∇ν ≠ 0, **A ≠ 0** (Hamiltonian dynamics!)
+- Results verified at LME scale (||θ|| ~ 3): A ≠ 0 for mixed local+entangling params
 
-**In progress (CIP-0007):**
+**Planned:**
 
-- Symmetric part S and full Jacobian M
 - Qubit (d=2) implementation
+- Extraction of effective Hamiltonian H_eff from A
+- Extraction of diffusion operator D[ρ] from S
 
 See Also
 --------
@@ -249,4 +289,3 @@ See Also
 - :doc:`generic_structure` - GENERIC decomposition theory
 - :doc:`quantum_exponential_families` - Quantum exponential family background
 - CIP-0007 in the repository for implementation details
-
