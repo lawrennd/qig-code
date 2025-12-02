@@ -10,6 +10,7 @@ Mathematical background for quantum information geometry and the inaccessible ga
    fisher_information
    inaccessible_game
    generic_structure
+   symbolic_computation
 
 Quantum Exponential Families
 -----------------------------
