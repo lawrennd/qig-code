@@ -325,6 +325,209 @@ def exact_constraint_lme(theta: Dict[str, sp.Symbol]) -> sp.Expr:
 
 
 # =============================================================================
+# Phase 4b: Constraint gradient, Fisher information, ν, ∇ν, A
+# =============================================================================
+
+def create_theta_symbols() -> Tuple[Dict[str, sp.Symbol], List[sp.Symbol]]:
+    """
+    Create symbolic parameters for the 20 block-preserving generators.
+    
+    Returns
+    -------
+    theta_dict : dict mapping generator names to symbols
+    theta_list : ordered list of symbols (for differentiation)
+    """
+    _, names = block_preserving_generators()
+    
+    # Create symbols with short names for cleaner expressions
+    symbols_list = []
+    theta_dict = {}
+    for i, name in enumerate(names):
+        sym = sp.Symbol(f'θ{i}', real=True)
+        symbols_list.append(sym)
+        theta_dict[name] = sym
+    
+    return theta_dict, symbols_list
+
+
+def exact_psi_lme(theta: Dict[str, sp.Symbol]) -> sp.Expr:
+    """EXACT cumulant generating function ψ = log Tr(exp(K))."""
+    exp_K = exact_exp_K_lme(theta)
+    return sp.log(exp_K.trace())
+
+
+def exact_constraint_gradient_lme(theta: Dict[str, sp.Symbol], 
+                                   theta_list: List[sp.Symbol]) -> Matrix:
+    """
+    EXACT constraint gradient a = ∇C = ∇(h₁ + h₂).
+    
+    Parameters
+    ----------
+    theta : dict mapping generator names to symbols
+    theta_list : ordered list of symbols for differentiation
+    
+    Returns
+    -------
+    Matrix : 20×1 column vector
+    """
+    C = exact_constraint_lme(theta)
+    n = len(theta_list)
+    
+    a = sp.zeros(n, 1)
+    for i, sym in enumerate(theta_list):
+        a[i, 0] = simplify(sp.diff(C, sym))
+    
+    return a
+
+
+def exact_fisher_information_lme(theta: Dict[str, sp.Symbol],
+                                  theta_list: List[sp.Symbol]) -> Matrix:
+    """
+    EXACT Fisher information G = ∇²ψ (BKM metric).
+    
+    Parameters
+    ----------
+    theta : dict mapping generator names to symbols
+    theta_list : ordered list of symbols for differentiation
+    
+    Returns
+    -------
+    Matrix : 20×20 symmetric matrix
+    """
+    psi = exact_psi_lme(theta)
+    n = len(theta_list)
+    
+    G = sp.zeros(n, n)
+    for i, sym_i in enumerate(theta_list):
+        dpsi_i = sp.diff(psi, sym_i)
+        for j, sym_j in enumerate(theta_list):
+            if j >= i:  # Use symmetry
+                G[i, j] = simplify(sp.diff(dpsi_i, sym_j))
+                if j > i:
+                    G[j, i] = G[i, j]
+    
+    return G
+
+
+def exact_lagrange_multiplier_lme(a: Matrix, G: Matrix, 
+                                   theta_list: List[sp.Symbol]) -> sp.Expr:
+    """
+    EXACT Lagrange multiplier ν = (aᵀGθ)/(aᵀa).
+    
+    Parameters
+    ----------
+    a : 20×1 constraint gradient
+    G : 20×20 Fisher information
+    theta_list : list of symbols
+    
+    Returns
+    -------
+    Scalar expression for ν
+    """
+    n = len(theta_list)
+    theta_vec = Matrix(theta_list)
+    
+    numerator = (a.T * G * theta_vec)[0, 0]
+    denominator = (a.T * a)[0, 0]
+    
+    return simplify(numerator / denominator)
+
+
+def exact_grad_lagrange_multiplier_lme(a: Matrix, G: Matrix, nu: sp.Expr,
+                                        theta_list: List[sp.Symbol]) -> Matrix:
+    """
+    EXACT gradient of Lagrange multiplier ∇ν.
+    
+    Parameters
+    ----------
+    a : 20×1 constraint gradient
+    G : 20×20 Fisher information
+    nu : scalar Lagrange multiplier
+    theta_list : list of symbols
+    
+    Returns
+    -------
+    Matrix : 20×1 column vector
+    """
+    n = len(theta_list)
+    grad_nu = sp.zeros(n, 1)
+    
+    for i, sym in enumerate(theta_list):
+        grad_nu[i, 0] = simplify(sp.diff(nu, sym))
+    
+    return grad_nu
+
+
+def exact_antisymmetric_part_lme(a: Matrix, grad_nu: Matrix) -> Matrix:
+    """
+    EXACT antisymmetric part A = (1/2)[a(∇ν)ᵀ - (∇ν)aᵀ].
+    
+    Parameters
+    ----------
+    a : 20×1 constraint gradient
+    grad_nu : 20×1 gradient of Lagrange multiplier
+    
+    Returns
+    -------
+    Matrix : 20×20 antisymmetric matrix
+    """
+    outer1 = a * grad_nu.T  # a ⊗ (∇ν)ᵀ
+    outer2 = grad_nu * a.T  # (∇ν) ⊗ aᵀ
+    
+    A = (outer1 - outer2) / 2
+    
+    # Simplify each element
+    n = a.shape[0]
+    for i in range(n):
+        for j in range(n):
+            A[i, j] = simplify(A[i, j])
+    
+    return A
+
+
+def compute_full_chain_lme(theta_dict: Dict[str, sp.Symbol] = None,
+                           theta_list: List[sp.Symbol] = None,
+                           simplify_intermediate: bool = True) -> Dict:
+    """
+    Compute the full chain: exp(K) → ρ → h → a → G → ν → ∇ν → A.
+    
+    Returns dict with all intermediate results.
+    """
+    if theta_dict is None or theta_list is None:
+        theta_dict, theta_list = create_theta_symbols()
+    
+    results = {'theta_dict': theta_dict, 'theta_list': theta_list}
+    
+    print("Step 1/7: Computing constraint gradient a = ∇(h₁+h₂)...")
+    results['a'] = exact_constraint_gradient_lme(theta_dict, theta_list)
+    
+    print("Step 2/7: Computing cumulant generating function ψ...")
+    results['psi'] = exact_psi_lme(theta_dict)
+    
+    print("Step 3/7: Computing Fisher information G = ∇²ψ...")
+    results['G'] = exact_fisher_information_lme(theta_dict, theta_list)
+    
+    print("Step 4/7: Computing Lagrange multiplier ν...")
+    results['nu'] = exact_lagrange_multiplier_lme(
+        results['a'], results['G'], theta_list
+    )
+    
+    print("Step 5/7: Computing gradient ∇ν...")
+    results['grad_nu'] = exact_grad_lagrange_multiplier_lme(
+        results['a'], results['G'], results['nu'], theta_list
+    )
+    
+    print("Step 6/7: Assembling antisymmetric part A...")
+    results['A'] = exact_antisymmetric_part_lme(results['a'], results['grad_nu'])
+    
+    print("Step 7/7: Computing ||A||...")
+    A_norm_sq = sum(results['A'][i,j]**2 for i in range(20) for j in range(20))
+    results['A_norm'] = sp.sqrt(A_norm_sq)
+    
+    return results
+
+
+# =============================================================================
 # Testing
 # =============================================================================
 
