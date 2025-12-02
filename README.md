@@ -255,6 +255,8 @@ See the `examples/` directory:
 
 - **`generate-origin-paper-figures.ipynb`**: Interactive demonstration notebook with validation experiments [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lawrennd/qig-code/blob/main/examples/generate-origin-paper-figures.ipynb)
 
+- **`symbolic_verification_experiments.ipynb`**: Verification of key theoretical predictions (qutrit optimality, constraint linearization, structural identity ν=-1) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lawrennd/qig-code/blob/main/examples/symbolic_verification_experiments.ipynb)
+
 ## Citation
 
 If you use this code in your research, please cite:
