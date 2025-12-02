@@ -115,7 +115,7 @@ Two methods are available for computing marginal entropies:
    
    - Uses quadratic eigenvalue formula
    - Fast differentiation (~0.08s)
-   - Ratio to numerical: 1.0001 (~0.01% error, from density matrix Taylor expansion)
+   - Ratio to numerical: 1.0001 (~0.01% error from symbolic ρ Taylor expansion)
 
 2. **Taylor approximation** (``method='taylor'``):
    
@@ -173,7 +173,7 @@ Current Status
 --------------
 
 The qutrit (d=3) implementation is complete for the antisymmetric part A.
-Work on qubits (d=2) and the symmetric part S is in progress—see CIP-0007
+Work on qubits (d=2) and the symmetric part S is planned in CIP-0007
 in the repository for details.
 
 See Also
