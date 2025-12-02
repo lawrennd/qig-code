@@ -154,6 +154,8 @@ Usage Example: LME Exact
    from qig.symbolic.lme_exact import (
        exact_exp_K_lme,
        exact_rho_lme,
+       exact_constraint_lme,
+       exact_psi_lme,
        block_preserving_generators,
    )
    import sympy as sp
@@ -163,17 +165,32 @@ Usage Example: LME Exact
    print(f"20 block-preserving generators: {names[:4]}...")
    
    # Create symbolic parameters
-   theta = {
-       'λ3⊗I': sp.Symbol('a3', real=True),
-       'λ8⊗I': sp.Symbol('a8', real=True),
-       'λ1⊗λ1': sp.Symbol('c11', real=True),
-   }
+   a = sp.Symbol('a', real=True)  # local
+   c = sp.Symbol('c', real=True)  # entangling
+   theta = {'λ3⊗I': a, 'λ1⊗λ1': c}
+   theta_list = [a, c]
    
    # EXACT exp(K) - no Taylor approximation!
    exp_K = exact_exp_K_lme(theta)
    
-   # EXACT density matrix
-   rho = exact_rho_lme(theta)
+   # EXACT constraint C = h₁ + h₂
+   C = exact_constraint_lme(theta)
+   
+   # Constraint gradient a = ∇C
+   a_vec = sp.Matrix([sp.diff(C, t) for t in theta_list])
+   
+   # Fisher information G = ∇²ψ
+   psi = exact_psi_lme(theta)
+   G = sp.Matrix([[sp.diff(sp.diff(psi, ti), tj) 
+                   for tj in theta_list] for ti in theta_list])
+   
+   # Lagrange multiplier ν = (aᵀGθ)/(aᵀa)
+   theta_vec = sp.Matrix(theta_list)
+   nu = (a_vec.T * G * theta_vec)[0,0] / (a_vec.T * a_vec)[0,0]
+   
+   # Antisymmetric part A = (1/2)[a(∇ν)ᵀ - (∇ν)aᵀ]
+   grad_nu = sp.Matrix([sp.diff(nu, t) for t in theta_list])
+   A = (a_vec * grad_nu.T - grad_nu * a_vec.T) / 2
 
 Caching
 ^^^^^^^
@@ -184,19 +201,22 @@ The first run may take seconds to minutes; subsequent runs load instantly.
 Validation
 ----------
 
-The LME exact method is validated against scipy:
+Run tests with:
 
-.. code-block:: python
+.. code-block:: bash
 
-   # All tests pass with machine precision
-   # ||exp(K)_exact - exp(K)_scipy|| ~ 10⁻¹⁵
+   pytest tests/test_lme_exact.py -v
 
 Key validations:
 
-- Block decomposition: 9×9 → 3×3 + 2×2 + 1×1×4 ✓
-- Eigenvalues at most quadratic ✓
-- 20 generators span full entangled subspace (rank 9) ✓
-- Machine precision agreement with scipy.linalg.expm ✓
+- **exp(K)**: matches scipy.linalg.expm to ~10⁻¹² ✓
+- **Constraint gradient a**: matches finite difference ✓
+- **Fisher info G**: matches numerical Hessian ✓
+- **ν for local params**: equals -1 (structural identity) ✓
+- **ν for entangling params**: ≠ -1 ✓
+- **A for local params**: equals 0 ✓
+- **A for entangling params**: ≠ 0 (Hamiltonian dynamics!) ✓
+- **A antisymmetry**: A + Aᵀ = 0 ✓
 
 Current Status
 --------------
@@ -204,8 +224,19 @@ Current Status
 **Complete:**
 
 - EXACT exp(K) for LME dynamics via block decomposition
-- Antisymmetric part A ≠ 0 (proves Hamiltonian dynamics exist)
+- EXACT density matrix ρ and reduced density matrices ρ₁, ρ₂
+- EXACT marginal entropies h₁, h₂
+- EXACT constraint gradient a = ∇(h₁ + h₂)
+- EXACT Fisher information G = ∇²ψ
+- EXACT Lagrange multiplier ν = (aᵀGθ)/(aᵀa)
+- EXACT gradient ∇ν
+- **EXACT antisymmetric part A = (1/2)[a(∇ν)ᵀ - (∇ν)aᵀ]**
 - 20 block-preserving generators identified
+
+**Key results:**
+
+- Local parameters only: ν = -1, ∇ν = 0, A = 0 (structural identity holds)
+- With entangling parameters: ν ≠ -1, ∇ν ≠ 0, **A ≠ 0** (Hamiltonian dynamics!)
 
 **In progress (CIP-0007):**
 
