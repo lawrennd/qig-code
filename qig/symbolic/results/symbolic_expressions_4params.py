@@ -3,7 +3,7 @@ Symbolic expressions for su(9) pair GENERIC decomposition.
 Generated with 4 symbolic parameters (theta1..theta4).
 
 KEY RESULT: A ≠ 0 for su(9) pair basis!
-This proves the structural identity is broken and Hamiltonian dynamics exist.
+This proves the structural identity Gθ = -a does not hold, enabling Hamiltonian dynamics.
 
 Related to CIP-0007.
 """
@@ -16,7 +16,7 @@ theta = sp.symbols("theta1:5", real=True)
 theta1, theta2, theta3, theta4 = theta
 
 # Constraint gradient: a = ∇(h₁ + h₂)
-# Note: a ≠ -θ/9 (has higher-order terms - structural identity broken!)
+# Note: a ≠ -θ/9 (has higher-order terms - structural identity does not hold)
 a = Matrix([
     [-5*theta1**3/243 - 5*theta1*theta2**2/243 - 2*theta1*theta3**2/243 - 7*theta1*theta4**2/486 - 2*theta1/81 - 2*theta3*theta4/81],
     [-theta2*(10*theta1**2 + 10*theta2**2 + 4*theta3**2 + theta4**2 + 12)/486],

@@ -19,7 +19,7 @@ symbolic expressions:
 - Enable verification of theoretical properties
 - Provide insight into how Lie algebra structure creates simplifications
 
-The key result is that the **antisymmetric part A ≠ 0** for the su(9) pair
+The main result is that the antisymmetric part A ≠ 0 for the su(9) pair
 basis, proving the existence of Hamiltonian (reversible) dynamics.
 
 The su(9) Pair Basis
@@ -27,16 +27,16 @@ The su(9) Pair Basis
 
 For a pair of qutrits (d=3), we use the full su(9) Lie algebra:
 
-- **80 generators** (compared to 16 for local su(3)⊗su(3) basis)
-- **Can represent entangled states** including Bell states
-- **Structural identity is BROKEN**: :math:`G\theta \neq -a`
+- *80 generators** (compared to 16 for local su(3)⊗su(3) basis)
+- *Can represent entangled states* including Bell states
+- *Structural identity does not hold*: :math:`G\theta \neq -a` (unlike separable states)
 
 This breaking of the structural identity is what allows :math:`A \neq 0`.
 
-Key Optimization: SU(3) Block Structure
+Key Optimisation: SU(3) Block Structure
 ---------------------------------------
 
-A crucial optimization exploits the Lie algebra structure of SU(3).
+A crucial optimisation exploits the Lie algebra structure of SU(3).
 
 The Block Structure
 ^^^^^^^^^^^^^^^^^^^
@@ -47,13 +47,13 @@ Reduced density matrices of qutrit pairs have a special form:
 
    \rho_1 = \begin{pmatrix} a & b & 0 \\ b & c & 0 \\ 0 & 0 & d \end{pmatrix}
 
-This is a **2×2 block plus 1×1 block** structure.
+This is a 2×2 block plus 1×1 block structure.
 
 Lie-Algebraic Origin
 ^^^^^^^^^^^^^^^^^^^^
 
-This structure is NOT accidental—it comes from SU(3)'s canonical subgroup
-decomposition:
+This structure comes from SU(3)'s canonical subgroup
+decomposition.
 
 .. math::
 
@@ -75,12 +75,15 @@ The 8 Gell-Mann matrices :math:`\lambda_1, \ldots, \lambda_8` split as:
 **zero coefficients** for the ladder operators, automatically giving the
 2×2 + 1 block form.
 
-This includes:
+**For the quantum inaccessible game with Gell-Mann basis**, this block structure
+applies to the reduced density matrices obtained by partial trace. Specifically:
 
-- Diagonal states in computational basis
-- Partial traces of Bell/maximally entangled states
-- SU(2)-symmetric states
-- Most states encountered in practice
+- The LME (maximally mixed) starting state: :math:`\rho = I/3`
+- Partial traces of maximally entangled states (Bell-like states)
+- States along the constrained dynamics trajectory
+- Any qutrit state diagonal in the computational basis
+
+This covers the states encountered in the inaccessible game analysis.
 
 Computational Benefit
 ^^^^^^^^^^^^^^^^^^^^^

@@ -9,7 +9,7 @@ Key Results
 -----------
 - 80 parameters (not 16 for local basis)
 - Can represent entangled states (e.g., Bell states)
-- Structural identity BROKEN: Gθ ≠ -a (key for GENERIC dynamics)
+- Structural identity Gθ = -a does NOT hold (unlike separable states)
 - Lagrange multiplier ν ≠ -1, and ∇ν ≠ 0
 - Antisymmetric part A is NON-ZERO (Hamiltonian dynamics exist!)
 
@@ -676,7 +676,7 @@ def symbolic_constraint_gradient_su9_pair(
     This gives quadratic (not cubic) eigenvalue equations, making
     differentiation ~100× faster than general eigenvalue decomposition.
     
-    For su(9) pair basis: Gθ ≠ -a (structural identity BROKEN)
+    For su(9) pair basis: Gθ ≠ -a (structural identity does not hold)
     This is the key result that enables A ≠ 0.
     """
     if len(theta_symbols) != 80:
@@ -822,7 +822,7 @@ def symbolic_antisymmetric_part_su9_pair(
         A = (1/2)[a(∇ν)ᵀ - (∇ν)aᵀ]
         
     For su(9) pair basis (unlike local basis):
-    - Structural identity is BROKEN: Gθ ≠ -a
+    - Structural identity Gθ = -a does not hold
     - Lagrange multiplier: ν ≠ -1
     - Gradient: ∇ν ≠ 0
     - Therefore: A ≠ 0 (non-zero antisymmetric part!)
