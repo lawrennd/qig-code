@@ -485,11 +485,77 @@ def exact_antisymmetric_part_lme(a: Matrix, grad_nu: Matrix) -> Matrix:
     return A
 
 
+def exact_constraint_hessian_lme(theta: Dict[str, sp.Symbol],
+                                  theta_list: List[sp.Symbol]) -> Matrix:
+    """
+    EXACT constraint Hessian ∇²C.
+    
+    Returns n×n matrix of second derivatives of C = h₁ + h₂.
+    """
+    C = exact_constraint_lme(theta)
+    n = len(theta_list)
+    
+    H = sp.zeros(n, n)
+    for i, sym_i in enumerate(theta_list):
+        dC_i = sp.diff(C, sym_i)
+        for j, sym_j in enumerate(theta_list):
+            if j >= i:  # Use symmetry
+                H[i, j] = simplify(sp.diff(dC_i, sym_j))
+                if j > i:
+                    H[j, i] = H[i, j]
+    
+    return H
+
+
+def exact_nabla_G_theta_lme(G: Matrix, theta_list: List[sp.Symbol]) -> Matrix:
+    """
+    EXACT (∇G)[θ] = Σ_k (∂G_ij/∂θ_k) θ_k.
+    
+    Third derivatives of ψ contracted with θ.
+    """
+    n = len(theta_list)
+    result = sp.zeros(n, n)
+    
+    for i in range(n):
+        for j in range(n):
+            for k, tk in enumerate(theta_list):
+                result[i, j] += sp.diff(G[i, j], tk) * tk
+    
+    return result
+
+
+def exact_jacobian_lme(theta: Dict[str, sp.Symbol],
+                       theta_list: List[sp.Symbol]) -> Matrix:
+    """
+    EXACT full Jacobian M = -G - (∇G)[θ] + ν∇²C + a(∇ν)ᵀ.
+    """
+    # Get components
+    psi = exact_psi_lme(theta)
+    G = exact_fisher_information_lme(theta, theta_list)
+    nabla_G_theta = exact_nabla_G_theta_lme(G, theta_list)
+    hess_C = exact_constraint_hessian_lme(theta, theta_list)
+    a = exact_constraint_gradient_lme(theta, theta_list)
+    nu = exact_lagrange_multiplier_lme(a, G, theta_list)
+    grad_nu = exact_grad_lagrange_multiplier_lme(a, G, nu, theta_list)
+    
+    # M = -G - (∇G)[θ] + ν∇²C + a(∇ν)ᵀ
+    M = -G - nabla_G_theta + nu * hess_C + a * grad_nu.T
+    
+    return M
+
+
+def exact_symmetric_part_lme(M: Matrix) -> Matrix:
+    """
+    EXACT symmetric part S = (M + Mᵀ)/2.
+    """
+    return (M + M.T) / 2
+
+
 def compute_full_chain_lme(theta_dict: Dict[str, sp.Symbol] = None,
                            theta_list: List[sp.Symbol] = None,
                            simplify_intermediate: bool = True) -> Dict:
     """
-    Compute the full chain: exp(K) → ρ → h → a → G → ν → ∇ν → A.
+    Compute the full chain: exp(K) → ρ → h → a → G → ν → ∇ν → M → S, A.
     
     Returns dict with all intermediate results.
     """

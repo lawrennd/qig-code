@@ -390,6 +390,94 @@ class TestAntisymmetricPart:
                 assert sp.simplify(A[i,j] + A[j,i]) == 0
 
 
+class TestSymmetricPart:
+    """Test symmetric part S and full Jacobian M."""
+    
+    def test_M_zero_for_single_local_param(self):
+        """For single local parameter, M = 0 (structural identity)."""
+        from qig.symbolic.lme_exact import (
+            exact_psi_lme, exact_constraint_lme,
+            exact_fisher_information_lme, exact_constraint_gradient_lme,
+            exact_lagrange_multiplier_lme, exact_grad_lagrange_multiplier_lme,
+            exact_constraint_hessian_lme, exact_nabla_G_theta_lme
+        )
+        
+        a = symbols('a', real=True)
+        theta = {'λ3⊗I': a}
+        theta_list = [a]
+        val = 0.2
+        
+        G = exact_fisher_information_lme(theta, theta_list)
+        nabla_G_theta = exact_nabla_G_theta_lme(G, theta_list)
+        hess_C = exact_constraint_hessian_lme(theta, theta_list)
+        a_vec = exact_constraint_gradient_lme(theta, theta_list)
+        nu = exact_lagrange_multiplier_lme(a_vec, G, theta_list)
+        grad_nu = exact_grad_lagrange_multiplier_lme(a_vec, G, nu, theta_list)
+        
+        M = -G - nabla_G_theta + nu * hess_C + a_vec * grad_nu.T
+        M_val = float(M[0,0].subs(a, val).evalf())
+        
+        assert abs(M_val) < 1e-10, f"M = {M_val} ≠ 0 for local param"
+    
+    def test_S_nonzero_for_entangling(self):
+        """For local + entangling, S ≠ 0."""
+        from qig.symbolic.lme_exact import (
+            exact_psi_lme, exact_constraint_lme,
+            exact_fisher_information_lme, exact_constraint_gradient_lme,
+            exact_lagrange_multiplier_lme, exact_grad_lagrange_multiplier_lme,
+            exact_constraint_hessian_lme, exact_nabla_G_theta_lme
+        )
+        
+        a, c = symbols('a c', real=True)
+        theta = {'λ3⊗I': a, 'λ1⊗λ1': c}
+        theta_list = [a, c]
+        vals = {a: 0.1, c: 0.2}
+        
+        G = exact_fisher_information_lme(theta, theta_list)
+        nabla_G_theta = exact_nabla_G_theta_lme(G, theta_list)
+        hess_C = exact_constraint_hessian_lme(theta, theta_list)
+        a_vec = exact_constraint_gradient_lme(theta, theta_list)
+        nu = exact_lagrange_multiplier_lme(a_vec, G, theta_list)
+        grad_nu = exact_grad_lagrange_multiplier_lme(a_vec, G, nu, theta_list)
+        
+        M = -G - nabla_G_theta + nu * hess_C + a_vec * grad_nu.T
+        S = (M + M.T) / 2
+        
+        S_num = np.array([[float(S[i,j].subs(vals).evalf()) for j in range(2)] 
+                         for i in range(2)])
+        
+        assert np.linalg.norm(S_num) > 0.1, f"||S|| = {np.linalg.norm(S_num)} ≈ 0"
+    
+    def test_S_is_symmetric(self):
+        """S should satisfy S = Sᵀ numerically."""
+        from qig.symbolic.lme_exact import (
+            exact_psi_lme, exact_constraint_lme,
+            exact_fisher_information_lme, exact_constraint_gradient_lme,
+            exact_lagrange_multiplier_lme, exact_grad_lagrange_multiplier_lme,
+            exact_constraint_hessian_lme, exact_nabla_G_theta_lme
+        )
+        
+        a, c = symbols('a c', real=True)
+        theta = {'λ3⊗I': a, 'λ1⊗λ1': c}
+        theta_list = [a, c]
+        vals = {a: 0.1, c: 0.2}
+        
+        G = exact_fisher_information_lme(theta, theta_list)
+        nabla_G_theta = exact_nabla_G_theta_lme(G, theta_list)
+        hess_C = exact_constraint_hessian_lme(theta, theta_list)
+        a_vec = exact_constraint_gradient_lme(theta, theta_list)
+        nu = exact_lagrange_multiplier_lme(a_vec, G, theta_list)
+        grad_nu = exact_grad_lagrange_multiplier_lme(a_vec, G, nu, theta_list)
+        
+        M = -G - nabla_G_theta + nu * hess_C + a_vec * grad_nu.T
+        S = (M + M.T) / 2
+        
+        # Check S = Sᵀ numerically
+        S_num = np.array([[float(S[i,j].subs(vals).evalf()) for j in range(2)] 
+                         for i in range(2)])
+        assert np.allclose(S_num, S_num.T)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
 
