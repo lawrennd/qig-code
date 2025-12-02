@@ -107,8 +107,9 @@ where:
 
 1. **Maximum entropy production**: Systems evolve to maximize joint entropy H while preserving marginal entropies
 2. **Qutrit optimality**: Qutrits (d=3) are optimal under certain resource constraints
-3. **GENERIC structure**: Dynamics decompose into dissipative + Hamiltonian parts
+3. **GENERIC structure**: Dynamics decompose into dissipative (S) + Hamiltonian (A) parts
 4. **Block-diagonal Fisher metric**: Non-interacting pairs enable computational tractability
+5. **Exact analytic forms**: For LME states, A and S have closed-form symbolic expressions (no approximations)
 
 ## API Documentation
 
@@ -179,6 +180,61 @@ from qig.duhamel import duhamel_derivative
 # Precise derivatives for quantum exponential families
 dH_dtheta = duhamel_derivative(rho, drho_dtheta, order=10)
 ```
+
+#### `qig.symbolic`
+
+Symbolic computation for GENERIC decomposition of qutrit pairs.
+
+**Parameterization**: We use the quantum exponential family with Gell-Mann matrices as sufficient statistics:
+
+```
+ρ(θ) = exp(K - ψ(θ)·I)   where   K = Σₐ θₐ Fₐ
+```
+
+The sufficient statistics `Fₐ` are tensor products of Gell-Mann matrices `{λᵢ}`:
+- **Local**: `λᵢ ⊗ I` and `I ⊗ λⱼ` (16 generators)
+- **Entangling**: `λᵢ ⊗ λⱼ` (64 generators)
+
+giving 80 generators spanning su(9) for a qutrit pair.
+
+**The exactness trick**: For locally maximally entangled (LME) states, the 9×9 matrix exponential `exp(K)` decomposes into smaller blocks:
+
+```
+9×9 → 3×3 + 2×2 + 1×1×4
+```
+
+This happens because LME states live in the 3D subspace `{|00⟩, |11⟩, |22⟩}`. The 3×3 and 2×2 blocks have eigenvalues from **quadratic** (not cubic) equations, enabling exact symbolic computation.
+
+**20 block-preserving generators** maintain this structure: 4 local diagonal (`λ₃⊗I`, `I⊗λ₃`, `λ₈⊗I`, `I⊗λ₈`) plus 16 entangling (`λᵢ⊗λⱼ` for i,j ∈ {1,2,3}).
+
+```python
+from qig.symbolic.lme_exact import (
+    exact_exp_K_lme,
+    exact_constraint_lme,
+    block_preserving_generators,
+)
+import sympy as sp
+
+# 20 generators that preserve LME block structure
+generators, names = block_preserving_generators()
+
+# Natural parameters θ as coefficients of Gell-Mann tensor products
+a = sp.Symbol('a', real=True)  # coefficient of λ₃⊗I (local)
+c = sp.Symbol('c', real=True)  # coefficient of λ₁⊗λ₁ (entangling)
+theta = {'λ3⊗I': a, 'λ1⊗λ1': c}
+
+# EXACT exp(K) - no Taylor approximation!
+exp_K = exact_exp_K_lme(theta)
+
+# EXACT constraint C = h₁ + h₂ (sum of marginal entropies)
+C = exact_constraint_lme(theta)
+```
+
+Key features:
+- **Exact exp(K)** via block decomposition - machine precision (~10⁻¹⁵)
+- **No Taylor approximation** required for LME dynamics
+- Analytic forms for antisymmetric (A) and symmetric (S) parts of GENERIC
+- See [symbolic computation docs](https://qig.readthedocs.io/en/latest/theory/symbolic_computation.html) for details
 
 ## Testing
 
