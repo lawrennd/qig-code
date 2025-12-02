@@ -88,13 +88,13 @@ This covers the states encountered in the inaccessible game analysis.
 Computational Benefit
 ^^^^^^^^^^^^^^^^^^^^^
 
-With block structure, eigenvalues come from a **quadratic** (not cubic) formula:
+With block structure, eigenvalues come from a quadratic (not cubic) formula:
 
 .. math::
 
    \lambda_{1,2} = \frac{(a+c) \pm \sqrt{(a-c)^2 + 4b^2}}{2}, \quad \lambda_3 = d
 
-This makes symbolic differentiation **~100× faster** than the general case.
+This makes symbolic differentiation ~100× faster than the general case.
 
 References
 ^^^^^^^^^^
@@ -115,7 +115,7 @@ Two methods are available for computing marginal entropies:
    
    - Uses quadratic eigenvalue formula
    - Fast differentiation (~0.08s)
-   - Ratio to numerical: 1.0001 (essentially exact)
+   - Ratio to numerical: 1.0001 (~0.01% error, from density matrix Taylor expansion)
 
 2. **Taylor approximation** (``method='taylor'``):
    
@@ -165,21 +165,16 @@ Symbolic expressions are validated against numerical computation:
 
 Key validations:
 
-- Constraint gradient ``a``: ratio to numerical = 1.0001
+- Constraint gradient ``a``: ratio to numerical ≈ 1.0001 (~0.01% error)
 - Antisymmetric part ``A ≠ 0``: confirms Hamiltonian dynamics
 - Signs and structure match numerical computation
 
-Planned Extensions
-------------------
+Current Status
+--------------
 
-Qubits (d=2)
-^^^^^^^^^^^^
-
-The next priority is implementing symbolic computation for qubit pairs:
-
-- su(4) basis: 15 parameters (simpler than 80 for qutrits)
-- Reduced :math:`\rho` is 2×2: eigenvalues always trivial (quadratic)
-- No block structure optimization needed—inherently simple
+The qutrit (d=3) implementation is complete for the antisymmetric part A.
+Work on qubits (d=2) and the symmetric part S is in progress—see CIP-0007
+in the repository for details.
 
 See Also
 --------
