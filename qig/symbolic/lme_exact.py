@@ -250,22 +250,78 @@ def exact_rho_lme(theta: Dict[str, sp.Symbol]) -> Matrix:
     return exp_K / Z
 
 
+def symbolic_partial_trace(rho: Matrix, trace_out: int) -> Matrix:
+    """
+    Symbolic partial trace for 3⊗3 system.
+    
+    Parameters
+    ----------
+    rho : 9×9 Matrix
+    trace_out : 1 or 2 (which subsystem to trace out)
+    
+    Returns
+    -------
+    3×3 Matrix
+    """
+    result = sp.zeros(3, 3)
+    
+    if trace_out == 2:  # Tr₂(ρ) → ρ₁
+        for i in range(3):
+            for k in range(3):
+                for j in range(3):
+                    # ρ₁[i,k] = Σⱼ ρ[3i+j, 3k+j]
+                    result[i, k] += rho[3*i + j, 3*k + j]
+    else:  # Tr₁(ρ) → ρ₂
+        for j in range(3):
+            for l in range(3):
+                for i in range(3):
+                    # ρ₂[j,l] = Σᵢ ρ[3i+j, 3i+l]
+                    result[j, l] += rho[3*i + j, 3*i + l]
+    
+    return result
+
+
 def exact_rho1_lme(theta: Dict[str, sp.Symbol]) -> Matrix:
-    """
-    EXACT reduced density matrix ρ₁ = Tr₂(ρ).
-    """
+    """EXACT reduced density matrix ρ₁ = Tr₂(ρ)."""
     rho = exact_rho_lme(theta)
+    return symbolic_partial_trace(rho, trace_out=2)
+
+
+def exact_rho2_lme(theta: Dict[str, sp.Symbol]) -> Matrix:
+    """EXACT reduced density matrix ρ₂ = Tr₁(ρ)."""
+    rho = exact_rho_lme(theta)
+    return symbolic_partial_trace(rho, trace_out=1)
+
+
+def exact_marginal_entropy_lme(rho_marginal: Matrix) -> sp.Expr:
+    """
+    EXACT von Neumann entropy of 3×3 marginal density matrix.
     
-    # Partial trace over subsystem 2
-    rho_arr = np.array(rho.tolist())
-    rho_tensor = rho_arr.reshape(3, 3, 3, 3)
-    rho1_arr = np.einsum('ijkj->ik', rho_tensor)
+    Uses block structure: eigenvalues are quadratic.
+    h = -Σᵢ λᵢ log(λᵢ)
+    """
+    # Diagonalize (3×3 with block structure → quadratic eigenvalues)
+    P, D = rho_marginal.diagonalize()
     
-    # Convert back to symbolic
-    rho1 = Matrix([[sp.nsimplify(complex(rho1_arr[i, k]), rational=True)
-                    for k in range(3)] for i in range(3)])
+    # Entropy: -Σ λᵢ log(λᵢ)
+    h = sp.Integer(0)
+    for i in range(3):
+        λ = D[i, i]
+        # Handle λ log(λ) → 0 as λ → 0
+        h -= λ * sp.log(λ)
     
-    return simplify(rho1)
+    return simplify(h)
+
+
+def exact_constraint_lme(theta: Dict[str, sp.Symbol]) -> sp.Expr:
+    """EXACT constraint C = h₁ + h₂."""
+    rho1 = exact_rho1_lme(theta)
+    rho2 = exact_rho2_lme(theta)
+    
+    h1 = exact_marginal_entropy_lme(rho1)
+    h2 = exact_marginal_entropy_lme(rho2)
+    
+    return h1 + h2
 
 
 # =============================================================================
