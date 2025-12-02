@@ -218,6 +218,178 @@ class TestFullChain:
         assert h2 is not None
 
 
+class TestConstraintGradient:
+    """Test constraint gradient a = ∇C."""
+    
+    def test_gradient_numerical_match(self):
+        """Symbolic gradient should match finite difference."""
+        from qig.symbolic.lme_exact import exact_constraint_lme
+        
+        a = symbols('a', real=True)
+        theta = {'λ3⊗I': a}
+        
+        C = exact_constraint_lme(theta)
+        dC_da = sp.diff(C, a)
+        
+        # Numerical derivative
+        val = 0.2
+        eps = 1e-6
+        C_plus = float(C.subs(a, val + eps).evalf())
+        C_minus = float(C.subs(a, val - eps).evalf())
+        dC_num = (C_plus - C_minus) / (2 * eps)
+        
+        dC_exact = float(dC_da.subs(a, val).evalf())
+        
+        assert abs(dC_exact - dC_num) < 1e-6
+
+
+class TestFisherInformation:
+    """Test Fisher information G = ∇²ψ."""
+    
+    def test_fisher_numerical_match(self):
+        """Symbolic Hessian should match finite difference."""
+        from qig.symbolic.lme_exact import exact_psi_lme
+        
+        a = symbols('a', real=True)
+        theta = {'λ3⊗I': a}
+        
+        psi = exact_psi_lme(theta)
+        G = sp.diff(sp.diff(psi, a), a)
+        
+        # Numerical second derivative
+        val = 0.2
+        eps = 1e-5
+        psi_plus = float(psi.subs(a, val + eps).evalf())
+        psi_mid = float(psi.subs(a, val).evalf())
+        psi_minus = float(psi.subs(a, val - eps).evalf())
+        G_num = (psi_plus - 2*psi_mid + psi_minus) / eps**2
+        
+        G_exact = float(G.subs(a, val).evalf())
+        
+        assert abs(G_exact - G_num) < 1e-4
+
+
+class TestLagrangeMultiplier:
+    """Test Lagrange multiplier ν and its gradient."""
+    
+    def test_nu_equals_minus_one_for_local(self):
+        """For local parameters only, ν = -1 (structural identity)."""
+        from qig.symbolic.lme_exact import exact_constraint_lme, exact_psi_lme
+        
+        a = symbols('a', real=True)
+        theta = {'λ3⊗I': a}
+        val = 0.2
+        
+        C = exact_constraint_lme(theta)
+        psi = exact_psi_lme(theta)
+        
+        dC_da = sp.diff(C, a)
+        G = sp.diff(sp.diff(psi, a), a)
+        nu = (dC_da * G * a) / (dC_da * dC_da)
+        
+        nu_val = float(nu.subs(a, val).evalf())
+        assert abs(nu_val + 1) < 1e-10, f"ν = {nu_val} ≠ -1 for local param"
+    
+    def test_nu_not_minus_one_for_entangling(self):
+        """For entangling parameters, ν ≠ -1."""
+        from qig.symbolic.lme_exact import exact_constraint_lme, exact_psi_lme
+        
+        c = symbols('c', real=True)
+        theta = {'λ1⊗λ1': c}
+        val = 0.2
+        
+        C = exact_constraint_lme(theta)
+        psi = exact_psi_lme(theta)
+        
+        dC_dc = sp.diff(C, c)
+        G = sp.diff(sp.diff(psi, c), c)
+        nu = (dC_dc * G * c) / (dC_dc * dC_dc)
+        
+        nu_val = float(nu.subs(c, val).evalf())
+        assert abs(nu_val + 1) > 0.1, f"ν = {nu_val} ≈ -1 (should differ)"
+
+
+class TestAntisymmetricPart:
+    """Test antisymmetric part A."""
+    
+    def test_A_zero_for_local_only(self):
+        """For local parameters only, A = 0."""
+        from qig.symbolic.lme_exact import exact_constraint_lme, exact_psi_lme
+        
+        a, b = symbols('a b', real=True)
+        theta = {'λ3⊗I': a, 'I⊗λ3': b}
+        theta_list = [a, b]
+        vals = {a: 0.1, b: 0.15}
+        
+        C = exact_constraint_lme(theta)
+        psi = exact_psi_lme(theta)
+        
+        a_vec = sp.Matrix([sp.diff(C, t) for t in theta_list])
+        G = sp.Matrix([[sp.diff(sp.diff(psi, ti), tj) for tj in theta_list] 
+                       for ti in theta_list])
+        
+        theta_vec = sp.Matrix(theta_list)
+        nu = (a_vec.T * G * theta_vec)[0,0] / (a_vec.T * a_vec)[0,0]
+        grad_nu = sp.Matrix([sp.diff(nu, t) for t in theta_list])
+        A = (a_vec * grad_nu.T - grad_nu * a_vec.T) / 2
+        
+        A_num = np.array([[float(A[i,j].subs(vals).evalf()) for j in range(2)] 
+                         for i in range(2)])
+        
+        assert np.linalg.norm(A_num) < 1e-10, f"||A|| = {np.linalg.norm(A_num)} for local"
+    
+    def test_A_nonzero_for_entangling(self):
+        """For entangling parameters, A ≠ 0."""
+        from qig.symbolic.lme_exact import exact_constraint_lme, exact_psi_lme
+        
+        a, c = symbols('a c', real=True)
+        theta = {'λ3⊗I': a, 'λ1⊗λ1': c}
+        theta_list = [a, c]
+        vals = {a: 0.1, c: 0.2}
+        
+        C = exact_constraint_lme(theta)
+        psi = exact_psi_lme(theta)
+        
+        a_vec = sp.Matrix([sp.diff(C, t) for t in theta_list])
+        G = sp.Matrix([[sp.diff(sp.diff(psi, ti), tj) for tj in theta_list] 
+                       for ti in theta_list])
+        
+        theta_vec = sp.Matrix(theta_list)
+        nu = (a_vec.T * G * theta_vec)[0,0] / (a_vec.T * a_vec)[0,0]
+        grad_nu = sp.Matrix([sp.diff(nu, t) for t in theta_list])
+        A = (a_vec * grad_nu.T - grad_nu * a_vec.T) / 2
+        
+        A_num = np.array([[float(A[i,j].subs(vals).evalf()) for j in range(2)] 
+                         for i in range(2)])
+        
+        assert np.linalg.norm(A_num) > 1e-6, f"||A|| = {np.linalg.norm(A_num)} ≈ 0"
+    
+    def test_A_is_antisymmetric(self):
+        """A should satisfy A + Aᵀ = 0."""
+        from qig.symbolic.lme_exact import exact_constraint_lme, exact_psi_lme
+        
+        a, c = symbols('a c', real=True)
+        theta = {'λ3⊗I': a, 'λ1⊗λ1': c}
+        theta_list = [a, c]
+        
+        C = exact_constraint_lme(theta)
+        psi = exact_psi_lme(theta)
+        
+        a_vec = sp.Matrix([sp.diff(C, t) for t in theta_list])
+        G = sp.Matrix([[sp.diff(sp.diff(psi, ti), tj) for tj in theta_list] 
+                       for ti in theta_list])
+        
+        theta_vec = sp.Matrix(theta_list)
+        nu = (a_vec.T * G * theta_vec)[0,0] / (a_vec.T * a_vec)[0,0]
+        grad_nu = sp.Matrix([sp.diff(nu, t) for t in theta_list])
+        A = (a_vec * grad_nu.T - grad_nu * a_vec.T) / 2
+        
+        # Check antisymmetry symbolically
+        for i in range(2):
+            for j in range(2):
+                assert sp.simplify(A[i,j] + A[j,i]) == 0
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
 
