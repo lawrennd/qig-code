@@ -13,6 +13,7 @@ from sympy import Matrix, Rational, sqrt, log
 
 # Symbolic parameters
 theta = sp.symbols("theta1:5", real=True)
+theta1, theta2, theta3, theta4 = theta
 
 # Constraint gradient: a = ∇(h₁ + h₂)
 # Note: a ≠ -θ/9 (has higher-order terms - structural identity broken!)
