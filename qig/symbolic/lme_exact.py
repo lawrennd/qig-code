@@ -410,7 +410,8 @@ def exact_fisher_information_lme(theta: Dict[str, sp.Symbol],
 
 
 def exact_lagrange_multiplier_lme(a: Matrix, G: Matrix, 
-                                   theta_list: List[sp.Symbol]) -> sp.Expr:
+                                   theta_list: List[sp.Symbol],
+                                   do_simplify: bool = False) -> sp.Expr:
     """
     EXACT Lagrange multiplier ν = (aᵀGθ)/(aᵀa).
     
@@ -419,22 +420,25 @@ def exact_lagrange_multiplier_lme(a: Matrix, G: Matrix,
     a : 20×1 constraint gradient
     G : 20×20 Fisher information
     theta_list : list of symbols
+    do_simplify : bool
+        Whether to simplify (SLOW)
     
     Returns
     -------
     Scalar expression for ν
     """
-    n = len(theta_list)
     theta_vec = Matrix(theta_list)
     
     numerator = (a.T * G * theta_vec)[0, 0]
     denominator = (a.T * a)[0, 0]
     
-    return simplify(numerator / denominator)
+    result = numerator / denominator
+    return simplify(result) if do_simplify else result
 
 
 def exact_grad_lagrange_multiplier_lme(a: Matrix, G: Matrix, nu: sp.Expr,
-                                        theta_list: List[sp.Symbol]) -> Matrix:
+                                        theta_list: List[sp.Symbol],
+                                        do_simplify: bool = False) -> Matrix:
     """
     EXACT gradient of Lagrange multiplier ∇ν.
     
@@ -444,6 +448,8 @@ def exact_grad_lagrange_multiplier_lme(a: Matrix, G: Matrix, nu: sp.Expr,
     G : 20×20 Fisher information
     nu : scalar Lagrange multiplier
     theta_list : list of symbols
+    do_simplify : bool
+        Whether to simplify each derivative (SLOW for complex expressions)
     
     Returns
     -------
@@ -453,7 +459,10 @@ def exact_grad_lagrange_multiplier_lme(a: Matrix, G: Matrix, nu: sp.Expr,
     grad_nu = sp.zeros(n, 1)
     
     for i, sym in enumerate(theta_list):
-        grad_nu[i, 0] = simplify(sp.diff(nu, sym))
+        print(f"  ∇ν[{i+1}/{n}]...", end=" ", flush=True)
+        deriv = sp.diff(nu, sym)
+        grad_nu[i, 0] = simplify(deriv) if do_simplify else deriv
+        print("done")
     
     return grad_nu
 
@@ -486,7 +495,8 @@ def exact_antisymmetric_part_lme(a: Matrix, grad_nu: Matrix) -> Matrix:
 
 
 def exact_constraint_hessian_lme(theta: Dict[str, sp.Symbol],
-                                  theta_list: List[sp.Symbol]) -> Matrix:
+                                  theta_list: List[sp.Symbol],
+                                  do_simplify: bool = False) -> Matrix:
     """
     EXACT constraint Hessian ∇²C.
     
@@ -497,12 +507,15 @@ def exact_constraint_hessian_lme(theta: Dict[str, sp.Symbol],
     
     H = sp.zeros(n, n)
     for i, sym_i in enumerate(theta_list):
+        print(f"  ∇²C row {i+1}/{n}...", end=" ", flush=True)
         dC_i = sp.diff(C, sym_i)
         for j, sym_j in enumerate(theta_list):
             if j >= i:  # Use symmetry
-                H[i, j] = simplify(sp.diff(dC_i, sym_j))
+                deriv = sp.diff(dC_i, sym_j)
+                H[i, j] = simplify(deriv) if do_simplify else deriv
                 if j > i:
                     H[j, i] = H[i, j]
+        print("done")
     
     return H
 
