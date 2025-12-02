@@ -418,8 +418,102 @@ class TestSU9ConstraintGeometry:
 class TestSU9AntisymmetricPart:
     """Test antisymmetric part for su(9) pair (Phase 4)."""
     
-    @pytest.mark.skip(reason="Phase 4: Not yet implemented")
+    def test_antisymmetric_property(self):
+        """Test that A is antisymmetric: A + Aᵀ = 0."""
+        from qig.symbolic import symbolic_antisymmetric_part_su9_pair
+        import sympy as sp
+        
+        # Use small subset for computational tractability
+        n_test = 6
+        theta_sym = sp.symbols(f'theta1:{n_test+1}', real=True)
+        theta_full = tuple(list(theta_sym) + [sp.Integer(0)] * (80 - n_test))
+        
+        print(f'Computing A with {n_test} symbolic parameters...')
+        A_sym = symbolic_antisymmetric_part_su9_pair(theta_full, order=2)
+        
+        print(f'  ✓ A computed, shape = {A_sym.shape}')
+        
+        # Check antisymmetry symbolically
+        sym_part = A_sym + A_sym.T
+        
+        # Check if zero (may need simplification)
+        is_zero = sym_part.is_zero_matrix
+        if not is_zero:
+            # Try simplifying a few components
+            all_zero = True
+            for i in range(min(3, n_test)):
+                for j in range(min(3, n_test)):
+                    if sp.simplify(sym_part[i, j]) != 0:
+                        all_zero = False
+                        break
+                if not all_zero:
+                    break
+            is_zero = all_zero
+        
+        print(f'  Antisymmetry check: {"PASS" if is_zero else "FAIL"}')
+        assert is_zero, "A should be antisymmetric"
+    
     def test_antisymmetric_part_nonzero(self):
-        """Test that A ≠ 0 for su(9) pair basis."""
-        pass
+        """Test that A ≠ 0 for su(9) pair basis (KEY RESULT!)."""
+        from qig.symbolic import symbolic_antisymmetric_part_su9_pair
+        import sympy as sp
+        
+        # Use small subset
+        n_test = 6
+        theta_sym = sp.symbols(f'theta1:{n_test+1}', real=True)
+        theta_full = tuple(list(theta_sym) + [sp.Integer(0)] * (80 - n_test))
+        
+        print(f'Computing A...')
+        A_sym = symbolic_antisymmetric_part_su9_pair(theta_full, order=2)
+        
+        # Evaluate numerically at small θ
+        A_func = sp.lambdify(theta_sym, A_sym, 'numpy')
+        
+        np.random.seed(42)
+        theta_test = np.random.randn(n_test) * 0.01
+        A_eval = A_func(*theta_test)
+        
+        norm_A = np.linalg.norm(A_eval)
+        print(f'  ||A|| = {norm_A:.3e}')
+        
+        # KEY TEST: A should be NON-ZERO for su(9)!
+        assert norm_A > 1e-10, f"A should be non-zero for su(9), got {norm_A:.3e}"
+        print(f'  ✓ A ≠ 0 for su(9) pair basis!')
+        print(f'  This confirms Hamiltonian dynamics are present!')
+    
+    def test_antisymmetric_numerical(self, qutrit_pair_family):
+        """Compare symbolic A to numerical (in perturbative regime)."""
+        from qig.symbolic import symbolic_antisymmetric_part_su9_pair
+        import sympy as sp
+        
+        # Use small subset for speed
+        n_test = 6
+        theta_sym = sp.symbols(f'theta1:{n_test+1}', real=True)
+        theta_full = tuple(list(theta_sym) + [sp.Integer(0)] * (80 - n_test))
+        
+        print(f'Computing symbolic A...')
+        A_sym = symbolic_antisymmetric_part_su9_pair(theta_full, order=2)
+        A_func = sp.lambdify(theta_sym, A_sym, 'numpy')
+        
+        # Test on small θ
+        np.random.seed(42)
+        for i in range(2):
+            theta_test = np.zeros(80)
+            theta_test[:n_test] = np.random.randn(n_test) * 0.01
+            
+            # Symbolic
+            A_analytic = np.zeros((80, 80))
+            A_analytic[:n_test, :n_test] = A_func(*theta_test[:n_test])
+            
+            # Numerical
+            A_numeric = qutrit_pair_family.antisymmetric_part(theta_test)
+            
+            # Compare only the active block
+            error = np.linalg.norm(A_analytic[:n_test, :n_test] - 
+                                   A_numeric[:n_test, :n_test])
+            print(f'  Test {i+1}: ||A_sym - A_num|| = {error:.3e}')
+            
+            # Order-2 approximation in perturbative regime
+            # Error should be reasonable (not machine precision, but small)
+            assert error < 1e-2, f"Error {error:.3e} too large for order-2"
 

@@ -327,9 +327,18 @@ def symbolic_fisher_information_su9_pair(
     
     for i in range(n):
         for j in range(i, n):  # Only compute upper triangle
-            G[i, j] = sp.diff(psi, theta_symbols[i], theta_symbols[j])
-            if i != j:
-                G[j, i] = G[i, j]  # Symmetric
+            # Only differentiate w.r.t. symbols, not constants
+            if isinstance(theta_symbols[i], sp.Symbol) and isinstance(theta_symbols[j], sp.Symbol):
+                G[i, j] = sp.diff(psi, theta_symbols[i], theta_symbols[j])
+                if i != j:
+                    G[j, i] = G[i, j]  # Symmetric
+            elif isinstance(theta_symbols[i], sp.Symbol):
+                # j is constant, derivative is 0
+                pass
+            elif isinstance(theta_symbols[j], sp.Symbol):
+                # i is constant, derivative is 0
+                pass
+            # else both are constants, G[i,j] = 0 (already initialized)
     
     return simplify(G)
 
@@ -623,20 +632,94 @@ def symbolic_grad_lagrange_multiplier_su9_pair(
     # Gradient
     grad_nu = sp.zeros(80, 1)
     for i, theta_i in enumerate(theta_symbols):
-        grad_nu[i] = sp.diff(nu, theta_i)
+        # Only differentiate w.r.t. symbols, not constants
+        if isinstance(theta_i, sp.Symbol):
+            grad_nu[i] = sp.diff(nu, theta_i)
+        else:
+            grad_nu[i] = 0
     
     return simplify(grad_nu)
 
 
 # Phase 4: Antisymmetric part
+@cached_symbolic
 def symbolic_antisymmetric_part_su9_pair(
     theta_symbols: Tuple[Symbol, ...],
     order: int = 2
 ) -> Matrix:
     """
-    Antisymmetric part of GENERIC decomposition for su(9) pair.
+    Antisymmetric part of GENERIC decomposition: A = (1/2)[a⊗(∇ν)ᵀ - (∇ν)⊗aᵀ].
     
-    Will be implemented in Phase 4.
+    This is the MAIN DELIVERABLE of CIP-0007!
+    
+    Parameters
+    ----------
+    theta_symbols : tuple of sp.Symbol
+        80 symbolic parameters
+    order : int, default=2
+        Order of expansion
+        
+    Returns
+    -------
+    A : sp.Matrix, shape (80, 80)
+        Antisymmetric part of flow Jacobian
+        
+    Notes
+    -----
+    From equation (283) in quantum-generic-decomposition.tex:
+        A = (1/2)[a(∇ν)ᵀ - (∇ν)aᵀ]
+        
+    For su(9) pair basis (unlike local basis):
+    - Structural identity is BROKEN: Gθ ≠ -a
+    - Lagrange multiplier: ν ≠ -1
+    - Gradient: ∇ν ≠ 0
+    - Therefore: A ≠ 0 (non-zero antisymmetric part!)
+    
+    This captures the Hamiltonian dynamics (reversible evolution).
+    
+    Properties:
+    - Antisymmetric: A = -Aᵀ
+    - Degeneracy: A·(-Gθ) ≈ 0 (approximate for order-2)
+    - Non-zero for entangling operators
+    
+    The Lie algebra structure enters through:
+    1. Constraint gradient a (via partial traces)
+    2. Lagrange multiplier ν (via Fisher metric)
+    3. Gradient ∇ν (breaks for su(9))
+    
+    Examples
+    --------
+    >>> import sympy as sp
+    >>> theta = sp.symbols('theta1:81', real=True)
+    >>> A = symbolic_antisymmetric_part_su9_pair(theta, order=2)
+    >>> A.shape
+    (80, 80)
+    >>> (A + A.T).norm()  # Should be ~0 (antisymmetric)
+    0
+    >>> A.norm()  # Should be non-zero for su(9)
+    <positive value>
+    
+    References
+    ----------
+    - quantum-generic-decomposition.tex: Equation (283)
+    - CIP-0007: Phase 4 implementation plan
     """
-    raise NotImplementedError("Phase 4: To be implemented")
+    if len(theta_symbols) != 80:
+        raise ValueError(f"Expected 80 parameters, got {len(theta_symbols)}")
+    
+    # Get constraint gradient and Lagrange multiplier gradient
+    # These are cached, so subsequent calls are instant
+    a = symbolic_constraint_gradient_su9_pair(theta_symbols, order)
+    grad_nu = symbolic_grad_lagrange_multiplier_su9_pair(theta_symbols, order)
+    
+    # Compute outer products
+    # a⊗(∇ν)ᵀ is a column vector ⊗ row vector = matrix
+    # In SymPy: a is (80,1), grad_nu is (80,1), need transpose of grad_nu
+    outer1 = a * grad_nu.T  # (80,1) * (1,80) = (80,80)
+    outer2 = grad_nu * a.T  # (80,1) * (1,80) = (80,80)
+    
+    # Antisymmetric part: A = (1/2)[outer1 - outer2]
+    A = Rational(1, 2) * (outer1 - outer2)
+    
+    return simplify(A)
 

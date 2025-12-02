@@ -21,6 +21,7 @@ from qig.symbolic.su9_pair import (
     symbolic_constraint_gradient_su9_pair,
     symbolic_lagrange_multiplier_su9_pair,
     symbolic_grad_lagrange_multiplier_su9_pair,
+    symbolic_antisymmetric_part_su9_pair,
 )
 
 __all__ = [
@@ -36,5 +37,6 @@ __all__ = [
     "symbolic_constraint_gradient_su9_pair",
     "symbolic_lagrange_multiplier_su9_pair",
     "symbolic_grad_lagrange_multiplier_su9_pair",
+    "symbolic_antisymmetric_part_su9_pair",
 ]
 
