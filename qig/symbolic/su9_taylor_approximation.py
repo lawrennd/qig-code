@@ -1,9 +1,12 @@
 """
-Symbolic computation for su(9) pair basis qutrit system.
+LEGACY: Taylor-approximation based symbolic computation for su(9) pair basis.
+
+WARNING: For EXACT computation, use `qig.symbolic.lme_exact` instead.
+This module uses TAYLOR EXPANSION for exp(K), introducing approximation error.
 
 This module implements symbolic expressions for a single qutrit PAIR using
-the full su(9) Lie algebra (80 generators). This allows representation of
-entangled states, unlike the local tensor product basis.
+the full su(9) Lie algebra (80 generators). It uses Taylor expansion for exp(K)
+which is an APPROXIMATION.
 
 Key Results
 -----------
