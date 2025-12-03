@@ -20,7 +20,7 @@ A Python package for quantum information geometry: constrained dynamics in quant
 
 ## Documentation
 
-📚 **Full documentation is available at [qig.readthedocs.io](https://qig.readthedocs.io/)**
+**Documentation is available at [qig.readthedocs.io](https://qig.readthedocs.io/)**
 
 The documentation includes:
 - **Getting Started**: Installation and quick start guide
@@ -185,7 +185,7 @@ dH_dtheta = duhamel_derivative(rho, drho_dtheta, order=10)
 
 Symbolic computation for GENERIC decomposition of qutrit pairs.
 
-**Parameterization**: We use the quantum exponential family with Gell-Mann matrices as sufficient statistics:
+**Parameterisation**: The code uses the quantum exponential family with Gell-Mann matrices as sufficient statistics:
 
 ```
 ρ(θ) = exp(K - ψ(θ)·I)   where   K = Σₐ θₐ Fₐ
@@ -223,16 +223,16 @@ a = sp.Symbol('a', real=True)  # coefficient of λ₃⊗I (local)
 c = sp.Symbol('c', real=True)  # coefficient of λ₁⊗λ₁ (entangling)
 theta = {'λ3⊗I': a, 'λ1⊗λ1': c}
 
-# EXACT exp(K) - no Taylor approximation!
+# Exact exp(K)
 exp_K = exact_exp_K_lme(theta)
 
-# EXACT constraint C = h₁ + h₂ (sum of marginal entropies)
+# Exact constraint C = h₁ + h₂ (sum of marginal entropies)
 C = exact_constraint_lme(theta)
 ```
 
 Key features:
 - **Exact exp(K)** via block decomposition - machine precision (~10⁻¹⁵)
-- **No Taylor approximation** required for LME dynamics
+- The decomposition avoides the need for Taylor approximation in the LME dynamics
 - Analytic forms for antisymmetric (A) and symmetric (S) parts of GENERIC
 - See [symbolic computation docs](https://qig.readthedocs.io/en/latest/theory/symbolic_computation.html) for details
 
@@ -266,7 +266,8 @@ If you use this code in your research, please cite:
   title={The Origin of the Inaccessible Game},
   author={Lawrence, Neil D.},
   journal={arXiv preprint},
-  year={2025}
+  year={2025},
+  note={In preparation}
 }
 ```
 
@@ -274,7 +275,7 @@ If you use this code in your research, please cite:
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
-## 🤝 Contributing
+## Contributing
 
 Contributions welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
@@ -293,15 +294,13 @@ nbstripout --install
 pytest tests/
 ```
 
-## 🔗 Links
+## Links
 
-- **Paper Repository**: [the-inaccessible-game-origin](https://github.com/lawrennd/the-inaccessible-game-origin)
 - **Documentation**: [README](https://github.com/lawrennd/qig-code#readme)
 - **Issues**: [GitHub Issues](https://github.com/lawrennd/qig-code/issues)
 
-## 📬 Contact
+## Contact
 
 For questions or collaboration:
 - GitHub Issues: [qig-code/issues](https://github.com/lawrennd/qig-code/issues)
-- Email: [Contact information]
-
+- GitHub ID @lawrennd
