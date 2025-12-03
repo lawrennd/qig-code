@@ -266,7 +266,8 @@ If you use this code in your research, please cite:
   title={The Origin of the Inaccessible Game},
   author={Lawrence, Neil D.},
   journal={arXiv preprint},
-  year={2025}
+  year={2025},
+  note={In preparation}
 }
 ```
 
@@ -274,7 +275,7 @@ If you use this code in your research, please cite:
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
-## 🤝 Contributing
+## Contributing
 
 Contributions welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
@@ -293,15 +294,13 @@ nbstripout --install
 pytest tests/
 ```
 
-## 🔗 Links
+## Links
 
-- **Paper Repository**: [the-inaccessible-game-origin](https://github.com/lawrennd/the-inaccessible-game-origin)
 - **Documentation**: [README](https://github.com/lawrennd/qig-code#readme)
 - **Issues**: [GitHub Issues](https://github.com/lawrennd/qig-code/issues)
 
-## 📬 Contact
+## Contact
 
 For questions or collaboration:
 - GitHub Issues: [qig-code/issues](https://github.com/lawrennd/qig-code/issues)
-- Email: [Contact information]
-
+- GitHub ID @lawrennd
