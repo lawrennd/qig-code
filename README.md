@@ -20,7 +20,7 @@ A Python package for quantum information geometry: constrained dynamics in quant
 
 ## Documentation
 
-📚 **Full documentation is available at [qig.readthedocs.io](https://qig.readthedocs.io/)**
+**Documentation is available at [qig.readthedocs.io](https://qig.readthedocs.io/)**
 
 The documentation includes:
 - **Getting Started**: Installation and quick start guide
@@ -185,7 +185,7 @@ dH_dtheta = duhamel_derivative(rho, drho_dtheta, order=10)
 
 Symbolic computation for GENERIC decomposition of qutrit pairs.
 
-**Parameterization**: We use the quantum exponential family with Gell-Mann matrices as sufficient statistics:
+**Parameterisation**: The code uses the quantum exponential family with Gell-Mann matrices as sufficient statistics:
 
 ```
 ρ(θ) = exp(K - ψ(θ)·I)   where   K = Σₐ θₐ Fₐ
@@ -223,16 +223,16 @@ a = sp.Symbol('a', real=True)  # coefficient of λ₃⊗I (local)
 c = sp.Symbol('c', real=True)  # coefficient of λ₁⊗λ₁ (entangling)
 theta = {'λ3⊗I': a, 'λ1⊗λ1': c}
 
-# EXACT exp(K) - no Taylor approximation!
+# Exact exp(K)
 exp_K = exact_exp_K_lme(theta)
 
-# EXACT constraint C = h₁ + h₂ (sum of marginal entropies)
+# Exact constraint C = h₁ + h₂ (sum of marginal entropies)
 C = exact_constraint_lme(theta)
 ```
 
 Key features:
 - **Exact exp(K)** via block decomposition - machine precision (~10⁻¹⁵)
-- **No Taylor approximation** required for LME dynamics
+- The decomposition avoides the need for Taylor approximation in the LME dynamics
 - Analytic forms for antisymmetric (A) and symmetric (S) parts of GENERIC
 - See [symbolic computation docs](https://qig.readthedocs.io/en/latest/theory/symbolic_computation.html) for details
 
