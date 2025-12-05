@@ -214,6 +214,7 @@ class TestThetaOnlyVsDuhamel:
         print(f"✓ {n_tests} random states: max_rel_error={max_rel_error:.2e}")
 
 
+@pytest.mark.slow
 class TestPerformance:
     """Benchmark performance improvements of θ-only method."""
     

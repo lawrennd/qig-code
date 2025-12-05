@@ -200,6 +200,7 @@ class TestJacobianAnalytic:
         quantum_assert_close(hessian_analytic, hessian_fd, 'numerical_validation',
                            err_msg=f"{n_sites} sites d={d}: Constraint Hessian mismatch")
     
+    @pytest.mark.slow
     @pytest.mark.parametrize("n_pairs,d", [
         (1, 3),  # One entangled qutrit pair (where Jacobian actually matters)
     ])

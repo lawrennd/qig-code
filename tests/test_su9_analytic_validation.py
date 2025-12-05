@@ -277,6 +277,7 @@ class TestSU9PairDensityMatrix:
             assert error < 1e-3, f"Error {error:.2e} too large (order-2)"
 
 
+@pytest.mark.slow
 class TestSU9ConstraintGeometry:
     """Test constraint geometry for su(9) pair (Phase 3)."""
     
@@ -415,6 +416,7 @@ class TestSU9ConstraintGeometry:
             print(f"  ⚠️  ∇ν ≈ 0 (may need higher order or different approximation)")
 
 
+@pytest.mark.slow
 class TestSU9AntisymmetricPart:
     """Test antisymmetric part for su(9) pair (Phase 4)."""
     
