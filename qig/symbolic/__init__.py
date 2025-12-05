@@ -40,9 +40,15 @@ from qig.symbolic.lme_exact import (
 from qig.symbolic.su9_taylor_approximation import (
     symbolic_su9_generators,
     symbolic_su9_structure_constants,
+    verify_su9_generators,
     symbolic_density_matrix_su9_pair,
     symbolic_fisher_information_su9_pair,
+    symbolic_von_neumann_entropy_su9_pair,
+    symbolic_marginal_entropies_exact_su9_pair,
+    symbolic_marginal_entropies_taylor_su9_pair,
     symbolic_constraint_gradient_su9_pair,
+    symbolic_lagrange_multiplier_su9_pair,
+    symbolic_grad_lagrange_multiplier_su9_pair,
     symbolic_antisymmetric_part_su9_pair,
 )
 
@@ -62,8 +68,14 @@ __all__ = [
     # Legacy (Taylor approximation)
     "symbolic_su9_generators",
     "symbolic_su9_structure_constants",
+    "verify_su9_generators",
     "symbolic_density_matrix_su9_pair",
     "symbolic_fisher_information_su9_pair",
+    "symbolic_von_neumann_entropy_su9_pair",
+    "symbolic_marginal_entropies_exact_su9_pair",
+    "symbolic_marginal_entropies_taylor_su9_pair",
     "symbolic_constraint_gradient_su9_pair",
+    "symbolic_lagrange_multiplier_su9_pair",
+    "symbolic_grad_lagrange_multiplier_su9_pair",
     "symbolic_antisymmetric_part_su9_pair",
 ]
