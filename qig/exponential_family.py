@@ -1616,9 +1616,13 @@ class QuantumExponentialFamily:
         rho = self.rho_from_theta(theta)
         return np.trace(rho @ rho).real
     
-    def get_bell_state_parameters(self, epsilon: float = 1e-6) -> np.ndarray:
+    def get_bell_state_parameters(
+        self,
+        epsilon: float = 1e-6,
+        log_epsilon: Optional[float] = None,
+    ) -> np.ndarray:
         """
-        Get natural parameters θ corresponding to a regularized Bell state.
+        Get natural parameters θ corresponding to a regularised Bell state.
         
         A Bell state is a pure state (rank 1), which lies at the boundary
         of the exponential family where natural parameters θ → -∞.
@@ -1632,9 +1636,14 @@ class QuantumExponentialFamily:
         Parameters
         ----------
         epsilon : float, default=1e-6
-            Regularization parameter: ρ_ε = (1-ε)|Φ⟩⟨Φ| + ε I/D
-            Smaller epsilon → closer to pure Bell state (more negative θ)
+            Regularisation parameter: ρ_ε = (1-ε)|Φ⟩⟨Φ| + ε I/D.
+            Smaller epsilon → closer to pure Bell state (more negative θ).
             Must be > 0 to avoid singularities.
+        log_epsilon : float, optional
+            If provided, overrides `epsilon` via log ε = log_epsilon.
+            This is numerically convenient when exploring very small ε,
+            and matches the logarithmic divergence of the entropy gradient
+            near pure states discussed in the paper.
             
         Returns
         -------
@@ -1662,19 +1671,49 @@ class QuantumExponentialFamily:
         
         if self.n_pairs != 1:
             raise ValueError("Bell state parameters only defined for single pair (n_pairs=1)")
+
+        # Work with log ε directly for numerical stability near the boundary.
+        # If log_epsilon is provided, use it; otherwise derive it from epsilon.
+        if log_epsilon is not None:
+            log_eps = float(log_epsilon)
+            if not np.isfinite(log_eps):
+                raise ValueError("log_epsilon must be a finite real number")
+        else:
+            if epsilon <= 0:
+                raise ValueError("epsilon must be > 0 (pure Bell state has θ → -∞)")
+            log_eps = float(np.log(epsilon))
+        # Clamp log ε to the smallest representable positive number to avoid exp underflow
+        min_log_eps = float(np.log(np.finfo(float).tiny))
+        if log_eps < min_log_eps:
+            log_eps = min_log_eps
         
-        if epsilon <= 0:
-            raise ValueError("epsilon must be > 0 (pure Bell state has θ → -∞)")
+        # Eigenbasis of the pure Bell state: ρ_bell has eigenvalues {1, 0, ..., 0}.
+        # Since ρ_mixed ∝ I commutes with ρ_bell, the regularised state
+        #   ρ_ε = (1-ε)ρ_bell + ε I/D
+        # shares the same eigenvectors for all ε, with eigenvalues
+        #   λ₀ = 1 - ε + ε/D,  λ_⊥ = ε/D.
+        # We only need log λ, and use log ε to avoid catastrophic cancellation.
+        rho_bell = bell_state_density_matrix(self.d)
+        eigvals_bell, U = eigh(rho_bell)
+        # Identify the eigenvector with eigenvalue ≈ 1 (the Bell state)
+        idx_max = int(np.argmax(eigvals_bell.real))
+        D = self.D
         
-        # Create regularized Bell state: mix with maximally mixed state
-        rho_bell = bell_state_density_matrix(self.d)  # Pure Bell state (rank 1)
-        rho_mixed = np.eye(self.D) / self.D            # Maximally mixed (full rank)
-        rho_eps = (1 - epsilon) * rho_bell + epsilon * rho_mixed
+        # Compute log eigenvalues of ρ_ε.
+        # For the Bell direction: λ₀ = 1 - ε(1 - 1/D), so
+        #   log λ₀ = log(1 - ε(1 - 1/D)) ≈ -ε(1 - 1/D) for small ε.
+        # For orthogonal directions: λ_⊥ = ε/D, so
+        #   log λ_⊥ = log ε - log D = log_eps - log D.
+        eps_val = float(np.exp(log_eps))
+        # Stable computation of log λ₀ using log1p
+        factor = eps_val * (1.0 - 1.0 / D)
+        log_lambda0 = np.log1p(-factor) if factor < 1.0 else np.log(np.finfo(float).tiny)
+        log_lambda_perp = log_eps - np.log(D)
         
-        # Compute matrix logarithm
-        # For ρ_ε approaching a pure state, eigenvalues → (1, 0, 0, ...)
-        # and log eigenvalues → (0, -∞, -∞, ...)
-        log_rho = logm(rho_eps)
+        log_diag = np.full(D, log_lambda_perp, dtype=float)
+        log_diag[idx_max] = log_lambda0
+        # Build log ρ_ε = U diag(log λ) U†
+        log_rho = U @ np.diag(log_diag) @ U.conj().T
         
         # Extract natural parameters by projection onto operator basis
         # Since our operators have Tr(Fₐ) = 0 (traceless), we use:

@@ -774,12 +774,53 @@ class TestBellStateParameters:
         # von Neumann entropy should be small (pure state has H=0)
         H = exp_fam.von_neumann_entropy(theta)
         
-        # With small epsilon, entropy should be roughly -epsilon log(epsilon)
+        # With small epsilon, entropy should scale like -ε log ε
         expected_order = -epsilon * np.log(epsilon)
-        assert H < 0.1, \
-            f"Total entropy too high for regularized pure state: {H}"
+        # Allow a small constant-factor slack around the scaling prediction.
+        # Numerically we observe H/(-ε log ε) ≈ 1.1–1.5 for ε ∈ [1e-5,1e-2],
+        # so a factor 2 is sufficient and still enforces "very small".
+        assert H < 2.0 * expected_order, \
+            f"Total entropy {H} too high vs O(-ε log ε)={expected_order} for regularized pure state"
         assert H > 0, \
             "Entropy should be positive for regularized state"
+    
+    def test_bell_state_log_epsilon_equivalence(self):
+        """epsilon and log_epsilon paths should produce the same state and parameters."""
+        for d in [2, 3]:
+            exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+            for epsilon in [1e-2, 1e-3, 1e-4]:
+                log_eps = np.log(epsilon)
+                
+                theta_eps = exp_fam.get_bell_state_parameters(epsilon=epsilon)
+                theta_log = exp_fam.get_bell_state_parameters(log_epsilon=log_eps)
+                
+                # Parameters should match to numerical precision
+                diff_theta = np.linalg.norm(theta_eps - theta_log)
+                assert diff_theta < 1e-10, \
+                    f"theta(epsilon) ≠ theta(log_epsilon) for d={d}, ε={epsilon}: ||Δθ||={diff_theta}"
+                
+                # Corresponding density matrices should coincide
+                rho_eps = exp_fam.rho_from_theta(theta_eps)
+                rho_log = exp_fam.rho_from_theta(theta_log)
+                quantum_assert_close(rho_eps, rho_log, 'density_matrix',
+                                   f"ρ(θ_ε) ≠ ρ(θ_log ε) for d={d}, ε={epsilon}")
+    
+    def test_bell_state_log_epsilon_scaling(self):
+        """Parameters should grow smoothly as log_epsilon decreases (logarithmic approach to boundary)."""
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        
+        # Use log_epsilon values that are not so extreme as to hit machine underflow
+        log_eps_values = [-2.0, -4.0, -6.0, -8.0]
+        max_params = []
+        
+        for log_eps in log_eps_values:
+            theta = exp_fam.get_bell_state_parameters(log_epsilon=log_eps)
+            max_params.append(np.max(np.abs(theta)))
+        
+        # As log_epsilon decreases (ε→0), parameter magnitudes should increase
+        for i in range(len(log_eps_values) - 1):
+            assert max_params[i+1] > max_params[i], \
+                f"Max |θ| should increase as log_epsilon decreases: {list(zip(log_eps_values, max_params))}"
     
     def test_bell_state_raises_for_zero_epsilon(self):
         """Test that pure Bell state (epsilon=0) raises ValueError."""

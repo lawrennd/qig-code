@@ -204,6 +204,35 @@ Usage Example: LME Exact
    grad_nu = sp.Matrix([sp.diff(nu, t) for t in theta_list])
    A = (a_vec * grad_nu.T - grad_nu * a_vec.T) / 2
 
+Numeric-Symbolic Bridge
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``numeric_lme_blocks_from_theta`` function bridges the numeric exponential
+family parameters to the symbolic block structure:
+
+.. code-block:: python
+
+   from qig.symbolic.lme_exact import numeric_lme_blocks_from_theta
+   from qig.exponential_family import QuantumExponentialFamily
+   
+   # Create numeric exponential family for qutrit pair
+   qef = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+   
+   # Get Bell state parameters (regularized with log_epsilon for stability)
+   theta = qef.get_bell_state_parameters(log_epsilon=-20)
+   
+   # Extract blocks in LME basis
+   blocks = numeric_lme_blocks_from_theta(theta, qef.operators)
+   
+   # blocks contains:
+   # - 'ent_3x3': 3×3 entangled block of K(θ)
+   # - 'block_2x2': 2×2 block
+   # - 'diag_1', 'diag_2', 'diag_3', 'diag_4': 1×1 diagonal entries
+
+This enables direct comparison between numeric computations and symbolic
+expressions for the same state. See the ``lme_numeric_symbolic_bridge.ipynb``
+notebook for a detailed tutorial.
+
 Precomputed Expressions
 ^^^^^^^^^^^^^^^^^^^^^^^
 

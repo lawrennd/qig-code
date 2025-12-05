@@ -18,6 +18,7 @@ Core Modules
    structure_constants
    generic
    generic_decomposition
+   symbolic
    validation
    reference_data
 

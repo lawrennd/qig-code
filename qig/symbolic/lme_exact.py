@@ -10,6 +10,27 @@ This enables EXACT exp(K) computation with NO Taylor approximation.
 
 The 20 block-preserving generators span the full entangled subspace,
 allowing exploration of ALL maximally entangled states.
+
+Numeric correspondence
+----------------------
+
+In the numeric codebase, the same 9×9 Hilbert space and su(9) generators
+appear via:
+
+- `qig.pair_operators.pair_basis_generators(d=3)`, and
+- `qig.exponential_family.QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)`,
+  whose `operators` attribute is a concrete su(9) basis.
+
+The helper `numeric_lme_blocks_from_theta` defined near the end of this file
+bridges these two views: given a numeric θ and operator list (as used by the
+exponential family), it reconstructs the block-decomposed K in the same
+permutation/basis used here symbolically. This allows direct comparison
+between:
+
+- the symbolic block parameters (e.g. the 2×2 block entries that feed into
+  quadratic eigenvalues), and
+- the numeric Bell/LME parameters θ obtained from
+  `QuantumExponentialFamily.get_bell_state_parameters`.
 """
 
 import sympy as sp
@@ -248,6 +269,80 @@ def exact_rho_lme(theta: Dict[str, sp.Symbol]) -> Matrix:
     exp_K = exact_exp_K_lme(theta)
     Z = exp_K.trace()
     return exp_K / Z
+
+
+# =============================================================================
+# Numeric bridge: from θ and operators to LME block structure
+# =============================================================================
+
+def numeric_lme_blocks_from_theta(
+    theta: np.ndarray,
+    operators: List[np.ndarray],
+) -> Dict[str, np.ndarray]:
+    """
+    Map numeric exponential-family parameters to the LME block structure.
+
+    This provides a bridge between:
+
+    - the numeric representation used by
+      ``QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)``
+      (θ plus a concrete su(9) operator basis), and
+    - the symbolic block decomposition used in this module
+      (3×3 entangled block + 2×2 block + 1×1 diagonals).
+
+    Parameters
+    ----------
+    theta : np.ndarray, shape (n_params,)
+        Natural parameters in the same ordering as ``operators``.
+        For the LME qutrit pair this should be the 80-dimensional θ
+        used by the pair-based exponential family.
+    operators : list of np.ndarray
+        List of traceless Hermitian generators (e.g., the
+        ``exp_fam.operators`` attribute of a
+        ``QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)``).
+
+    Returns
+    -------
+    blocks : dict
+        Dictionary with numeric blocks in the same layout as
+        :func:`extract_blocks`:
+
+        - ``'ent_3x3'`` : 3×3 entangled block
+        - ``'block_2x2'`` : 2×2 block (indices 3,5 in block basis)
+        - ``'diag_1'``, ``'diag_2'``, ``'diag_3'``, ``'diag_4'`` : 1×1 entries
+    """
+    if not operators:
+        raise ValueError("operators list must be non-empty")
+    D = operators[0].shape[0]
+    if D != 9:
+        raise ValueError(
+            f"numeric_lme_blocks_from_theta is defined for single qutrit pairs (dim=9), got dim={D}"
+        )
+
+    # Build numeric K(θ) = ∑ θ_a F_a
+    K = np.zeros((D, D), dtype=complex)
+    for theta_a, F_a in zip(theta, operators):
+        K += theta_a * F_a
+
+    # Numeric permutation matrix corresponding to permutation_matrix()
+    reorder = [0, 4, 8, 1, 2, 3, 5, 6, 7]
+    P = np.zeros((9, 9), dtype=complex)
+    for i, j in enumerate(reorder):
+        P[i, j] = 1.0
+
+    # Transform to block basis
+    K_block = P @ K @ P.conj().T
+
+    # Extract blocks with the same indices as extract_blocks()
+    blocks = {
+        "ent_3x3": K_block[:3, :3],
+        "block_2x2": K_block[3:6:2, 3:6:2],  # indices 3,5
+        "diag_1": K_block[4, 4],  # index 4
+        "diag_2": K_block[6, 6],  # index 6
+        "diag_3": K_block[7, 7],  # index 7
+        "diag_4": K_block[8, 8],  # index 8
+    }
+    return blocks
 
 
 def symbolic_partial_trace(rho: Matrix, trace_out: int) -> Matrix:

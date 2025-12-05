@@ -29,6 +29,9 @@ from qig.symbolic.lme_exact import (
     # Entropy
     exact_marginal_entropy_lme,
     exact_constraint_lme,
+    
+    # Numeric bridge
+    numeric_lme_blocks_from_theta,
 )
 
 # =============================================================================
@@ -54,6 +57,7 @@ __all__ = [
     "exact_rho2_lme",
     "exact_marginal_entropy_lme",
     "exact_constraint_lme",
+    "numeric_lme_blocks_from_theta",
     
     # Legacy (Taylor approximation)
     "symbolic_su9_generators",

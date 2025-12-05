@@ -155,7 +155,9 @@ def run_notebook_smoke_test(notebook_path, max_cells=8, timeout=120):
         return True, None
         
     except CellExecutionError as e:
-        error_msg = f"Cell {e.cell_index} failed: {str(e)}"
+        # CellExecutionError may not have cell_index attribute in all versions
+        cell_idx = getattr(e, 'cell_index', 'unknown')
+        error_msg = f"Cell {cell_idx} failed: {str(e)}"
         print(f"❌ Smoke test failed: {notebook_path.name}")
         print(f"   {error_msg}")
         return False, error_msg
@@ -451,6 +453,81 @@ def test_notebook_full_execution():
     # Check outputs (figure generation notebook, no pass markers required)
     assert check_notebook_outputs(output_path, require_pass_markers=False), \
         f"Notebook validation failed: {notebook_path.name}"
+
+
+@integration_test
+def test_lme_numeric_symbolic_bridge_smoke():
+    """Smoke test for LME numeric-symbolic bridge notebook.
+    
+    This test validates the notebook that bridges the symbolic LME decomposition
+    (qig.symbolic.lme_exact) with the numeric exponential family 
+    (qig.exponential_family.QuantumExponentialFamily).
+    
+    The notebook demonstrates:
+    - Regularized Bell state construction with log_epsilon
+    - Block decomposition of K(theta) in the LME basis
+    - Eigenvalue structure at the LME origin
+    - Scaling behavior of natural parameters
+    
+    To run:
+      pytest -m integration tests/test_notebook.py::test_lme_numeric_symbolic_bridge_smoke -v
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+    
+    if not HAS_EXECUTE_PREPROCESSOR:
+        pytest.skip("nbformat/ExecutePreprocessor not installed")
+    
+    # Find notebook
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "lme_numeric_symbolic_bridge.ipynb"
+    
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+    
+    # Run smoke test - this notebook has 15 cells, test first 8
+    # which covers imports, Bell state construction, and block extraction
+    success, error_msg = run_notebook_smoke_test(notebook_path, max_cells=8, timeout=120)
+    
+    if not success:
+        pytest.fail(f"LME bridge notebook smoke test failed: {error_msg}")
+
+
+@full_notebook_test
+def test_lme_numeric_symbolic_bridge_full():
+    """Full execution test for LME numeric-symbolic bridge notebook.
+    
+    This test executes the complete notebook including:
+    - All eigenvalue analysis cells
+    - Scaling analysis with multiple log_epsilon values
+    - Plot generation
+    
+    To run:
+      pytest -m "integration and slow" tests/test_notebook.py::test_lme_numeric_symbolic_bridge_full -v
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+    
+    if not HAS_NBCONVERT:
+        pytest.skip("jupyter nbconvert not installed")
+    
+    # Find notebook
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "lme_numeric_symbolic_bridge.ipynb"
+    
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+    
+    # Execute full notebook
+    success, output_path = run_notebook(notebook_path)
+    assert success, f"LME bridge notebook execution failed: {notebook_path.name}"
+    
+    # Check outputs (no pass markers required, just verify no errors)
+    assert check_notebook_outputs(output_path, require_pass_markers=False), \
+        f"LME bridge notebook validation failed: {notebook_path.name}"
+
 
 if __name__ == "__main__":
     main()

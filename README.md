@@ -212,6 +212,7 @@ from qig.symbolic.lme_exact import (
     exact_exp_K_lme,
     exact_constraint_lme,
     block_preserving_generators,
+    numeric_lme_blocks_from_theta,  # Bridge to numeric representation
 )
 import sympy as sp
 
@@ -228,12 +229,20 @@ exp_K = exact_exp_K_lme(theta)
 
 # Exact constraint C = h₁ + h₂ (sum of marginal entropies)
 C = exact_constraint_lme(theta)
+
+# Bridge numeric θ to symbolic block structure
+from qig.exponential_family import QuantumExponentialFamily
+qef = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+theta_numeric = qef.get_bell_state_parameters(log_epsilon=-20)
+blocks = numeric_lme_blocks_from_theta(theta_numeric, qef.operators)
+# blocks['ent_3x3'] is the 3×3 entangled block of K(θ)
 ```
 
 Key features:
 - **Exact exp(K)** via block decomposition - machine precision (~10⁻¹⁵)
-- The decomposition avoides the need for Taylor approximation in the LME dynamics
+- The decomposition avoids the need for Taylor approximation in the LME dynamics
 - Analytic forms for antisymmetric (A) and symmetric (S) parts of GENERIC
+- **Numeric-symbolic bridge** via `numeric_lme_blocks_from_theta` connects exponential family θ to block parameters
 - See [symbolic computation docs](https://qig.readthedocs.io/en/latest/theory/symbolic_computation.html) for details
 
 ## Testing
@@ -256,6 +265,8 @@ See the `examples/` directory:
 - **`generate-origin-paper-figures.ipynb`**: Interactive demonstration notebook with validation experiments [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lawrennd/qig-code/blob/main/examples/generate-origin-paper-figures.ipynb)
 
 - **`symbolic_verification_experiments.ipynb`**: Verification of key theoretical predictions (qutrit optimality, constraint linearization, structural identity ν=-1) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lawrennd/qig-code/blob/main/examples/symbolic_verification_experiments.ipynb)
+
+- **`lme_numeric_symbolic_bridge.ipynb`**: Bridge between numeric exponential family and symbolic LME decomposition, showing block structure, eigenvalue analysis, and natural parameter scaling [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lawrennd/qig-code/blob/main/examples/lme_numeric_symbolic_bridge.ipynb)
 
 ## Citation
 
