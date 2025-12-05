@@ -440,6 +440,7 @@ class TestThetaOnlyHessian:
             print(f"  Seed {seed}: min eigenvalue = {min_eigval:.2e}")
 
 
+@pytest.mark.slow
 class TestHessianPerformance:
     """Benchmark performance of FD θ-only Hessian (fast enough to be practical)."""
     

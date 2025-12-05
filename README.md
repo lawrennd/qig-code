@@ -247,16 +247,33 @@ Key features:
 
 ## Testing
 
+The test suite is organised into categories with pytest markers:
+
 ```bash
-# Run full test suite
-pytest tests/
+# Run standard tests (excludes slow and integration tests)
+pytest
+
+# Run all tests including slow ones
+pytest -m "slow"
+
+# Run integration tests (notebooks)
+pytest -m "integration"
+
+# Run everything
+pytest -m ""
 
 # Run with coverage
-pytest tests/ --cov=qig --cov-report=html
-
-# Quick smoke test
-DYNAMICS_POINTS=5 DYNAMICS_T_MAX=0.5 pytest tests/
+pytest --cov=qig --cov-report=html
 ```
+
+### Test Categories
+
+- **Standard tests** (~340 tests, ~3 min): Core functionality, unit tests, numerical validation
+- **Slow tests** (~35 tests): Computationally intensive tests (e.g., qutrit pair finite-difference Jacobians)
+- **Integration tests**: Notebook smoke tests
+- **Skipped tests**: Tests for future CIP-0007 symbolic features (skip gracefully)
+
+The default `pytest` command runs standard tests only, which is suitable for CI/CD and development workflows.
 
 ## Examples
 

@@ -154,6 +154,7 @@ class TestQuantumExponentialFamily:
                 f"rel_fro_err={rel_fro_err:.2e}"
             )
 
+    @pytest.mark.slow
     def test_fisher_information_matches_finite_difference_ququarts(self):
         """
         Analytic BKM Fisher information should agree with a finite-difference

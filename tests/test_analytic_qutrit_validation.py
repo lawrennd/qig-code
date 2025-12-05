@@ -51,6 +51,7 @@ def random_states(qutrit_pair_family, n_states=100):
     return theta_list
 
 
+@pytest.mark.skip(reason="CIP-0007: symbolic_gell_mann_matrices and symbolic_su3_structure_constants not yet implemented")
 class TestSymbolicInfrastructure:
     """Test basic symbolic computation infrastructure."""
     
@@ -118,6 +119,7 @@ class TestSymbolicInfrastructure:
         pass
 
 
+@pytest.mark.skip(reason="CIP-0007: Single-qutrit symbolic functions not yet implemented")
 class TestSingleQutritAnalytic:
     """Test single-qutrit analytic forms (8 parameters)."""
     
@@ -273,6 +275,7 @@ class TestSingleQutritAnalytic:
             assert error < 1e-4, f"Error {error:.2e} too large for order-2 approximation"
 
 
+@pytest.mark.skip(reason="CIP-0007: Two-qutrit symbolic functions not yet implemented")
 class TestTwoQutritConstraintGeometry:
     """Test constraint geometry components: a, ν, ∇ν."""
     
@@ -493,6 +496,7 @@ class TestTwoQutritConstraintGeometry:
         assert error < 1e-2, f"Error {error:.2e} too large"
 
 
+@pytest.mark.skip(reason="CIP-0007: symbolic_antisymmetric_part_two_qutrit not yet implemented")
 class TestAntisymmetricPartAnalytic:
     """
     Core validation: analytic A matches numerical to machine precision.

@@ -179,6 +179,7 @@ class TestIrreversibleDynamics:
         assert np.all(entropy_changes >= -1e-6), "Entropy should not decrease"
 
 
+@pytest.mark.slow
 class TestFullDynamicsWithMonitoring:
     """Test full GENERIC dynamics with structure monitoring."""
     
@@ -241,6 +242,7 @@ class TestFullDynamicsWithMonitoring:
             assert abs(np.trace(D_rho)) < 1e-10
 
 
+@pytest.mark.slow
 class TestEntropyProduction:
     """Test entropy production tracking."""
     
@@ -278,6 +280,7 @@ class TestEntropyProduction:
         assert abs(cumulative[0]) < 1e-3  # Looser tolerance for numerical integration
 
 
+@pytest.mark.slow
 class TestConstraintPreservation:
     """Test constraint preservation in full dynamics."""
     
@@ -300,6 +303,7 @@ class TestConstraintPreservation:
         assert C_variation < 1e-4, f"Constraint variation: {C_variation}"
 
 
+@pytest.mark.slow
 class TestGenericStructurePreservation:
     """Test preservation of GENERIC structure properties."""
     

@@ -59,6 +59,7 @@ class TestEndToEnd2Qubit:
         assert len(result['H_eff']) == 20
         assert np.all(result['entropy_production'] >= -1e-12)
         
+    @pytest.mark.slow
     def test_2qubit_constraint_preservation(self):
         """Test constraint preservation throughout integration."""
         exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
@@ -75,9 +76,11 @@ class TestEndToEnd2Qubit:
         assert C_std < 1e-4, f"Constraint variation: {C_std}"
 
 
+@pytest.mark.slow
 class TestEndToEnd2Qutrit:
     """End-to-end tests for 2-qutrit system."""
     
+    @pytest.mark.slow
     def test_complete_pipeline_2qutrit(self):
         """Test complete GENERIC decomposition for 2-qutrit pair."""
         exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)

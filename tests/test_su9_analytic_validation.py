@@ -283,11 +283,11 @@ class TestSU9ConstraintGeometry:
     
     def test_marginal_entropies(self):
         """Test marginal entropies for su(9) pair."""
-        from qig.symbolic import symbolic_marginal_entropies_su9_pair
+        from qig.symbolic import symbolic_marginal_entropies_taylor_su9_pair
         import sympy as sp
         
         theta_sym = sp.symbols('theta1:81', real=True)
-        h1, h2 = symbolic_marginal_entropies_su9_pair(theta_sym, order=2)
+        h1, h2 = symbolic_marginal_entropies_taylor_su9_pair(theta_sym, order=2)
         
         # At θ=0: should be log(3) for both
         h1_0 = float(h1.subs({t: 0 for t in theta_sym}))

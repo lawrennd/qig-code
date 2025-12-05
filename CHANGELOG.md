@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed - Test Suite Organisation
+
+- **pytest markers**: Tests now use `slow` and `integration` markers for organisation
+- **Default exclusions**: `pytest.ini` excludes slow and integration tests by default for faster CI/CD
+- **Sympy dependency**: Added `sympy>=1.12` to `requirements.txt` (was only in `pyproject.toml`)
+- **Future tests**: CIP-0007 symbolic tests skip gracefully when features aren't implemented
+
 ### Added - GENERIC Decomposition Framework (CIP-0006)
 
 Complete implementation of GENERIC decomposition for Lie-algebraic bases, enabling systematic extraction of effective Hamiltonian and diffusion operators from constrained quantum dynamics.
