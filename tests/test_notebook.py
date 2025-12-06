@@ -529,6 +529,79 @@ def test_lme_numeric_symbolic_bridge_full():
         f"LME bridge notebook validation failed: {notebook_path.name}"
 
 
+@integration_test
+def test_entropy_time_analysis_smoke():
+    """Smoke test for entropy time analysis notebook.
+    
+    This test validates the notebook that analyzes entropy time reparameterization
+    and its relationship to Fisher information geometry.
+    
+    The notebook demonstrates:
+    - Entropy evolution under different time parameterisations
+    - Fisher metric tensor analysis
+    - Time dilation effects near entropy extrema
+    - Comparison of affine vs entropy time evolution
+    
+    To run:
+      pytest -m integration tests/test_notebook.py::test_entropy_time_analysis_smoke -v
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+    
+    if not HAS_EXECUTE_PREPROCESSOR:
+        pytest.skip("nbformat/ExecutePreprocessor not installed")
+    
+    # Find notebook
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "entropy_time_analysis.ipynb"
+    
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+    
+    # Run smoke test - test first 8 cells which covers imports and basic setup
+    success, error_msg = run_notebook_smoke_test(notebook_path, max_cells=8, timeout=120)
+    
+    if not success:
+        pytest.fail(f"Entropy time analysis notebook smoke test failed: {error_msg}")
+
+
+@full_notebook_test
+def test_entropy_time_analysis_full():
+    """Full execution test for entropy time analysis notebook.
+    
+    This test executes the complete notebook including:
+    - Full entropy evolution simulations
+    - Fisher metric computations
+    - Time dilation analysis
+    - All plot generation
+    
+    To run:
+      pytest -m "integration and slow" tests/test_notebook.py::test_entropy_time_analysis_full -v
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+    
+    if not HAS_NBCONVERT:
+        pytest.skip("jupyter nbconvert not installed")
+    
+    # Find notebook
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "entropy_time_analysis.ipynb"
+    
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+    
+    # Execute full notebook
+    success, output_path = run_notebook(notebook_path)
+    assert success, f"Entropy time analysis notebook execution failed: {notebook_path.name}"
+    
+    # Check outputs (no pass markers required, just verify no errors)
+    assert check_notebook_outputs(output_path, require_pass_markers=False), \
+        f"Entropy time analysis notebook validation failed: {notebook_path.name}"
+
+
 if __name__ == "__main__":
     main()
 

@@ -285,6 +285,8 @@ See the `examples/` directory:
 
 - **`lme_numeric_symbolic_bridge.ipynb`**: Bridge between numeric exponential family and symbolic LME decomposition, showing block structure, eigenvalue analysis, and natural parameter scaling [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lawrennd/qig-code/blob/main/examples/lme_numeric_symbolic_bridge.ipynb)
 
+- **`entropy_time_analysis.ipynb`**: Analysis of entropy time reparameterisation and its relationship to Fisher information geometry, showing time dilation effects near entropy extrema [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lawrennd/qig-code/blob/main/examples/entropy_time_analysis.ipynb)
+
 ## Citation
 
 If you use this code in your research, please cite:
