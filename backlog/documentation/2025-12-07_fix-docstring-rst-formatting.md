@@ -1,7 +1,7 @@
 ---
 id: 2025-12-07_fix-docstring-rst-formatting
 title: Fix docstring RST formatting for Sphinx documentation
-status: in_progress
+status: completed
 priority: medium
 created: 2025-12-07
 owner: null
@@ -111,3 +111,15 @@ Remaining warnings (78 total):
 Next steps:
 - Fix exponential_family.py docstring formatting
 - Update Sphinx config to avoid duplicate API docs
+
+### 2025-12-07 (completed)
+Sphinx warnings reduced from 132 to 10:
+
+- ✅ Removed duplicate automodule directives from api/index.rst (~90 warnings)
+- ✅ Removed duplicate autofunction directives from api/symbolic.rst (~8 warnings)
+- ✅ Fixed docstring RST formatting in exponential_family.py
+- ✅ Fixed ket notation in lme_exact.py with double backticks
+- ✅ Fixed duplicate "Open in Colab" targets in notebooks.rst
+- ✅ Fixed *.ipynb glob in notebook_output_filtering.rst
+
+Remaining 10 warnings: ValidationCheck dataclass attributes (known Sphinx/dataclass edge case, acceptable)
