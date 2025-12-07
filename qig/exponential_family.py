@@ -493,32 +493,30 @@ class QuantumExponentialFamily:
         Compute Fisher information (BKM metric) G(θ) = ∇∇ψ(θ) using the
         Kubo-Mori / BKM inner product.
 
-        For a quantum exponential family
-            ρ(θ) = exp(K(θ)) / Z(θ),  K(θ) = ∑_a θ_a F_a,
-        the Bogoliubov-Kubo-Mori metric can be written as
-        \\[
-            G_{ab}(θ)
-            = \\int_0^1 \\mathrm{Tr}\\!\\left(
-                ρ(θ)^s  \\tilde F_a  ρ(θ)^{1-s} \\tilde F_b
-              \\right)\\,\\mathrm{d}s,
-        \\]
-        where \\(\\tilde F_a = F_a - \\mathrm{Tr}[ρ(θ) F_a]\\,\\mathbb I\\) are
-        centred sufficient statistics.  In the eigenbasis of ρ(θ), this
-        reduces to the standard spectral representation with the
-        Morozova-Chentsov function
-            c(λ, μ) = (log λ - log μ)/(λ - μ)
-        (with the diagonal limit c(λ, λ) = 1/λ).  When all F_a commute with
-        ρ(θ) (the classical/diagonal case), this expression reduces to the
+        For a quantum exponential family ``ρ(θ) = exp(K(θ)) / Z(θ)`` with
+        ``K(θ) = ∑_a θ_a F_a``, the Bogoliubov-Kubo-Mori metric is:
+
+        .. math::
+
+            G_{ab}(θ) = \\int_0^1 \\mathrm{Tr}\\left(
+                ρ(θ)^s \\tilde{F}_a ρ(θ)^{1-s} \\tilde{F}_b
+            \\right) \\mathrm{d}s
+
+        where ``F̃_a = F_a - Tr[ρ(θ) F_a] I`` are centred sufficient statistics.
+
+        In the eigenbasis of ρ(θ), this reduces to the spectral representation
+        with the Morozova-Chentsov function ``c(λ, μ) = (log λ - log μ)/(λ - μ)``
+        (diagonal limit: ``c(λ, λ) = 1/λ``).
+
+        When all F_a commute with ρ(θ) (classical case), this reduces to the
         usual covariance Fisher information matrix.
 
         This implementation:
-        - diagonalises ρ(θ) = U diag(p) U† (respecting the Hilbert space
-          structure);
-        - centres each F_a in that basis;
-        - applies the BKM kernel c(p_i, p_j) to all matrix elements, taking
-          care with ordering (A_a[i,j] A_b[j,i]) and Hermitian conjugation;
-        - and finally symmetrises G to guard against small numerical
-          asymmetries.
+
+        - Diagonalises ρ(θ) = U diag(p) U†
+        - Centres each F_a in that basis
+        - Applies the BKM kernel c(p_i, p_j) to all matrix elements
+        - Symmetrises G to guard against numerical asymmetries
         """
         # Step 1: spectral decomposition of ρ(θ)
         rho = self.rho_from_theta(theta)
@@ -854,13 +852,14 @@ class QuantumExponentialFamily:
         theta : ndarray
             Natural parameters
         method : str, default='theta_only'
-            Method for gradient computation:
-            - 'theta_only': Fast θ-only method using BKM inner products (default)
-              ~100× faster, machine precision accuracy
-            - 'duhamel': Legacy method materializing ∂ρ/∂θ via Duhamel integration
-              Slow but kept for verification
-            - 'sld': Legacy method materializing ∂ρ/∂θ via SLD approximation
-              Faster than Duhamel but ~5% error
+            Method for gradient computation. Options:
+
+            - ``'theta_only'``: Fast θ-only method using BKM inner products (default).
+              ~100× faster, machine precision accuracy.
+            - ``'duhamel'``: Legacy method materializing ∂ρ/∂θ via Duhamel.
+              Slow but kept for verification.
+            - ``'sld'``: Legacy method using SLD approximation.
+              Faster than Duhamel but ~5% error.
               
         Returns
         -------
@@ -1140,18 +1139,15 @@ class QuantumExponentialFamily:
             
         Notes
         -----
-        Why this is better than current approach:
-        
-        Current (two approximations):
-            ∂²C/∂θ_a∂θ_b = f(∂²ρ/∂θ_a∂θ_b)
-                          = f(FD(∂ρ/∂θ))
-                          = f(FD(Duhamel(ρ)))
-            Error ≈ O(Duhamel) + O(FD) ≈ 10⁻¹⁰ + 10⁻⁶ ≈ 10⁻⁶
-        
-        New (one approximation):
-            ∂²C/∂θ_a∂θ_b ≈ FD(∂C/∂θ_a)
-                          = FD(exact_BKM_formula(ρ))
-            Error ≈ O(FD) ≈ 10⁻⁸ (with eps=1e-5)
+        **Why this is better than current approach:**
+
+        Current (two approximations): Error ≈ 10⁻⁶
+
+        - ``∂²C/∂θ_a∂θ_b = f(∂²ρ/∂θ_a∂θ_b) = f(FD(∂ρ/∂θ)) = f(FD(Duhamel(ρ)))``
+
+        New (one approximation): Error ≈ 10⁻⁸
+
+        - ``∂²C/∂θ_a∂θ_b ≈ FD(∂C/∂θ_a) = FD(exact_BKM_formula(ρ))``
         
         Key insight: Differentiating an exact gradient is more accurate than
         using an exact formula with approximate second derivatives.
@@ -1189,11 +1185,13 @@ class QuantumExponentialFamily:
         theta : ndarray, shape (n_params,)
             Natural parameters
         method : str, default='fd_theta_only'
-            Method for Hessian computation:
-            - 'fd_theta_only': FD of θ-only gradient (default)
-              ~50-100× faster, ~10⁻⁸ error, recommended
-            - 'duhamel': FD of Duhamel drho (legacy, slow, ~10⁻⁶ error)
-            - 'sld': Analytic formula using SLD (legacy, fast but ~10% error)
+            Method for Hessian computation. Options:
+
+            - ``'fd_theta_only'``: FD of θ-only gradient (default).
+              ~50-100× faster, ~10⁻⁸ error, recommended.
+            - ``'duhamel'``: FD of Duhamel drho (legacy, slow, ~10⁻⁶ error).
+            - ``'sld'``: Analytic formula using SLD (legacy, fast but ~10% error).
+
         n_points : int, default=100
             Quadrature points for Duhamel (ignored for other methods)
         eps : float, default=1e-5
@@ -1344,20 +1342,17 @@ class QuantumExponentialFamily:
         """
         Compute ∇ν, the gradient of the Lagrange multiplier ν(θ).
         
-        From the paper (equations 831-832):
-        ∂ν/∂θ_j = (1/||a||²) [
-            a^T G e_j                      # Fisher information term
-          + a^T (∇G)[θ] e_j                # Third cumulant term  
-          + (∇a)_j^T G θ                   # Hessian-metric coupling
-          - 2ν a^T (∇a)_j                  # Normalization correction
-        ]
-        
+        From the paper (equations 831-832), the gradient components are:
+
+        ``∂ν/∂θ_j = (1/||a||²) [a^T G e_j + a^T (∇G)[θ] e_j + (∇a)_j^T G θ - 2ν a^T (∇a)_j]``
+
         where:
-        - ν = (a^T G θ)/(a^T a) is the Lagrange multiplier
-        - a = ∇C = ∇(∑h_i) is the constraint gradient
-        - G = Fisher information (BKM metric)
-        - (∇G)[θ] = third cumulant tensor contracted with θ
-        - ∇a = ∇²C is the constraint Hessian
+
+        - ``ν = (a^T G θ)/(a^T a)`` is the Lagrange multiplier
+        - ``a = ∇C = ∇(∑h_i)`` is the constraint gradient
+        - ``G`` = Fisher information (BKM metric)
+        - ``(∇G)[θ]`` = third cumulant tensor contracted with θ
+        - ``∇a = ∇²C`` is the constraint Hessian
         
         Parameters
         ----------

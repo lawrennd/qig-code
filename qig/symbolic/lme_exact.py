@@ -81,7 +81,7 @@ def permutation_matrix() -> Matrix:
 @lru_cache(maxsize=1)
 def block_preserving_generators() -> Tuple[List[Matrix], List[str]]:
     """
-    20 generators that preserve the {|00⟩,|11⟩,|22⟩} block structure.
+    20 generators that preserve the ``{|00⟩,|11⟩,|22⟩}`` block structure.
     
     Returns
     -------
@@ -142,8 +142,8 @@ def eigenvalues_2x2(M: Matrix) -> Tuple:
     """
     Exact eigenvalues of 2×2 Hermitian matrix using quadratic formula.
     
-    For M = [[a, b], [b*, c]]:
-        λ = (a+c)/2 ± sqrt((a-c)²/4 + |b|²)
+    For ``M = [[a, b], [b*, c]]``:
+    ``λ = (a+c)/2 ± sqrt((a-c)²/4 + |b|²)``
     """
     a, c = M[0, 0], M[1, 1]
     b = M[0, 1]

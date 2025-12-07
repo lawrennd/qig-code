@@ -26,34 +26,6 @@ Core module for exact LME computations.
    :undoc-members:
    :show-inheritance:
 
-Key Functions
--------------
-
-Block Decomposition
-^^^^^^^^^^^^^^^^^^^
-
-.. autofunction:: qig.symbolic.lme_exact.exact_exp_K_lme
-
-.. autofunction:: qig.symbolic.lme_exact.exact_rho_lme
-
-.. autofunction:: qig.symbolic.lme_exact.exact_constraint_lme
-
-.. autofunction:: qig.symbolic.lme_exact.exact_psi_lme
-
-Generators
-^^^^^^^^^^
-
-.. autofunction:: qig.symbolic.lme_exact.block_preserving_generators
-
-.. autofunction:: qig.symbolic.lme_exact.permutation_matrix
-
-.. autofunction:: qig.symbolic.lme_exact.extract_blocks
-
-Numeric Bridge
-^^^^^^^^^^^^^^
-
-.. autofunction:: qig.symbolic.lme_exact.numeric_lme_blocks_from_theta
-
 Example Usage
 -------------
 

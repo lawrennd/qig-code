@@ -219,7 +219,7 @@ Temporarily disable the filter:
 Related Files
 -------------
 
-- ``.gitattributes`` - Applies filter to *.ipynb files
+- ``.gitattributes`` - Applies filter to ``*.ipynb`` files
 - ``tests/test_notebook.py`` - Notebook testing infrastructure
 - :doc:`testing` - Testing documentation
 - ``requirements.txt`` - Includes nbstripout dependency
