@@ -1,7 +1,7 @@
 ---
 id: 2025-12-07_clarify-dynamics-api
 title: Clarify InaccessibleGameDynamics API - when to use which method
-status: proposed
+status: completed
 priority: high
 created: 2025-12-07
 owner: null
@@ -89,3 +89,12 @@ result = dynamics.solve(
 Task created. Current API has three methods with unclear relationship.
 
 Decision: Go with Option C (unified interface). `integrate()` is essentially broken for constrained problems - it looks right but drifts off the constraint silently. Need to clean up rather than just document the trap.
+
+### 2025-12-07 (completed)
+Implemented Option C:
+- Added `solve()` as the primary API (wraps `solve_constrained_maxent()`)
+- Deprecated `integrate()` with `DeprecationWarning`
+- Improved docstrings with usage examples
+- Added `'theta'` alias in results for backward compatibility
+- Updated `integrate_with_monitoring()` to use `solve()` internally
+- All 343 tests pass
