@@ -2015,12 +2015,13 @@ class QuantumExponentialFamily:
         eps_val: float,
         log_eps: float,
         sigma_per_pair: List[np.ndarray],
+        bell_indices: Optional[List[int]] = None,
     ) -> np.ndarray:
         """
         Efficient θ computation for product σ = σ₁⊗...⊗σₙ.
         
         For each pair k, the marginal is:
-            ρₖ_ε = (1-ε)|Φ⟩⟨Φ| + ε σₖ
+            ρₖ_ε = (1-ε)|Φₖ⟩⟨Φₖ| + ε σₖ
         
         We compute log(ρₖ_ε) via small d²×d² eigendecomposition,
         then project onto the per-pair operators.
@@ -2035,6 +2036,9 @@ class QuantumExponentialFamily:
             log(ε) for numerical stability
         sigma_per_pair : list of ndarray
             List of n density matrices, each d²×d² for one pair
+        bell_indices : list of int, optional
+            Which Bell state (k=0,...,d-1) to use for each pair.
+            Default: all zeros (standard Bell state |Φ₀⟩).
             
         Returns
         -------
@@ -2050,9 +2054,9 @@ class QuantumExponentialFamily:
         # Get single-pair generators
         single_pair_ops = pair_basis_generators(d)
         
-        # Get single-pair Bell state
-        psi_bell_single = bell_state(d)
-        rho_bell_single = np.outer(psi_bell_single, psi_bell_single.conj())
+        # Handle bell_indices
+        if bell_indices is None:
+            bell_indices = [0] * self.n_pairs
         
         # Compute θ for each pair
         theta = np.zeros(self.n_params)
@@ -2060,8 +2064,12 @@ class QuantumExponentialFamily:
         for k in range(self.n_pairs):
             sigma_k = sigma_per_pair[k]
             
-            # Form ρₖ_ε = (1-ε)|Φ⟩⟨Φ| + ε σₖ
-            rho_k_eps = (1 - eps_val) * rho_bell_single + eps_val * sigma_k
+            # Get Bell state for this pair (may differ per pair via bell_indices)
+            psi_bell_k = bell_state(d, bell_indices[k])
+            rho_bell_k = np.outer(psi_bell_k, psi_bell_k.conj())
+            
+            # Form ρₖ_ε = (1-ε)|Φₖ⟩⟨Φₖ| + ε σₖ
+            rho_k_eps = (1 - eps_val) * rho_bell_k + eps_val * sigma_k
             
             # Ensure Hermitian
             rho_k_eps = (rho_k_eps + rho_k_eps.conj().T) / 2
@@ -2089,6 +2097,7 @@ class QuantumExponentialFamily:
         log_epsilon: Optional[float] = None,
         sigma: Optional[np.ndarray] = None,
         sigma_per_pair: Optional[List[np.ndarray]] = None,
+        bell_indices: Optional[List[int]] = None,
     ) -> np.ndarray:
         """
         Get natural parameters θ corresponding to a regularised Bell state.
@@ -2115,6 +2124,10 @@ class QuantumExponentialFamily:
             Full D×D regularisation matrix. Any valid density matrix.
             Use for entangled σ (inter-pair correlations in perturbation).
             If None and sigma_per_pair is None, uses I/D (isotropic).
+        bell_indices : list of int, optional
+            Which Bell state (k=0,...,d-1) to use for each pair.
+            Default: all zeros (standard Bell state ``|Φ₀⟩``).
+            Allows exploring different pure state origins.
         sigma_per_pair : list of ndarray, optional
             List of n density matrices, each d²×d² for one pair.
             Constructs σ = σ₁⊗σ₂⊗...⊗σₙ (product structure).
@@ -2192,7 +2205,7 @@ class QuantumExponentialFamily:
                 log_eps = float(np.log(epsilon))
             eps_val = float(np.exp(log_eps))
             
-            return self._bell_parameters_product_sigma(eps_val, log_eps, sigma_per_pair)
+            return self._bell_parameters_product_sigma(eps_val, log_eps, sigma_per_pair, bell_indices)
         
         # Work with log ε directly for numerical stability near the boundary.
         if log_epsilon is not None:
@@ -2213,7 +2226,7 @@ class QuantumExponentialFamily:
         D = self.D
         
         # Get Bell state (product of n_pairs Bell states)
-        psi_bell = product_of_bell_states(self.n_pairs, self.d)
+        psi_bell = product_of_bell_states(self.n_pairs, self.d, bell_indices=bell_indices)
         rho_bell = np.outer(psi_bell, psi_bell.conj())
         
         # Determine sigma structure and compute log(ρ_ε) accordingly
@@ -2259,7 +2272,7 @@ class QuantumExponentialFamily:
                 ]
             
             return self._bell_parameters_product_sigma(
-                eps_val, log_eps, sigma_per_pair
+                eps_val, log_eps, sigma_per_pair, bell_indices
             )
             
         else:
