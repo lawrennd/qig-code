@@ -602,6 +602,154 @@ def test_entropy_time_analysis_full():
         f"Entropy time analysis notebook validation failed: {notebook_path.name}"
 
 
+@integration_test
+def test_entropy_time_paths_smoke():
+    """Smoke test for entropy time paths notebook.
+    
+    This test validates the notebook that explores different paths from the LME origin
+    using entropy time reparameterisation.
+    
+    The notebook demonstrates:
+    - The north pole analogy for the LME origin
+    - Isotropic vs anisotropic regularisation
+    - The "almost-null" direction of the BKM metric
+    - L'Hôpital-style limits in entropy time
+    - How different σ choices give different limiting directions
+    - Tracing trajectories backward to the origin
+    
+    To run:
+      pytest -m integration tests/test_notebook.py::test_entropy_time_paths_smoke -v
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+    
+    if not HAS_EXECUTE_PREPROCESSOR:
+        pytest.skip("nbformat/ExecutePreprocessor not installed")
+    
+    # Find notebook
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "entropy_time_paths.ipynb"
+    
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+    
+    # Run smoke test - test first 8 cells which covers imports and basic setup
+    success, error_msg = run_notebook_smoke_test(notebook_path, max_cells=8, timeout=120)
+    
+    if not success:
+        pytest.fail(f"Entropy time paths notebook smoke test failed: {error_msg}")
+
+
+@full_notebook_test
+def test_entropy_time_paths_full():
+    """Full execution test for entropy time paths notebook.
+    
+    This test executes the complete notebook including:
+    - All regularisation comparisons
+    - Limiting direction analysis
+    - Backward trajectory tracing
+    - Full analysis of entropy time flow
+    
+    To run:
+      pytest -m "integration and slow" tests/test_notebook.py::test_entropy_time_paths_full -v
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+    
+    if not HAS_NBCONVERT:
+        pytest.skip("jupyter nbconvert not installed")
+    
+    # Find notebook
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "entropy_time_paths.ipynb"
+    
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+    
+    # Execute full notebook
+    success, output_path = run_notebook(notebook_path)
+    assert success, f"Entropy time paths notebook execution failed: {notebook_path.name}"
+    
+    # Check outputs (no pass markers required, just verify no errors)
+    assert check_notebook_outputs(output_path, require_pass_markers=False), \
+        f"Entropy time paths notebook validation failed: {notebook_path.name}"
+
+
+@integration_test
+def test_boring_game_dynamics_smoke():
+    """Smoke test for boring game dynamics notebook.
+    
+    This test validates the notebook that explains when the inaccessible game
+    becomes "boring" - when constrained and unconstrained dynamics coincide.
+    
+    The notebook demonstrates:
+    - Bell state construction and properties
+    - Why the LME origin satisfies constraints automatically
+    - When the game becomes non-trivial
+    - Conditions for constraint activation
+    
+    To run:
+      pytest -m integration tests/test_notebook.py::test_boring_game_dynamics_smoke -v
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+    
+    if not HAS_EXECUTE_PREPROCESSOR:
+        pytest.skip("nbformat/ExecutePreprocessor not installed")
+    
+    # Find notebook
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "boring_game_dynamics.ipynb"
+    
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+    
+    # Run smoke test - test first 8 cells which covers imports and basic setup
+    success, error_msg = run_notebook_smoke_test(notebook_path, max_cells=8, timeout=120)
+    
+    if not success:
+        pytest.fail(f"Boring game dynamics notebook smoke test failed: {error_msg}")
+
+
+@full_notebook_test
+def test_boring_game_dynamics_full():
+    """Full execution test for boring game dynamics notebook.
+    
+    This test executes the complete notebook including:
+    - Bell state analysis
+    - Entropy and constraint calculations
+    - Full dynamics simulations
+    - All plot generation
+    
+    To run:
+      pytest -m "integration and slow" tests/test_notebook.py::test_boring_game_dynamics_full -v
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+    
+    if not HAS_NBCONVERT:
+        pytest.skip("jupyter nbconvert not installed")
+    
+    # Find notebook
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "boring_game_dynamics.ipynb"
+    
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+    
+    # Execute full notebook
+    success, output_path = run_notebook(notebook_path)
+    assert success, f"Boring game dynamics notebook execution failed: {notebook_path.name}"
+    
+    # Check outputs (no pass markers required, just verify no errors)
+    assert check_notebook_outputs(output_path, require_pass_markers=False), \
+        f"Boring game dynamics notebook validation failed: {notebook_path.name}"
+
+
 if __name__ == "__main__":
     main()
 
