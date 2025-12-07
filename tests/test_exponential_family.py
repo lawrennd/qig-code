@@ -415,6 +415,292 @@ class TestQutritValidation:
                            err_msg="Product state should have near-zero mutual information")
 
 
+# ============================================================================
+# Test: Sigma Regularisation Infrastructure
+# ============================================================================
+
+class TestSigmaValidation:
+    """Test σ validation and structure detection for regularised states."""
+    
+    def test_validate_sigma_valid(self):
+        """Test validate_sigma accepts valid density matrices."""
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        D = exp_fam.D
+        
+        # Isotropic sigma
+        sigma_iso = np.eye(D) / D
+        is_valid, msg = exp_fam.validate_sigma(sigma_iso)
+        assert is_valid, f"Isotropic sigma should be valid: {msg}"
+        
+        # Pure state projector
+        psi = np.zeros(D, dtype=complex)
+        psi[0] = 1.0
+        sigma_pure = np.outer(psi, psi.conj())
+        is_valid, msg = exp_fam.validate_sigma(sigma_pure)
+        assert is_valid, f"Pure state sigma should be valid: {msg}"
+    
+    def test_validate_sigma_invalid(self):
+        """Test validate_sigma rejects invalid matrices."""
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        D = exp_fam.D
+        
+        # Wrong trace
+        sigma_bad_trace = np.eye(D) * 2
+        is_valid, msg = exp_fam.validate_sigma(sigma_bad_trace)
+        assert not is_valid, "Should reject wrong trace"
+        assert "Tr" in msg
+        
+        # Not Hermitian
+        sigma_non_herm = np.eye(D, dtype=complex) / D
+        sigma_non_herm[0, 1] = 1j
+        is_valid, msg = exp_fam.validate_sigma(sigma_non_herm)
+        assert not is_valid, "Should reject non-Hermitian"
+        
+        # Wrong shape
+        sigma_wrong_shape = np.eye(D-1) / (D-1)
+        is_valid, msg = exp_fam.validate_sigma(sigma_wrong_shape)
+        assert not is_valid, "Should reject wrong shape"
+    
+    def test_detect_sigma_structure_isotropic(self):
+        """Test detection of isotropic sigma."""
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        D = exp_fam.D
+        
+        sigma_iso = np.eye(D) / D
+        structure = exp_fam.detect_sigma_structure(sigma_iso)
+        assert structure == 'isotropic'
+    
+    def test_detect_sigma_structure_pure(self):
+        """Test detection of pure state sigma."""
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        D = exp_fam.D
+        
+        psi = np.zeros(D, dtype=complex)
+        psi[1] = 1.0
+        sigma_pure = np.outer(psi, psi.conj())
+        structure = exp_fam.detect_sigma_structure(sigma_pure)
+        assert structure == 'pure'
+    
+    def test_detect_sigma_structure_general(self):
+        """Test detection of general sigma."""
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        D = exp_fam.D
+        
+        # Mixed state that's not isotropic
+        sigma_mixed = np.diag([0.5, 0.3, 0.1, 0.05, 0.03, 0.01, 0.005, 0.004, 0.001])
+        sigma_mixed = sigma_mixed / np.trace(sigma_mixed)
+        structure = exp_fam.detect_sigma_structure(sigma_mixed)
+        assert structure == 'general'
+    
+    def test_regularise_pure_state_isotropic(self):
+        """Test regularise_pure_state with default isotropic sigma."""
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        D = exp_fam.D
+        eps = 0.01
+        
+        psi = np.zeros(D, dtype=complex)
+        psi[0] = 1.0
+        
+        rho_eps = exp_fam.regularise_pure_state(psi, eps)
+        
+        # Check properties
+        assert np.isclose(np.trace(rho_eps), 1.0), "Should have unit trace"
+        assert np.allclose(rho_eps, rho_eps.conj().T), "Should be Hermitian"
+        eigvals = np.linalg.eigvalsh(rho_eps)
+        assert np.all(eigvals >= -1e-10), "Should be PSD"
+    
+    def test_regularise_pure_state_custom_sigma(self):
+        """Test regularise_pure_state with custom sigma."""
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        D = exp_fam.D
+        eps = 0.1
+        
+        psi = np.zeros(D, dtype=complex)
+        psi[0] = 1.0
+        
+        # Custom sigma (projector onto different state)
+        sigma = np.zeros((D, D), dtype=complex)
+        sigma[1, 1] = 1.0
+        
+        rho_eps = exp_fam.regularise_pure_state(psi, eps, sigma=sigma)
+        
+        # Should be (1-eps)|0><0| + eps|1><1|
+        expected = (1 - eps) * np.outer(psi, psi.conj()) + eps * sigma
+        assert np.allclose(rho_eps, expected), "Should match expected formula"
+
+
+class TestBellStateParametersWithSigma:
+    """Test get_bell_state_parameters with custom regularisation σ."""
+    
+    def test_bell_parameters_isotropic(self):
+        """Test get_bell_state_parameters with default isotropic sigma."""
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        
+        theta = exp_fam.get_bell_state_parameters(epsilon=0.01)
+        
+        assert theta.shape == (exp_fam.n_params,)
+        assert np.all(np.isfinite(theta))
+        # Bell state has large negative parameters
+        assert np.linalg.norm(theta) > 1.0
+    
+    def test_bell_parameters_custom_sigma(self):
+        """Test get_bell_state_parameters with custom sigma."""
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        D = exp_fam.D
+        
+        # Custom sigma (projector)
+        sigma = np.zeros((D, D), dtype=complex)
+        sigma[1, 1] = 1.0
+        
+        theta = exp_fam.get_bell_state_parameters(epsilon=0.01, sigma=sigma)
+        
+        assert theta.shape == (exp_fam.n_params,)
+        assert np.all(np.isfinite(theta))
+    
+    def test_different_sigma_gives_different_theta(self):
+        """Test that different sigma gives different theta."""
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        D = exp_fam.D
+        
+        # Isotropic
+        theta_iso = exp_fam.get_bell_state_parameters(epsilon=0.01)
+        
+        # Custom sigma
+        sigma = np.zeros((D, D), dtype=complex)
+        sigma[1, 1] = 1.0
+        theta_custom = exp_fam.get_bell_state_parameters(epsilon=0.01, sigma=sigma)
+        
+        # Should be different
+        diff = np.linalg.norm(theta_iso - theta_custom)
+        assert diff > 0.1, f"Different sigma should give different theta, diff={diff}"
+    
+    def test_bell_parameters_log_epsilon(self):
+        """Test get_bell_state_parameters with log_epsilon."""
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        
+        # These should give similar results
+        theta1 = exp_fam.get_bell_state_parameters(epsilon=0.001)
+        theta2 = exp_fam.get_bell_state_parameters(log_epsilon=np.log(0.001))
+        
+        assert np.allclose(theta1, theta2, rtol=1e-6)
+
+
+class TestMultiPairExponentialFamily:
+    """Test exponential family with multiple entangled pairs (n_pairs > 1)."""
+    
+    def test_multipair_initialisation(self):
+        """Test multi-pair exponential family initialisation."""
+        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        
+        assert exp_fam.n_pairs == 2
+        assert exp_fam.d == 2
+        assert exp_fam.D == 16  # (2^2)^2 = 16
+        assert exp_fam.n_params == 30  # 2 * 15 = 30
+    
+    def test_multipair_bell_parameters(self):
+        """Test get_bell_state_parameters for multi-pair."""
+        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        
+        theta = exp_fam.get_bell_state_parameters(epsilon=0.01)
+        
+        assert theta.shape == (exp_fam.n_params,)
+        assert np.all(np.isfinite(theta))
+    
+    def test_multipair_dynamics_constraint_preservation(self):
+        """Test that multi-pair dynamics preserve constraint."""
+        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        dynamics = InaccessibleGameDynamics(exp_fam)
+        
+        theta_0 = exp_fam.get_bell_state_parameters(epsilon=0.01)
+        result = dynamics.solve(theta_0, n_steps=20, dt=0.01, verbose=False)
+        
+        C_init = result['C_init']
+        C_final = result['constraint_values'][-1]
+        
+        # Constraint should be preserved (tight tolerance)
+        assert abs(C_final - C_init) < 1e-6, \
+            f"Constraint drift: {abs(C_final - C_init)}"
+    
+    def test_multipair_dynamics_entropy_increase(self):
+        """Test that multi-pair dynamics increase entropy."""
+        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        dynamics = InaccessibleGameDynamics(exp_fam)
+        
+        theta_0 = exp_fam.get_bell_state_parameters(epsilon=0.01)
+        result = dynamics.solve(theta_0, n_steps=50, dt=0.01, verbose=False)
+        
+        # Compute entropies
+        rho_0 = exp_fam.rho_from_theta(theta_0)
+        rho_f = exp_fam.rho_from_theta(result['trajectory'][-1])
+        
+        H_0 = von_neumann_entropy(rho_0)
+        H_f = von_neumann_entropy(rho_f)
+        
+        # Entropy should increase (or at least not decrease significantly)
+        assert H_f >= H_0 - 1e-6, f"Entropy should increase: {H_0} -> {H_f}"
+    
+    def test_multipair_three_pairs(self):
+        """Test with 3 qubit pairs (larger system)."""
+        exp_fam = QuantumExponentialFamily(n_pairs=3, d=2, pair_basis=True)
+        
+        assert exp_fam.D == 64  # (2^2)^3 = 64
+        assert exp_fam.n_params == 45  # 3 * 15 = 45
+        
+        theta = exp_fam.get_bell_state_parameters(epsilon=0.01)
+        assert theta.shape == (45,)
+        assert np.all(np.isfinite(theta))
+
+
+class TestProductSigmaRegularisation:
+    """Test sigma_per_pair for efficient product-structured regularisation."""
+    
+    def test_sigma_per_pair_basic(self):
+        """Test sigma_per_pair constructs product sigma."""
+        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        D_pair = 4  # d^2 = 4
+        
+        # Per-pair sigmas (isotropic on each pair)
+        sigma1 = np.eye(D_pair) / D_pair
+        sigma2 = np.eye(D_pair) / D_pair
+        
+        theta = exp_fam.get_bell_state_parameters(
+            epsilon=0.01,
+            sigma_per_pair=[sigma1, sigma2]
+        )
+        
+        assert theta.shape == (exp_fam.n_params,)
+        assert np.all(np.isfinite(theta))
+    
+    def test_sigma_per_pair_wrong_length(self):
+        """Test sigma_per_pair rejects wrong number of matrices."""
+        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        D_pair = 4
+        
+        sigma1 = np.eye(D_pair) / D_pair
+        
+        with pytest.raises(ValueError, match="must have 2 matrices"):
+            exp_fam.get_bell_state_parameters(
+                epsilon=0.01,
+                sigma_per_pair=[sigma1]  # Only 1, need 2
+            )
+    
+    def test_sigma_and_sigma_per_pair_exclusive(self):
+        """Test that sigma and sigma_per_pair cannot both be specified."""
+        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        D = exp_fam.D
+        D_pair = 4
+        
+        sigma = np.eye(D) / D
+        sigma_per_pair = [np.eye(D_pair) / D_pair, np.eye(D_pair) / D_pair]
+        
+        with pytest.raises(ValueError, match="Cannot specify both"):
+            exp_fam.get_bell_state_parameters(
+                epsilon=0.01,
+                sigma=sigma,
+                sigma_per_pair=sigma_per_pair
+            )
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
 
