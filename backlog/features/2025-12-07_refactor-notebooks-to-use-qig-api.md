@@ -1,7 +1,7 @@
 ---
 id: 2025-12-07_refactor-notebooks-to-use-qig-api
 title: Refactor boring_game_dynamics and entropy_time_paths notebooks to use qig API
-status: proposed
+status: completed
 priority: medium
 created: 2025-12-07
 owner: null
@@ -131,3 +131,10 @@ If validation reveals discrepancies:
 
 ### 2025-12-07
 Task created with Proposed status. Analysis shows significant code duplication between notebooks and qig API.
+
+### 2025-12-07 (completed)
+Both notebooks refactored:
+- `boring_game_dynamics.ipynb`: Replaced Bell state construction, partial_trace, entropy, marginal_entropies with qig API
+- `entropy_time_paths.ipynb`: Replaced Bell state construction and entropy with qig API
+- Validated equivalence before each replacement
+- Core physics (gradient flows, entropy time) preserved unchanged
