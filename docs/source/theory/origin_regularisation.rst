@@ -217,7 +217,7 @@ Performance comparison (d=2 qubits):
 Different Origins: bell_indices
 -------------------------------
 
-The standard LME origin uses |Φ₀⟩⊗|Φ₀⟩⊗... where |Φ₀⟩ = Σⱼ|jj⟩/√d.
+The standard LME origin uses ``|Φ₀⟩⊗|Φ₀⟩⊗...`` where ``|Φ₀⟩ = Σⱼ|jj⟩/√d``.
 But there are d different Bell states per pair:
 
 .. math::
