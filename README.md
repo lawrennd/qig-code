@@ -291,6 +291,8 @@ See the `examples/` directory:
 
 - **`boring_game_dynamics.ipynb`**: Analysis of why the inaccessible game becomes "boring" from the LME origin when constrained and unconstrained dynamics coincide because the marginal entropy constraint is automatically satisfied along the gradient flow [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lawrennd/qig-code/blob/main/examples/boring_game_dynamics.ipynb)
 
+- **`multi_pair_regularisation.ipynb`**: Tutorial demonstrating CIP-0008 regularisation machinery for multi-pair systems—the "north pole" analogy, isotropic/product/general σ choices, different origins via `bell_indices`, and block-diagonal Fisher information with performance benchmarks [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lawrennd/qig-code/blob/main/examples/multi_pair_regularisation.ipynb)
+
 ## Citation
 
 If you use this code in your research, please cite:

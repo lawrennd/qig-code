@@ -71,6 +71,21 @@ The ``examples/`` directory contains tutorial and demonstration notebooks:
    
    `Open in Colab <https://colab.research.google.com/github/lawrennd/qig-code/blob/main/examples/boring_game_dynamics.ipynb>`__
 
+**multi_pair_regularisation.ipynb**
+   Tutorial demonstrating the CIP-0008 regularisation machinery for multi-pair
+   quantum systems. Explores how different choices of regularisation matrix σ
+   affect physics and computational efficiency. Covers:
+   
+   - The "north pole" analogy for the LME origin
+   - Isotropic σ = I/D (default, efficient, "boring")
+   - Product σ = σ₁⊗...⊗σₙ (efficient, per-pair directions)
+   - General entangled σ (flexible, O(D³) cost)
+   - Different origins via ``bell_indices``
+   - Block-diagonal Fisher information for product states
+   - Performance benchmarks
+   
+   `Open in Colab <https://colab.research.google.com/github/lawrennd/qig-code/blob/main/examples/multi_pair_regularisation.ipynb>`__
+
 Notebook Output Filtering
 --------------------------
 
