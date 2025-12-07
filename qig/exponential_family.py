@@ -1868,8 +1868,6 @@ class QuantumExponentialFamily:
             
         Notes
         -----
-        For n_pairs=1, only sigma (or default I/D) is supported.
-        
         The regularisation matrix σ encodes the "direction of approach" 
         to the pure-state boundary (see CIP-0008 and entropy_time_paths.ipynb):
         
@@ -1882,6 +1880,14 @@ class QuantumExponentialFamily:
         
         Since Tr(Fₐ) = 0 for our operators, we get:
         θₐ = Tr(log(ρ) Fₐ) / Tr(FₐFₐ)
+        
+        **Multi-pair note**: For n_pairs > 1, our operator basis is the direct
+        sum of per-pair su(d²) algebras, NOT the full su(D) algebra. The 
+        regularised Bell state may have components outside this subspace.
+        The returned θ is the projection onto our subspace, which is correct
+        for the inaccessible game dynamics (which stay in this subspace).
+        Reconstruction via ``rho_from_theta(θ)`` will NOT exactly match the
+        target ρ_ε, but the dynamics are correct.
         """
         if not self.pair_basis:
             raise ValueError("Bell states only defined for pair_basis=True")
@@ -1910,14 +1916,6 @@ class QuantumExponentialFamily:
             for k in range(1, self.n_pairs):
                 sigma = np.kron(sigma, sigma_per_pair[k])
         
-        # Currently only support n_pairs=1 for efficient computation
-        # TODO: CIP-0008 Phase 2 will add multi-pair support
-        if self.n_pairs != 1:
-            raise ValueError(
-                "Bell state parameters currently only supported for n_pairs=1. "
-                "Multi-pair support coming in CIP-0008."
-            )
-
         # Work with log ε directly for numerical stability near the boundary.
         if log_epsilon is not None:
             log_eps = float(log_epsilon)
@@ -1936,9 +1934,9 @@ class QuantumExponentialFamily:
         eps_val = float(np.exp(log_eps))
         D = self.D
         
-        # Get Bell state
-        rho_bell = bell_state_density_matrix(self.d)
-        psi_bell = product_of_bell_states(1, self.d)
+        # Get Bell state (product of n_pairs Bell states)
+        psi_bell = product_of_bell_states(self.n_pairs, self.d)
+        rho_bell = np.outer(psi_bell, psi_bell.conj())
         
         # Determine sigma structure and compute log(ρ_ε) accordingly
         if sigma is None:
@@ -1953,8 +1951,10 @@ class QuantumExponentialFamily:
         
         if sigma_structure == 'isotropic':
             # Efficient analytic computation for σ = I/D
-            # ρ_ε = (1-ε)|Φ⟩⟨Φ| + ε I/D has eigenvalues:
-            #   λ₀ = 1 - ε + ε/D,  λ_⊥ = ε/D
+            # ρ_ε = (1-ε)|Ψ⟩⟨Ψ| + ε I/D has eigenvalues:
+            #   λ₀ = 1 - ε + ε/D (the Bell state direction)
+            #   λ_⊥ = ε/D (all D-1 orthogonal directions)
+            # This works for any n_pairs!
             eigvals_bell, U = eigh(rho_bell)
             idx_max = int(np.argmax(eigvals_bell.real))
             
@@ -1966,14 +1966,31 @@ class QuantumExponentialFamily:
             log_diag[idx_max] = log_lambda0
             log_rho = U @ np.diag(log_diag) @ U.conj().T
             
+        elif sigma_structure == 'product' and self.n_pairs > 1:
+            # Product sigma: can compute more efficiently per-pair
+            # But for now, fall through to general case
+            # TODO: Implement truly efficient block-diagonal computation
+            import warnings
+            warnings.warn(
+                "Product σ detected but block-diagonal optimization not yet implemented. "
+                "Using general O(D³) computation.",
+                UserWarning
+            )
+            rho_eps = (1 - eps_val) * rho_bell + eps_val * sigma
+            rho_eps = (rho_eps + rho_eps.conj().T) / 2
+            eigvals, U = eigh(rho_eps)
+            eigvals = np.maximum(eigvals, np.finfo(float).tiny)
+            log_eigvals = np.log(eigvals)
+            log_rho = U @ np.diag(log_eigvals) @ U.conj().T
+            
         else:
             # General case: compute ρ_ε and take matrix log
             # This is O(D³) but handles arbitrary σ
             import warnings
-            if sigma_structure == 'general':
+            if sigma_structure == 'general' and self.n_pairs > 1:
                 warnings.warn(
-                    f"Using general σ (structure: {sigma_structure}). "
-                    "This loses O(n) efficiency for multi-pair systems.",
+                    f"Using general σ (structure: {sigma_structure}) with {self.n_pairs} pairs. "
+                    "This loses O(n) efficiency.",
                     UserWarning
                 )
             
