@@ -9,6 +9,7 @@ Mathematical background for quantum information geometry and the inaccessible ga
    quantum_exponential_families
    fisher_information
    inaccessible_game
+   origin_regularisation
    generic_structure
    symbolic_computation
 
@@ -44,6 +45,20 @@ Topics:
 - The inaccessible region
 - Information gain vs accessibility
 - Relationship to thermodynamics
+
+Origin Regularisation
+---------------------
+
+The LME origin (product of Bell states) lies at the pure-state boundary
+where natural parameters θ → -∞. The regularisation matrix σ encodes the
+"direction of approach" to this boundary. Key topics:
+
+- The north pole analogy (coordinate singularity at pure states)
+- Valid σ requirements (Hermitian, PSD, unit trace)
+- Efficiency implications (isotropic vs product vs general)
+- Block-diagonal Fisher information for product states
+
+See :doc:`origin_regularisation` for full details.
 
 GENERIC Structure
 -----------------
