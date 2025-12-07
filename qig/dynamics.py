@@ -21,6 +21,30 @@ class InaccessibleGameDynamics:
 
     Implements: θ̇ = -Π_∥(θ) G(θ) θ
     where Π_∥ projects onto constraint manifold ∑_i h_i = C.
+    
+    Primary API
+    -----------
+    solve(theta_0, n_steps, dt, ...) : Recommended method for integrating dynamics.
+        Uses gradient descent with Newton projection onto constraint manifold.
+        Supports entropy time via `entropy_time=True`.
+    
+    Advanced/Internal
+    -----------------
+    flow(t, theta) : Compute θ̇ at a single point. For custom integrators.
+    
+    Example
+    -------
+    >>> from qig.exponential_family import QuantumExponentialFamily
+    >>> from qig.dynamics import InaccessibleGameDynamics
+    >>> 
+    >>> exp_family = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+    >>> theta_0 = exp_family.get_bell_state_parameters(epsilon=0.01)
+    >>> 
+    >>> dynamics = InaccessibleGameDynamics(exp_family)
+    >>> result = dynamics.solve(theta_0, n_steps=100, dt=0.01)
+    >>> 
+    >>> print(f"Converged: {result['converged']}")
+    >>> print(f"Constraint preserved: dC = {result['constraint_values'][-1] - result['C_init']:.2e}")
     """
 
     def __init__(self, exp_family: QuantumExponentialFamily, method: str = 'duhamel'):
@@ -59,7 +83,27 @@ class InaccessibleGameDynamics:
 
     def flow(self, t: float, theta: np.ndarray) -> np.ndarray:
         """
-        Compute θ̇ = -Π_∥ G θ at given θ.
+        Compute θ̇ = -Π_∥ G θ at given θ (advanced/internal use).
+        
+        This is a low-level method that computes the flow vector at a single point.
+        For most use cases, prefer `solve()` which handles integration and 
+        constraint projection automatically.
+        
+        Parameters
+        ----------
+        t : float
+            Time (used for time-dependent problems; ignored for autonomous flow)
+        theta : ndarray
+            Natural parameters at which to compute the flow
+            
+        Returns
+        -------
+        theta_dot : ndarray
+            The constrained flow vector θ̇ = -Π_∥ G θ
+            
+        Notes
+        -----
+        If `time_mode='entropy'`, the flow is scaled so dH/dt = 1.
         """
         # Compute Fisher information G(θ)
         G = self.exp_family.fisher_information(theta)
@@ -91,12 +135,85 @@ class InaccessibleGameDynamics:
 
         return theta_dot
 
+    def solve(self, theta_0: np.ndarray, n_steps: int = 1000, dt: float = 0.001,
+              convergence_tol: float = 1e-6, entropy_time: bool = False,
+              project: bool = True, project_every: int = 10,
+              verbose: bool = True) -> Dict[str, Any]:
+        """
+        Solve constrained maximum entropy dynamics (recommended method).
+        
+        Uses gradient descent with Newton projection onto constraint manifold.
+        This is the primary API for integrating the inaccessible game dynamics.
+        
+        Parameters
+        ----------
+        theta_0 : ndarray
+            Initial natural parameters
+        n_steps : int, default=1000
+            Maximum number of steps
+        dt : float, default=0.001
+            Step size (or entropy increment if entropy_time=True)
+        convergence_tol : float, default=1e-6
+            Stop when ||F|| < convergence_tol
+        entropy_time : bool, default=False
+            If True, scale steps so dH/dt = 1 (entropy increases by dt per step)
+        project : bool, default=True
+            Project onto constraint manifold (recommended)
+        project_every : int, default=10
+            Project every N steps (for efficiency)
+        verbose : bool, default=True
+            Print progress messages
+            
+        Returns
+        -------
+        dict with keys:
+            trajectory : ndarray, shape (n_steps+1, n_params)
+                Parameter trajectory θ(t)
+            flow_norms : ndarray
+                ||F(θ)|| at each step (→ 0 at convergence)
+            constraint_values : ndarray
+                Σᵢ hᵢ at each step (should stay ≈ constant)
+            C_init : float
+                Initial constraint value
+            converged : bool
+                Whether convergence was achieved
+            n_steps : int
+                Number of steps taken
+                
+        Example
+        -------
+        >>> result = dynamics.solve(theta_0, n_steps=500, dt=0.01, entropy_time=True)
+        >>> print(f"Converged: {result['converged']}")
+        """
+        return self.solve_constrained_maxent(
+            theta_0, n_steps=n_steps, dt=dt, convergence_tol=convergence_tol,
+            project=project, project_every=project_every, 
+            use_entropy_time=entropy_time
+        )
+    
     def integrate(
         self, theta_0: np.ndarray, t_span: Tuple[float, float], n_points: int = 100
     ) -> Dict[str, Any]:
         """
-        Integrate constrained dynamics from initial condition.
+        [DEPRECATED] Integrate using scipy solve_ivp.
+        
+        .. deprecated::
+            This method does not project onto the constraint manifold,
+            causing constraint drift. Use `solve()` instead.
+            
+        Warning
+        -------
+        This method is numerically unstable for constrained problems.
+        The constraint C = Σᵢ hᵢ will drift over time, giving incorrect results.
+        Use `solve()` which includes Newton projection for stability.
         """
+        import warnings
+        warnings.warn(
+            "integrate() is deprecated and numerically unstable for constrained problems. "
+            "Use solve() instead, which includes Newton projection onto the constraint manifold.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         # Store initial constraint value
         rho_0 = self.exp_family.rho_from_theta(theta_0)
         h_0 = marginal_entropies(rho_0, self.exp_family.dims)
@@ -288,8 +405,10 @@ class InaccessibleGameDynamics:
 
             # Check convergence - stop early if we achieve target accuracy
             if flow_norm < convergence_tol:
+                traj = np.array(trajectory)
                 return {
-                    'trajectory': np.array(trajectory),
+                    'trajectory': traj,
+                    'theta': traj,  # Alias for backward compatibility
                     'flow_norms': np.array(flow_norms),
                     'constraint_values': np.array(constraint_values),
                     'C_init': C_init,
@@ -302,8 +421,10 @@ class InaccessibleGameDynamics:
             if len(flow_norms) > 10:
                 recent_min = np.min(flow_norms[-20:])  # Check last 20 steps
                 if recent_min < convergence_tol:
+                    traj = np.array(trajectory)
                     return {
-                        'trajectory': np.array(trajectory),
+                        'trajectory': traj,
+                        'theta': traj,  # Alias for backward compatibility
                         'flow_norms': np.array(flow_norms),
                         'constraint_values': np.array(constraint_values),
                         'C_init': C_init,
@@ -315,8 +436,10 @@ class InaccessibleGameDynamics:
         if len(flow_norms) >= 5:
             last_5_flow_norms = flow_norms[-5:]
             if np.all(np.array(last_5_flow_norms) < convergence_tol):
+                traj = np.array(trajectory)
                 return {
-                    'trajectory': np.array(trajectory),
+                    'trajectory': traj,
+                    'theta': traj,  # Alias for backward compatibility
                     'flow_norms': np.array(flow_norms),
                     'constraint_values': np.array(constraint_values),
                     'C_init': C_init,
@@ -324,17 +447,10 @@ class InaccessibleGameDynamics:
                     'n_steps': n_steps
                 }
 
+        traj = np.array(trajectory)
         return {
-            'trajectory': np.array(trajectory),
-            'flow_norms': np.array(flow_norms),
-            'constraint_values': np.array(constraint_values),
-            'C_init': C_init,
-            'converged': False,
-            'n_steps': n_steps
-        }
-
-        return {
-            'trajectory': np.array(trajectory),
+            'trajectory': traj,
+            'theta': traj,  # Alias for backward compatibility
             'flow_norms': np.array(flow_norms),
             'constraint_values': np.array(constraint_values),
             'C_init': C_init,
@@ -552,8 +668,35 @@ class GenericDynamics(InaccessibleGameDynamics):
         -------
         dict with trajectory and GENERIC monitoring data
         """
-        # First integrate the full dynamics
-        result = self.integrate(theta_0, t_span, n_points)
+        # First integrate the full dynamics using solve() (stable)
+        # Convert t_span to n_steps and dt
+        # Note: solve() returns n_steps+1 points (including initial), 
+        # so use n_points-1 to match integrate()'s behavior
+        t_total = t_span[1] - t_span[0]
+        dt = t_total / (n_points - 1) if n_points > 1 else t_total
+        result = self.solve(theta_0, n_steps=n_points-1, dt=dt, verbose=False)
+        
+        # Add compatibility keys
+        result['theta'] = result['trajectory']  # Alias for backward compatibility
+        result['time'] = np.linspace(t_span[0], t_span[1], len(result['trajectory']))
+        # Note: 'converged' means reached fixed point; 'success' means integration completed
+        # For compatibility with old integrate() which used scipy's success flag
+        result['success'] = True  # solve() always completes (unlike scipy which can fail)
+        
+        # Compute entropies along trajectory (for compatibility with integrate())
+        theta_traj = result['trajectory']
+        n_steps_actual = len(theta_traj)
+        H_traj = np.zeros(n_steps_actual)
+        h_traj = np.zeros((n_steps_actual, self.exp_family.n_sites))
+        
+        for i, theta in enumerate(theta_traj):
+            rho = self.exp_family.rho_from_theta(theta)
+            H_traj[i] = von_neumann_entropy(rho)
+            h_traj[i] = marginal_entropies(rho, self.exp_family.dims)
+        
+        result['H'] = H_traj
+        result['h'] = h_traj
+        result['constraint'] = np.sum(h_traj, axis=1)
         
         # Compute GENERIC decomposition at each point
         theta_traj = result['theta']
