@@ -132,9 +132,11 @@ If validation reveals discrepancies:
 ### 2025-12-07
 Task created with Proposed status. Analysis shows significant code duplication between notebooks and qig API.
 
-### 2025-12-07 (completed)
+### 2025-12-07 (completed - but incomplete)
 Both notebooks refactored:
 - `boring_game_dynamics.ipynb`: Replaced Bell state construction, partial_trace, entropy, marginal_entropies with qig API
 - `entropy_time_paths.ipynb`: Replaced Bell state construction and entropy with qig API
 - Validated equivalence before each replacement
 - Core physics (gradient flows, entropy time) preserved unchanged
+
+**NOTE**: This refactoring only replaced utility functions while keeping the manual ρ-space gradient flow. This misses the point of the inaccessible game, which is formulated in natural parameter (θ) space. See new task `2025-12-07_notebooks-natural-parameter-dynamics` for the proper refactoring.
