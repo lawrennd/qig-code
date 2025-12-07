@@ -36,9 +36,9 @@ This is **classical** steepest ascent in ρ-space, not the quantum inaccessible 
 The notebooks should:
 1. Use `QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)`
 2. Get initial θ via `exp_family.get_bell_state_parameters(epsilon)`
-3. Use `InaccessibleGameDynamics(exp_family)` for the dynamics
-4. Call `dynamics.set_time_mode('entropy')` for entropy time
-5. Integrate via `dynamics.integrate(theta_0, t_span)` or `solve_constrained_maxent()`
+3. Use `InaccessibleGameDynamics(exp_family).solve_constrained_maxent()` for the dynamics
+4. Use `use_entropy_time=True` for entropy time parametrization
+5. Show constraint preservation via `result['constraint_values']`
 
 ## Key Concepts to Demonstrate
 
@@ -73,32 +73,37 @@ G = exp_family.fisher_information(theta)
 C, grad_C = exp_family.marginal_entropy_constraint(theta)
 ```
 
-### Use InaccessibleGameDynamics
+### Use InaccessibleGameDynamics with solve_constrained_maxent()
 
 ```python
 from qig.dynamics import InaccessibleGameDynamics
 
 dynamics = InaccessibleGameDynamics(exp_family)
-dynamics.set_time_mode('entropy')  # For entropy time
 
-# Integrate
-result = dynamics.integrate(theta_0, t_span=(0, 10), n_points=100)
-
-# Or use gradient descent solver
+# Solve constrained dynamics: θ̇ = -Π_∥ G θ
+# Uses Lagrange multiplier: F = F_unc - νa where ν = (a^T F_unc)/||a||²
+# Plus Newton projection onto constraint manifold for stability
 result = dynamics.solve_constrained_maxent(
-    theta_init, n_steps=1000, dt=0.001,
-    use_entropy_time=True
+    theta_0, 
+    n_steps=1000, 
+    dt=0.001,
+    use_entropy_time=True  # For entropy time parametrization
 )
+
+# Access trajectory
+theta_traj = result['trajectory']
+constraint_values = result['constraint_values']  # Should stay constant
+flow_norms = result['flow_norms']  # ||F|| → 0 at convergence
 ```
 
 ## Acceptance Criteria
 
 - [ ] Notebooks work in θ-space, not ρ-space
 - [ ] Use `QuantumExponentialFamily` with `pair_basis=True`
-- [ ] Use `InaccessibleGameDynamics` for constrained dynamics
+- [ ] Use `InaccessibleGameDynamics.solve_constrained_maxent()` for the dynamics
 - [ ] Demonstrate constraint gradient a = ∇C
-- [ ] Show Π_∥ projection clearly
-- [ ] Entropy time parametrization via `set_time_mode('entropy')`
+- [ ] Show Lagrange multiplier ν = (a^T F_unc)/||a||²
+- [ ] Entropy time parametrization via `use_entropy_time=True`
 - [ ] Results show the same physics but in the correct formulation
 
 ## Related
