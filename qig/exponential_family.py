@@ -582,6 +582,190 @@ class QuantumExponentialFamily:
         G = 0.5 * (G + G.T)
         return G
 
+    def fisher_information_product(
+        self, theta: np.ndarray, check_product: bool = True, tol: float = 1e-6
+    ) -> np.ndarray:
+        """
+        Compute Fisher information exploiting block-diagonal structure for product states.
+        
+        For product states ρ = ρ₁ ⊗ ρ₂ ⊗ ... ⊗ ρₙ with pair-based operators,
+        the BKM Fisher metric is block-diagonal:
+        
+            G = diag(G₁, G₂, ..., Gₙ)
+        
+        where each Gₖ is computed from the marginal ρₖ on pair k.
+        
+        Complexity:
+            - Full: O(D³) = O(d^(6n)) where D = d^(2n)
+            - Block: O(n × d¹²) - exponentially faster for n > 1
+        
+        Parameters
+        ----------
+        theta : ndarray, shape (n_params,)
+            Natural parameters
+        check_product : bool, default True
+            If True, verify state is approximately a product state.
+            If False, assume product structure (faster but may be wrong).
+        tol : float, default 1e-6
+            Tolerance for product state check
+            
+        Returns
+        -------
+        G : ndarray, shape (n_params, n_params)
+            Block-diagonal Fisher information matrix
+            
+        Raises
+        ------
+        ValueError
+            If not using pair_basis mode
+            If check_product=True and state is not a product state
+            
+        Notes
+        -----
+        For n qutrit pairs (d=3):
+        - n=2: Full O(81³)=530k, Block O(2×3¹²)=1M → similar
+        - n=3: Full O(729³)=387M, Block O(3×3¹²)=1.6M → 240× faster
+        - n=4: Full O(6561³)=282B, Block O(4×3¹²)=2.1M → 134000× faster
+        
+        The crossover point where block computation wins is typically n≥2
+        for qutrits and n≥3 for qubits.
+        """
+        if not self.pair_basis:
+            raise ValueError(
+                "fisher_information_product requires pair_basis=True. "
+                "For local operators, use fisher_information()."
+            )
+        
+        from .pair_operators import pair_basis_generators
+        
+        rho = self.rho_from_theta(theta)
+        
+        # Optionally check if state is approximately a product state
+        if check_product:
+            if not self._is_product_state(rho, tol=tol):
+                raise ValueError(
+                    f"State is not a product state (within tol={tol}). "
+                    "Use fisher_information() for entangled states, or "
+                    "set check_product=False if you know the structure is block-diagonal."
+                )
+        
+        # Get single-pair generators (d²×d² matrices)
+        single_pair_generators = pair_basis_generators(self.d)
+        n_ops_per_pair = len(single_pair_generators)  # d⁴ - 1
+        
+        # Compute Fisher metric block for each pair
+        G = np.zeros((self.n_params, self.n_params))
+        
+        for k in range(self.n_pairs):
+            # Extract marginal ρₖ on pair k
+            rho_k = self._partial_trace_to_pair(rho, k)
+            
+            # Compute BKM metric for this pair
+            G_k = self._fisher_block(rho_k, single_pair_generators)
+            
+            # Insert into block-diagonal structure
+            start_idx = k * n_ops_per_pair
+            end_idx = (k + 1) * n_ops_per_pair
+            G[start_idx:end_idx, start_idx:end_idx] = G_k
+        
+        return G
+    
+    def _fisher_block(
+        self, rho: np.ndarray, operators: List[np.ndarray]
+    ) -> np.ndarray:
+        """
+        Compute Fisher information block for a single subsystem.
+        
+        This is the BKM metric computed from a single marginal density matrix
+        and its associated operators.
+        
+        Parameters
+        ----------
+        rho : ndarray, shape (d², d²)
+            Density matrix for a single pair
+        operators : List[ndarray]
+            List of d⁴-1 operators, each of shape (d², d²)
+            
+        Returns
+        -------
+        G : ndarray, shape (d⁴-1, d⁴-1)
+            Fisher information block
+        """
+        from scipy.linalg import eigh
+        
+        D = rho.shape[0]
+        n = len(operators)
+        
+        # Eigendecomposition
+        eigvals, U = eigh(rho)
+        p = np.clip(np.real(eigvals), 1e-14, None)
+        
+        # Centre operators and transform to eigenbasis
+        A_tilde = np.zeros((n, D, D), dtype=complex)
+        I = np.eye(D, dtype=complex)
+        
+        for a, F_a in enumerate(operators):
+            mean_Fa = np.trace(rho @ F_a).real
+            A_a = F_a - mean_Fa * I
+            A_tilde[a] = U.conj().T @ A_a @ U
+        
+        # BKM kernel
+        p_i = p[:, None]
+        p_j = p[None, :]
+        diff = p_i - p_j
+        log_diff = np.log(p_i) - np.log(p_j)
+        
+        k = np.zeros_like(diff)
+        non_degenerate = np.abs(diff) > 1e-14
+        k[non_degenerate] = diff[non_degenerate] / log_diff[non_degenerate]
+        degenerate = np.abs(diff) <= 1e-14
+        k[degenerate] = 0.5 * (p_i + p_j)[degenerate]
+        
+        # Assemble metric
+        G = np.zeros((n, n))
+        for a in range(n):
+            A_a = A_tilde[a]
+            for b in range(a, n):
+                A_b = A_tilde[b]
+                prod = A_a * np.conj(A_b)
+                Gab = float(np.real(np.sum(k * prod)))
+                G[a, b] = Gab
+                G[b, a] = Gab
+        
+        return 0.5 * (G + G.T)
+    
+    def _is_product_state(self, rho: np.ndarray, tol: float = 1e-6) -> bool:
+        """
+        Check if ρ is approximately a product state ρ₁ ⊗ ... ⊗ ρₙ.
+        
+        Uses the criterion: ρ is a product iff ρ = ⊗ₖ Trₖ̄(ρ)
+        where Trₖ̄ traces out all pairs except k.
+        
+        Parameters
+        ----------
+        rho : ndarray
+            Density matrix
+        tol : float
+            Tolerance for comparison
+            
+        Returns
+        -------
+        bool
+            True if ρ is approximately a product state
+        """
+        if not self.pair_basis or self.n_pairs == 1:
+            return True  # Single pair is trivially "product"
+        
+        # Compute product of marginals
+        D_pair = self.d ** 2
+        rho_product = np.array([[1.0]])
+        
+        for k in range(self.n_pairs):
+            rho_k = self._partial_trace_to_pair(rho, k)
+            rho_product = np.kron(rho_product, rho_k)
+        
+        return np.allclose(rho, rho_product, atol=tol)
+
     def marginal_entropy_constraint_theta_only(
         self, theta: np.ndarray
     ) -> Tuple[float, np.ndarray]:
@@ -1709,21 +1893,37 @@ class QuantumExponentialFamily:
         D_pair = self.d ** 2
         n = self.n_pairs
         
+        if n == 1:
+            return sigma  # Nothing to trace
+        
         # Reshape to tensor with legs for each pair
+        # Shape: (D_pair,) * n for bra, then (D_pair,) * n for ket
         sigma_tensor = sigma.reshape([D_pair] * (2 * n))
         
-        # Trace out all pairs except pair_idx
-        # Pairs are at positions 0, 1, ..., n-1 (bra) and n, n+1, ..., 2n-1 (ket)
-        axes_to_trace = []
+        # Use einsum to trace out all pairs except pair_idx
+        # Build index strings: bra indices 0..n-1, ket indices n..2n-1
+        # Pairs to trace get same index letter; pair to keep gets distinct letters
+        bra_indices = []
+        ket_indices = []
+        trace_letter = ord('a')
+        keep_bra = chr(ord('z') - 1)  # 'y'
+        keep_ket = chr(ord('z'))      # 'z'
+        
         for k in range(n):
-            if k != pair_idx:
-                axes_to_trace.append((k, k + n))
+            if k == pair_idx:
+                bra_indices.append(keep_bra)
+                ket_indices.append(keep_ket)
+            else:
+                letter = chr(trace_letter)
+                bra_indices.append(letter)
+                ket_indices.append(letter)  # Same letter = trace over this pair
+                trace_letter += 1
         
-        result = sigma_tensor
-        # Trace from highest index to lowest to avoid index shifting issues
-        for bra_idx, ket_idx in sorted(axes_to_trace, reverse=True):
-            result = np.trace(result, axis1=bra_idx, axis2=ket_idx)
+        input_str = ''.join(bra_indices + ket_indices)
+        output_str = keep_bra + keep_ket
+        einsum_str = f"{input_str}->{output_str}"
         
+        result = np.einsum(einsum_str, sigma_tensor)
         return result.reshape(D_pair, D_pair)
     
     def detect_sigma_structure(self, sigma: np.ndarray) -> str:

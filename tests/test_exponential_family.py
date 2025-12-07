@@ -701,6 +701,114 @@ class TestProductSigmaRegularisation:
             )
 
 
+class TestBlockDiagonalFisherInformation:
+    """Test fisher_information_product with block-diagonal structure."""
+
+    def test_single_pair_matches_full(self):
+        """Single pair block computation matches full computation."""
+        qef = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        theta = qef.get_bell_state_parameters(epsilon=0.1)
+        
+        G_full = qef.fisher_information(theta)
+        G_block = qef.fisher_information_product(theta)
+        
+        assert np.allclose(G_full, G_block), "Single pair should match exactly"
+
+    def test_two_pairs_matches_full(self):
+        """Two pairs block computation matches full computation."""
+        qef = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        theta = qef.get_bell_state_parameters(epsilon=0.1)
+        
+        G_full = qef.fisher_information(theta)
+        G_block = qef.fisher_information_product(theta)
+        
+        assert np.allclose(G_full, G_block), f"Max diff: {np.max(np.abs(G_full - G_block))}"
+
+    def test_three_pairs_matches_full(self):
+        """Three pairs block computation matches full computation."""
+        qef = QuantumExponentialFamily(n_pairs=3, d=2, pair_basis=True)
+        theta = qef.get_bell_state_parameters(epsilon=0.1)
+        
+        G_full = qef.fisher_information(theta)
+        G_block = qef.fisher_information_product(theta)
+        
+        assert np.allclose(G_full, G_block), f"Max diff: {np.max(np.abs(G_full - G_block))}"
+
+    def test_block_diagonal_structure(self):
+        """Verify the result is actually block-diagonal."""
+        qef = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        theta = qef.get_bell_state_parameters(epsilon=0.1)
+        
+        G_block = qef.fisher_information_product(theta)
+        
+        # Check off-diagonal blocks are zero
+        n_ops_per_pair = 15  # d^4 - 1 for d=2
+        off_diag = G_block[:n_ops_per_pair, n_ops_per_pair:]
+        
+        assert np.allclose(off_diag, 0), f"Off-diagonal block max: {np.max(np.abs(off_diag))}"
+
+    def test_qutrits_two_pairs(self):
+        """Test with qutrits (d=3) for two pairs."""
+        qef = QuantumExponentialFamily(n_pairs=2, d=3, pair_basis=True)
+        theta = qef.get_bell_state_parameters(epsilon=0.1)
+        
+        G_full = qef.fisher_information(theta)
+        G_block = qef.fisher_information_product(theta)
+        
+        assert np.allclose(G_full, G_block), f"Max diff: {np.max(np.abs(G_full - G_block))}"
+
+    def test_symmetric_positive_definite(self):
+        """Fisher metric should be symmetric positive definite."""
+        qef = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        theta = qef.get_bell_state_parameters(epsilon=0.1)
+        
+        G = qef.fisher_information_product(theta)
+        
+        # Symmetric
+        assert np.allclose(G, G.T), "Fisher metric should be symmetric"
+        
+        # Positive definite (all eigenvalues > 0)
+        eigvals = np.linalg.eigvalsh(G)
+        assert np.all(eigvals > 0), f"Min eigenvalue: {eigvals.min()}"
+
+    def test_requires_pair_basis(self):
+        """Should raise error if not using pair_basis."""
+        qef = QuantumExponentialFamily(n_sites=2, d=2, pair_basis=False)
+        theta = np.zeros(qef.n_params)
+        
+        with pytest.raises(ValueError, match="pair_basis"):
+            qef.fisher_information_product(theta)
+
+    def test_check_product_flag(self):
+        """Test check_product flag behaviour."""
+        qef = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        theta = qef.get_bell_state_parameters(epsilon=0.1)
+        
+        # With check_product=True (default) - should work for product state
+        G1 = qef.fisher_information_product(theta, check_product=True)
+        
+        # With check_product=False - should also work
+        G2 = qef.fisher_information_product(theta, check_product=False)
+        
+        assert np.allclose(G1, G2)
+
+    def test_partial_trace_to_pair_correctness(self):
+        """Test _partial_trace_to_pair gives correct marginals."""
+        qef = QuantumExponentialFamily(n_pairs=3, d=2, pair_basis=True)
+        theta = qef.get_bell_state_parameters(epsilon=0.1)
+        rho = qef.rho_from_theta(theta)
+        
+        # For product Bell state, each marginal should be I/d²
+        D_pair = qef.d ** 2
+        expected_marginal = np.eye(D_pair) / D_pair
+        
+        for k in range(qef.n_pairs):
+            rho_k = qef._partial_trace_to_pair(rho, k)
+            # Should be approximately I/d² (mixed state)
+            assert rho_k.shape == (D_pair, D_pair)
+            assert np.isclose(np.trace(rho_k), 1.0), f"Pair {k} trace: {np.trace(rho_k)}"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
 
