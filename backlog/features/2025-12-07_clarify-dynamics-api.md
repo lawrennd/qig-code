@@ -2,7 +2,7 @@
 id: 2025-12-07_clarify-dynamics-api
 title: Clarify InaccessibleGameDynamics API - when to use which method
 status: proposed
-priority: medium
+priority: high
 created: 2025-12-07
 owner: null
 dependencies: []
@@ -39,35 +39,43 @@ The relationship between these methods and when to use each is not immediately c
 - Supports `use_entropy_time=True`
 - More stable for constrained optimisation
 
-## Proposed Clarification
+## Proposed Solution: Option C - Unified interface with cleanup
 
-### Option A: Better docstrings
-Add clear guidance in docstrings about when to use each method:
-- `flow()`: For understanding the dynamics, custom integrators
-- `integrate()`: Quick exploration (may drift off constraint)
-- `solve_constrained_maxent()`: **Recommended** for actual computation
+**Problem**: `integrate()` looks like the obvious choice but it's broken for constrained problems (no projection → constraint drift). This is a trap for users.
 
-### Option B: Deprecate or rename
-Consider whether `integrate()` should be:
-- Deprecated in favour of `solve_constrained_maxent()`
-- Renamed to `integrate_unconstrained()` to make clear it doesn't project
-- Updated to use Newton projection like `solve_constrained_maxent()`
+### New unified API
 
-### Option C: Unified interface
-Create a single `solve()` method with options:
 ```python
 result = dynamics.solve(
     theta_0,
-    method='constrained_maxent',  # or 'ivp', 'euler'
-    use_entropy_time=True,
-    project=True
+    t_end=10.0,           # or n_steps for gradient descent
+    method='gradient',     # 'gradient' (recommended) or 'ivp' (unstable)
+    entropy_time=True,
+    project=True,
+    project_every=10
 )
 ```
 
+### Cleanup of broken/confusing methods
+
+| Method | Action |
+|--------|--------|
+| `solve_constrained_maxent()` | Rename to `solve()` or keep as implementation |
+| `integrate()` | **Remove** or make private `_integrate_ivp()` |
+| `flow()` | Keep as `_flow()` for internal use, or expose for advanced users |
+
+### Why remove integrate()?
+- Uses `solve_ivp` without constraint projection
+- Looks like the "right" way to integrate but isn't
+- Constraint drifts, giving wrong answers silently
+- If someone needs raw IVP, they can use scipy directly with `flow()`
+
 ## Acceptance Criteria
 
-- [ ] Clear documentation of when to use each method
-- [ ] API makes the recommended approach obvious
+- [ ] Single `solve()` method as the primary API
+- [ ] `integrate()` removed or clearly marked as internal/deprecated
+- [ ] `flow()` available for advanced use but not the main interface
+- [ ] Clear error message if constraint drift detected
 - [ ] Examples in docstrings showing typical usage
 
 ## Related
@@ -79,3 +87,5 @@ result = dynamics.solve(
 
 ### 2025-12-07
 Task created. Current API has three methods with unclear relationship.
+
+Decision: Go with Option C (unified interface). `integrate()` is essentially broken for constrained problems - it looks right but drifts off the constraint silently. Need to clean up rather than just document the trap.
