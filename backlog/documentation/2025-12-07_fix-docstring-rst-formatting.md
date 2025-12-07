@@ -1,7 +1,7 @@
 ---
 id: 2025-12-07_fix-docstring-rst-formatting
 title: Fix docstring RST formatting for Sphinx documentation
-status: proposed
+status: in_progress
 priority: medium
 created: 2025-12-07
 owner: null
@@ -96,3 +96,18 @@ Returns the Bell state :math:`|\Phi\\rangle = \\frac{1}{\\sqrt{d}} \\sum_i |ii\\
 
 ### 2025-12-07
 Task created. 63 warnings in Sphinx build, mostly from RST substitution reference issues in docstrings using ket notation.
+
+### 2025-12-07 (continued)
+Partial fix committed:
+- ✅ `qig/pair_operators.py` - Fixed ket notation with double backticks
+- ✅ `qig/symbolic/lme_exact.py` - Fixed permutation_matrix docstring
+- ✅ `docs/source/development/notebooks.rst` - Fixed |θ| notation
+
+Remaining warnings (78 total):
+- ~50 "duplicate object description" - Sphinx config issue (API documented twice)
+- ~20 docstring formatting in `exponential_family.py` (blank lines needed)
+- A few remaining substitution issues
+
+Next steps:
+- Fix exponential_family.py docstring formatting
+- Update Sphinx config to avoid duplicate API docs
