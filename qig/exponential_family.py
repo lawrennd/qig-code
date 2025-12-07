@@ -1616,10 +1616,211 @@ class QuantumExponentialFamily:
         rho = self.rho_from_theta(theta)
         return np.trace(rho @ rho).real
     
+    # =========================================================================
+    # CIP-0008: σ-parametrised regularisation infrastructure
+    # =========================================================================
+    
+    def validate_sigma(self, sigma: np.ndarray) -> Tuple[bool, str]:
+        """
+        Validate that σ is a valid density matrix of correct dimension.
+        
+        Parameters
+        ----------
+        sigma : ndarray
+            Matrix to validate
+            
+        Returns
+        -------
+        is_valid : bool
+            True if σ is a valid density matrix
+        message : str
+            "Valid" or error description
+        """
+        D = self.D
+        
+        # Check shape
+        if sigma.shape != (D, D):
+            return False, f"Shape mismatch: expected ({D}, {D}), got {sigma.shape}"
+        
+        # Check Hermitian
+        if not np.allclose(sigma, sigma.conj().T, atol=1e-10):
+            return False, "σ must be Hermitian"
+        
+        # Check positive semidefinite
+        eigvals = np.linalg.eigvalsh(sigma)
+        if np.any(eigvals < -1e-10):
+            return False, f"σ must be PSD, min eigenvalue: {eigvals.min():.2e}"
+        
+        # Check unit trace
+        tr = np.trace(sigma).real
+        if not np.isclose(tr, 1.0, atol=1e-10):
+            return False, f"Tr(σ) must be 1, got {tr:.6f}"
+        
+        return True, "Valid"
+    
+    def is_product_sigma(
+        self, sigma: np.ndarray, tol: float = 1e-6
+    ) -> Tuple[bool, Optional[List[np.ndarray]]]:
+        """
+        Check if σ has product structure σ = σ₁⊗σ₂⊗...⊗σₙ.
+        
+        Parameters
+        ----------
+        sigma : ndarray
+            Density matrix to check
+        tol : float
+            Tolerance for product structure detection
+            
+        Returns
+        -------
+        is_product : bool
+            True if σ is (approximately) a product state
+        factors : list of ndarray or None
+            If product, the individual σₖ matrices; otherwise None
+        """
+        if self.n_pairs == 1:
+            # Single pair is trivially a "product"
+            return True, [sigma]
+        
+        # For multi-pair, check if σ can be factorised
+        # This is expensive in general - use partial trace to check consistency
+        D_pair = self.d ** 2
+        
+        # Extract marginals for each pair
+        marginals = []
+        for k in range(self.n_pairs):
+            # Trace out all pairs except k
+            sigma_k = self._partial_trace_to_pair(sigma, k)
+            marginals.append(sigma_k)
+        
+        # Reconstruct product state from marginals
+        sigma_product = marginals[0]
+        for k in range(1, self.n_pairs):
+            sigma_product = np.kron(sigma_product, marginals[k])
+        
+        # Check if reconstruction matches
+        if np.allclose(sigma, sigma_product, atol=tol):
+            return True, marginals
+        
+        return False, None
+    
+    def _partial_trace_to_pair(self, sigma: np.ndarray, pair_idx: int) -> np.ndarray:
+        """Trace out all pairs except pair_idx, returning d²×d² density matrix."""
+        D_pair = self.d ** 2
+        n = self.n_pairs
+        
+        # Reshape to tensor with legs for each pair
+        sigma_tensor = sigma.reshape([D_pair] * (2 * n))
+        
+        # Trace out all pairs except pair_idx
+        # Pairs are at positions 0, 1, ..., n-1 (bra) and n, n+1, ..., 2n-1 (ket)
+        axes_to_trace = []
+        for k in range(n):
+            if k != pair_idx:
+                axes_to_trace.append((k, k + n))
+        
+        result = sigma_tensor
+        # Trace from highest index to lowest to avoid index shifting issues
+        for bra_idx, ket_idx in sorted(axes_to_trace, reverse=True):
+            result = np.trace(result, axis1=bra_idx, axis2=ket_idx)
+        
+        return result.reshape(D_pair, D_pair)
+    
+    def detect_sigma_structure(self, sigma: np.ndarray) -> str:
+        """
+        Detect structure of σ for efficiency optimisation.
+        
+        Parameters
+        ----------
+        sigma : ndarray
+            Regularisation matrix
+            
+        Returns
+        -------
+        structure : str
+            One of: 'isotropic', 'product', 'pure', 'general'
+        """
+        D = self.D
+        
+        # Check if isotropic (I/D)
+        if np.allclose(sigma, np.eye(D) / D, atol=1e-10):
+            return 'isotropic'
+        
+        # Check if product state (for multi-pair)
+        if self.n_pairs > 1:
+            is_prod, _ = self.is_product_sigma(sigma)
+            if is_prod:
+                return 'product'
+        
+        # Check if rank-1 (pure state)
+        eigvals = np.linalg.eigvalsh(sigma)
+        n_nonzero = np.sum(eigvals > 1e-10)
+        if n_nonzero == 1:
+            return 'pure'
+        
+        return 'general'
+    
+    def regularise_pure_state(
+        self,
+        psi: np.ndarray,
+        epsilon: float,
+        sigma: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
+        """
+        Create regularised density matrix from pure state.
+        
+        ρ_ε = (1-ε)|ψ⟩⟨ψ| + ε σ
+        
+        Parameters
+        ----------
+        psi : ndarray
+            Pure state vector (length D)
+        epsilon : float
+            Regularisation strength, must be in (0, 1)
+        sigma : ndarray, optional
+            Regularisation direction. Default: I/D (isotropic)
+            
+        Returns
+        -------
+        rho_epsilon : ndarray
+            Regularised density matrix (D×D)
+        """
+        D = self.D
+        
+        # Validate psi
+        if psi.shape != (D,):
+            raise ValueError(f"psi must have length {D}, got {psi.shape}")
+        
+        # Normalise psi if needed
+        norm = np.linalg.norm(psi)
+        if not np.isclose(norm, 1.0, atol=1e-10):
+            psi = psi / norm
+        
+        # Validate epsilon
+        if not 0 < epsilon < 1:
+            raise ValueError(f"epsilon must be in (0, 1), got {epsilon}")
+        
+        # Default sigma is isotropic
+        if sigma is None:
+            sigma = np.eye(D, dtype=complex) / D
+        else:
+            # Validate sigma
+            is_valid, msg = self.validate_sigma(sigma)
+            if not is_valid:
+                raise ValueError(f"Invalid sigma: {msg}")
+        
+        # Create regularised state
+        rho_pure = np.outer(psi, psi.conj())
+        rho_epsilon = (1 - epsilon) * rho_pure + epsilon * sigma
+        
+        return rho_epsilon
+
     def get_bell_state_parameters(
         self,
         epsilon: float = 1e-6,
         log_epsilon: Optional[float] = None,
+        sigma: Optional[np.ndarray] = None,
+        sigma_per_pair: Optional[List[np.ndarray]] = None,
     ) -> np.ndarray:
         """
         Get natural parameters θ corresponding to a regularised Bell state.
@@ -1627,23 +1828,30 @@ class QuantumExponentialFamily:
         A Bell state is a pure state (rank 1), which lies at the boundary
         of the exponential family where natural parameters θ → -∞.
         
-        For regularized state: ρ_ε = (1-ε)|Φ⟩⟨Φ| + ε I/D
+        For regularised state: ``ρ_ε = (1-ε)|Φ⟩⟨Φ| + ε σ``
         
-        We compute θ by solving: ρ_ε = exp(Σ θₐFₐ - ψ(θ))
+        We compute θ by solving: ``ρ_ε = exp(Σ θₐFₐ - ψ(θ))``
         
-        This gives: θₐ ∝ Tr(log(ρ_ε) Fₐ)
+        This gives: ``θₐ ∝ Tr(log(ρ_ε) Fₐ)``
         
         Parameters
         ----------
         epsilon : float, default=1e-6
-            Regularisation parameter: ρ_ε = (1-ε)|Φ⟩⟨Φ| + ε I/D.
+            Regularisation parameter.
             Smaller epsilon → closer to pure Bell state (more negative θ).
             Must be > 0 to avoid singularities.
         log_epsilon : float, optional
-            If provided, overrides `epsilon` via log ε = log_epsilon.
-            This is numerically convenient when exploring very small ε,
-            and matches the logarithmic divergence of the entropy gradient
-            near pure states discussed in the paper.
+            If provided, overrides ``epsilon`` via log ε = log_epsilon.
+            This is numerically convenient when exploring very small ε.
+        sigma : ndarray, optional
+            Full D×D regularisation matrix. Any valid density matrix.
+            Use for entangled σ (inter-pair correlations in perturbation).
+            If None and sigma_per_pair is None, uses I/D (isotropic).
+        sigma_per_pair : list of ndarray, optional
+            List of n density matrices, each d²×d² for one pair.
+            Constructs σ = σ₁⊗σ₂⊗...⊗σₙ (product structure).
+            Efficient O(n) computation preserved.
+            Only valid for multi-pair systems (n_pairs > 1).
             
         Returns
         -------
@@ -1652,13 +1860,22 @@ class QuantumExponentialFamily:
             Many components will be large and negative (approaching -∞
             for pure state).
             
+        Raises
+        ------
+        ValueError
+            If both sigma and sigma_per_pair are provided.
+            If sigma_per_pair has wrong length or invalid matrices.
+            
         Notes
         -----
-        Only works for pair_basis=True systems (n_pairs=1).
+        For n_pairs=1, only sigma (or default I/D) is supported.
         
-        The regularization makes the state full rank, allowing finite
-        natural parameters. As epsilon → 0, parameters θ → -∞ 
-        (pure state is at the boundary).
+        The regularisation matrix σ encodes the "direction of approach" 
+        to the pure-state boundary (see CIP-0008 and entropy_time_paths.ipynb):
+        
+        - Different σ = different "meridians" from the north pole
+        - Isotropic σ = I/D gives the "boring" symmetric departure
+        - Anisotropic σ reveals the tangent cone of possible departures
         
         For the exponential family ρ(θ) = exp(H(θ))/Z where H = Σ θₐFₐ,
         we have: log(ρ) = H - log(Z)·I
@@ -1669,11 +1886,39 @@ class QuantumExponentialFamily:
         if not self.pair_basis:
             raise ValueError("Bell states only defined for pair_basis=True")
         
+        # Validate sigma options
+        if sigma is not None and sigma_per_pair is not None:
+            raise ValueError("Cannot specify both sigma and sigma_per_pair")
+        
+        # Handle sigma_per_pair for multi-pair systems
+        if sigma_per_pair is not None:
+            if self.n_pairs == 1:
+                raise ValueError("sigma_per_pair only valid for n_pairs > 1")
+            if len(sigma_per_pair) != self.n_pairs:
+                raise ValueError(
+                    f"sigma_per_pair must have {self.n_pairs} matrices, got {len(sigma_per_pair)}"
+                )
+            # Validate each per-pair sigma
+            D_pair = self.d ** 2
+            for k, sigma_k in enumerate(sigma_per_pair):
+                if sigma_k.shape != (D_pair, D_pair):
+                    raise ValueError(
+                        f"sigma_per_pair[{k}] must be {D_pair}×{D_pair}, got {sigma_k.shape}"
+                    )
+            # Build product sigma
+            sigma = sigma_per_pair[0]
+            for k in range(1, self.n_pairs):
+                sigma = np.kron(sigma, sigma_per_pair[k])
+        
+        # Currently only support n_pairs=1 for efficient computation
+        # TODO: CIP-0008 Phase 2 will add multi-pair support
         if self.n_pairs != 1:
-            raise ValueError("Bell state parameters only defined for single pair (n_pairs=1)")
+            raise ValueError(
+                "Bell state parameters currently only supported for n_pairs=1. "
+                "Multi-pair support coming in CIP-0008."
+            )
 
         # Work with log ε directly for numerical stability near the boundary.
-        # If log_epsilon is provided, use it; otherwise derive it from epsilon.
         if log_epsilon is not None:
             log_eps = float(log_epsilon)
             if not np.isfinite(log_eps):
@@ -1682,52 +1927,77 @@ class QuantumExponentialFamily:
             if epsilon <= 0:
                 raise ValueError("epsilon must be > 0 (pure Bell state has θ → -∞)")
             log_eps = float(np.log(epsilon))
-        # Clamp log ε to the smallest representable positive number to avoid exp underflow
+        
+        # Clamp log ε to avoid underflow
         min_log_eps = float(np.log(np.finfo(float).tiny))
         if log_eps < min_log_eps:
             log_eps = min_log_eps
         
-        # Eigenbasis of the pure Bell state: ρ_bell has eigenvalues {1, 0, ..., 0}.
-        # Since ρ_mixed ∝ I commutes with ρ_bell, the regularised state
-        #   ρ_ε = (1-ε)ρ_bell + ε I/D
-        # shares the same eigenvectors for all ε, with eigenvalues
-        #   λ₀ = 1 - ε + ε/D,  λ_⊥ = ε/D.
-        # We only need log λ, and use log ε to avoid catastrophic cancellation.
-        rho_bell = bell_state_density_matrix(self.d)
-        eigvals_bell, U = eigh(rho_bell)
-        # Identify the eigenvector with eigenvalue ≈ 1 (the Bell state)
-        idx_max = int(np.argmax(eigvals_bell.real))
+        eps_val = float(np.exp(log_eps))
         D = self.D
         
-        # Compute log eigenvalues of ρ_ε.
-        # For the Bell direction: λ₀ = 1 - ε(1 - 1/D), so
-        #   log λ₀ = log(1 - ε(1 - 1/D)) ≈ -ε(1 - 1/D) for small ε.
-        # For orthogonal directions: λ_⊥ = ε/D, so
-        #   log λ_⊥ = log ε - log D = log_eps - log D.
-        eps_val = float(np.exp(log_eps))
-        # Stable computation of log λ₀ using log1p
-        factor = eps_val * (1.0 - 1.0 / D)
-        log_lambda0 = np.log1p(-factor) if factor < 1.0 else np.log(np.finfo(float).tiny)
-        log_lambda_perp = log_eps - np.log(D)
+        # Get Bell state
+        rho_bell = bell_state_density_matrix(self.d)
+        psi_bell = product_of_bell_states(1, self.d)
         
-        log_diag = np.full(D, log_lambda_perp, dtype=float)
-        log_diag[idx_max] = log_lambda0
-        # Build log ρ_ε = U diag(log λ) U†
-        log_rho = U @ np.diag(log_diag) @ U.conj().T
+        # Determine sigma structure and compute log(ρ_ε) accordingly
+        if sigma is None:
+            # Isotropic case: σ = I/D (efficient analytic formula)
+            sigma_structure = 'isotropic'
+        else:
+            # Validate sigma
+            is_valid, msg = self.validate_sigma(sigma)
+            if not is_valid:
+                raise ValueError(f"Invalid sigma: {msg}")
+            sigma_structure = self.detect_sigma_structure(sigma)
+        
+        if sigma_structure == 'isotropic':
+            # Efficient analytic computation for σ = I/D
+            # ρ_ε = (1-ε)|Φ⟩⟨Φ| + ε I/D has eigenvalues:
+            #   λ₀ = 1 - ε + ε/D,  λ_⊥ = ε/D
+            eigvals_bell, U = eigh(rho_bell)
+            idx_max = int(np.argmax(eigvals_bell.real))
+            
+            factor = eps_val * (1.0 - 1.0 / D)
+            log_lambda0 = np.log1p(-factor) if factor < 1.0 else np.log(np.finfo(float).tiny)
+            log_lambda_perp = log_eps - np.log(D)
+            
+            log_diag = np.full(D, log_lambda_perp, dtype=float)
+            log_diag[idx_max] = log_lambda0
+            log_rho = U @ np.diag(log_diag) @ U.conj().T
+            
+        else:
+            # General case: compute ρ_ε and take matrix log
+            # This is O(D³) but handles arbitrary σ
+            import warnings
+            if sigma_structure == 'general':
+                warnings.warn(
+                    f"Using general σ (structure: {sigma_structure}). "
+                    "This loses O(n) efficiency for multi-pair systems.",
+                    UserWarning
+                )
+            
+            rho_eps = (1 - eps_val) * rho_bell + eps_val * sigma
+            
+            # Ensure Hermitian and compute log via eigendecomposition
+            rho_eps = (rho_eps + rho_eps.conj().T) / 2
+            eigvals, U = eigh(rho_eps)
+            
+            # Clamp small eigenvalues for numerical stability
+            eigvals = np.maximum(eigvals, np.finfo(float).tiny)
+            log_eigvals = np.log(eigvals)
+            log_rho = U @ np.diag(log_eigvals) @ U.conj().T
         
         # Extract natural parameters by projection onto operator basis
-        # Since our operators have Tr(Fₐ) = 0 (traceless), we use:
         # θₐ = Tr(log(ρ) Fₐ) / Tr(FₐFₐ)
         theta = np.zeros(self.n_params)
         for a, F_a in enumerate(self.operators):
             numerator = np.real(np.trace(log_rho @ F_a))
-            # For our basis, typically Tr(FₐFₐ) = constant (e.g., 2 for Pauli, GellMann)
-            # But we compute it to be safe
             denominator = np.real(np.trace(F_a @ F_a))
             if denominator > 0:
                 theta[a] = numerator / denominator
             else:
-                theta[a] = 0.0  # Should not happen for proper basis
+                theta[a] = 0.0
         
         return theta
 
