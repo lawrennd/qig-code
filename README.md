@@ -105,8 +105,8 @@ where:
 
 ### Key Results
 
-1. **Maximum entropy production**: Systems evolve to maximize joint entropy H while preserving marginal entropies
-2. **Qutrit optimality**: Qutrits (d=3) are optimal under certain resource constraints
+1. **Maximum entropy production**: Systems evolve to maximise joint entropy H while preserving marginal entropies
+2. **Qutrit optimality**: Qutrits ($d=3$) are optimal under certain resource constraints
 3. **GENERIC structure**: Dynamics decompose into dissipative (S) + Hamiltonian (A) parts
 4. **Block-diagonal Fisher metric**: Non-interacting pairs enable computational tractability
 5. **Exact analytic forms**: For LME states, A and S have closed-form symbolic expressions (no approximations)
@@ -158,7 +158,7 @@ solution = dynamics.integrate(
 
 #### `qig.pair_operators`
 
-Operator basis generation:
+Operator basis generation.
 
 ```python
 from qig.pair_operators import bell_state, gell_mann_generators
@@ -172,7 +172,7 @@ su9_ops = gell_mann_generators(d=3)  # 80 generators
 
 #### `qig.duhamel`
 
-High-precision quantum derivatives using Duhamel's formula:
+Quantum derivatives using Duhamel's formula.
 
 ```python
 from qig.duhamel import duhamel_derivative
@@ -183,9 +183,9 @@ dH_dtheta = duhamel_derivative(rho, drho_dtheta, order=10)
 
 #### `qig.symbolic`
 
-Symbolic computation for GENERIC decomposition of qutrit pairs.
+Symbolic computation for GENERIC decomposition of *qutrit* pairs.
 
-**Parameterisation**: The code uses the quantum exponential family with Gell-Mann matrices as sufficient statistics:
+**Parameterisation**: The code uses the quantum exponential family with Gell-Mann matrices as sufficient statistics.
 
 ```
 ρ(θ) = exp(K - ψ(θ)·I)   where   K = Σₐ θₐ Fₐ
@@ -197,13 +197,13 @@ The sufficient statistics `Fₐ` are tensor products of Gell-Mann matrices `{λ�
 
 giving 80 generators spanning su(9) for a qutrit pair.
 
-**The exactness trick**: For locally maximally entangled (LME) states, the 9×9 matrix exponential `exp(K)` decomposes into smaller blocks:
+*The exactness trick*: For locally maximally entangled (LME) states, the 9×9 matrix exponential `exp(K)` decomposes into smaller blocks:
 
 ```
 9×9 → 3×3 + 2×2 + 1×1×4
 ```
 
-This happens because LME states live in the 3D subspace `{|00⟩, |11⟩, |22⟩}`. The 3×3 and 2×2 blocks have eigenvalues from **quadratic** (not cubic) equations, enabling exact symbolic computation.
+This happens because LME states live in the 3D subspace `{|00⟩, |11⟩, |22⟩}`. The 3×3 and 2×2 blocks have eigenvalues from *quadratic* (not cubic) equations, enabling exact symbolic computation.
 
 **20 block-preserving generators** maintain this structure: 4 local diagonal (`λ₃⊗I`, `I⊗λ₃`, `λ₈⊗I`, `I⊗λ₈`) plus 16 entangling (`λᵢ⊗λⱼ` for i,j ∈ {1,2,3}).
 
@@ -239,7 +239,7 @@ blocks = numeric_lme_blocks_from_theta(theta_numeric, qef.operators)
 ```
 
 Key features:
-- **Exact exp(K)** via block decomposition - machine precision (~10⁻¹⁵)
+- **Exact exp(K)** via block decomposition
 - The decomposition avoids the need for Taylor approximation in the LME dynamics
 - Analytic forms for antisymmetric (A) and symmetric (S) parts of GENERIC
 - **Numeric-symbolic bridge** via `numeric_lme_blocks_from_theta` connects exponential family θ to block parameters
@@ -301,7 +301,7 @@ If you use this code in your research, please cite:
 }
 ```
 
-## 📄 License
+## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
