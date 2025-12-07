@@ -1,7 +1,7 @@
 ---
 id: 2025-12-07_notebooks-natural-parameter-dynamics
 title: Refactor notebooks to use natural parameter (θ) dynamics instead of density matrix (ρ) space
-status: proposed
+status: completed
 priority: high
 created: 2025-12-07
 owner: null
@@ -117,3 +117,17 @@ flow_norms = result['flow_norms']  # ||F|| → 0 at convergence
 
 ### 2025-12-07
 Task created. Previous refactoring missed the point - replaced utilities but kept ρ-space dynamics. Need to properly use θ-space formulation.
+
+### 2025-12-07 (completed)
+Both notebooks refactored to use θ-space dynamics:
+
+**boring_game_dynamics.ipynb**:
+- Main simulation now uses `QuantumExponentialFamily` and `solve_constrained_maxent()`
+- Shows key insight: ||a|| ≈ 0 at LME origin (constraint gradient is ~zero)
+- Demonstrates WHY the game is "boring": Π_∥ ≈ I because constraint is auto-satisfied
+- Multi-pair cells kept in ρ-space (θ-space init only supports n_pairs=1)
+
+**entropy_time_paths.ipynb**:
+- Added θ-space entropy time demonstration using `use_entropy_time=True`
+- Shows dH/dt ≈ 1 by construction in entropy time
+- ρ-space discussion kept for geometric intuition about regularization choices
