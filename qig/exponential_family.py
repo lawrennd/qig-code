@@ -2015,6 +2015,79 @@ class QuantumExponentialFamily:
         
         return rho_epsilon
 
+    def _bell_parameters_product_sigma(
+        self,
+        eps_val: float,
+        log_eps: float,
+        sigma_per_pair: List[np.ndarray],
+    ) -> np.ndarray:
+        """
+        Efficient θ computation for product σ = σ₁⊗...⊗σₙ.
+        
+        For each pair k, the marginal is:
+            ρₖ_ε = (1-ε)|Φ⟩⟨Φ| + ε σₖ
+        
+        We compute log(ρₖ_ε) via small d²×d² eigendecomposition,
+        then project onto the per-pair operators.
+        
+        Complexity: O(n × d⁶) instead of O(d^(6n))
+        
+        Parameters
+        ----------
+        eps_val : float
+            Regularisation ε value
+        log_eps : float
+            log(ε) for numerical stability
+        sigma_per_pair : list of ndarray
+            List of n density matrices, each d²×d² for one pair
+            
+        Returns
+        -------
+        theta : ndarray
+            Natural parameters [θ₁, θ₂, ..., θₙ]
+        """
+        from .pair_operators import pair_basis_generators, bell_state
+        
+        d = self.d
+        D_pair = d ** 2
+        n_ops_per_pair = D_pair ** 2 - 1  # d⁴ - 1
+        
+        # Get single-pair generators
+        single_pair_ops = pair_basis_generators(d)
+        
+        # Get single-pair Bell state
+        psi_bell_single = bell_state(d)
+        rho_bell_single = np.outer(psi_bell_single, psi_bell_single.conj())
+        
+        # Compute θ for each pair
+        theta = np.zeros(self.n_params)
+        
+        for k in range(self.n_pairs):
+            sigma_k = sigma_per_pair[k]
+            
+            # Form ρₖ_ε = (1-ε)|Φ⟩⟨Φ| + ε σₖ
+            rho_k_eps = (1 - eps_val) * rho_bell_single + eps_val * sigma_k
+            
+            # Ensure Hermitian
+            rho_k_eps = (rho_k_eps + rho_k_eps.conj().T) / 2
+            
+            # Compute log via eigendecomposition (small d²×d² matrix)
+            eigvals, U = eigh(rho_k_eps)
+            eigvals = np.maximum(eigvals, np.finfo(float).tiny)
+            log_eigvals = np.log(eigvals)
+            log_rho_k = U @ np.diag(log_eigvals) @ U.conj().T
+            
+            # Project onto per-pair operators
+            # θₐ = Tr(log(ρₖ) Fₐ) / Tr(Fₐ²)
+            start_idx = k * n_ops_per_pair
+            for a, F_a in enumerate(single_pair_ops):
+                numerator = np.real(np.trace(log_rho_k @ F_a))
+                denominator = np.real(np.trace(F_a @ F_a))
+                if denominator > 0:
+                    theta[start_idx + a] = numerator / denominator
+        
+        return theta
+
     def get_bell_state_parameters(
         self,
         epsilon: float = 1e-6,
@@ -2096,7 +2169,7 @@ class QuantumExponentialFamily:
         if sigma is not None and sigma_per_pair is not None:
             raise ValueError("Cannot specify both sigma and sigma_per_pair")
         
-        # Handle sigma_per_pair for multi-pair systems
+        # Handle sigma_per_pair for multi-pair systems (efficient O(n × d⁶) path)
         if sigma_per_pair is not None:
             if self.n_pairs == 1:
                 raise ValueError("sigma_per_pair only valid for n_pairs > 1")
@@ -2104,17 +2177,27 @@ class QuantumExponentialFamily:
                 raise ValueError(
                     f"sigma_per_pair must have {self.n_pairs} matrices, got {len(sigma_per_pair)}"
                 )
-            # Validate each per-pair sigma
+            # Validate each per-pair sigma (fast: O(n × d⁶) not O(D³))
             D_pair = self.d ** 2
             for k, sigma_k in enumerate(sigma_per_pair):
                 if sigma_k.shape != (D_pair, D_pair):
                     raise ValueError(
                         f"sigma_per_pair[{k}] must be {D_pair}×{D_pair}, got {sigma_k.shape}"
                     )
-            # Build product sigma
-            sigma = sigma_per_pair[0]
-            for k in range(1, self.n_pairs):
-                sigma = np.kron(sigma, sigma_per_pair[k])
+                # Quick validation (skip full eigenvalue check for speed)
+                if not np.allclose(sigma_k, sigma_k.conj().T, atol=1e-10):
+                    raise ValueError(f"sigma_per_pair[{k}] must be Hermitian")
+                if not np.isclose(np.trace(sigma_k), 1.0, atol=1e-10):
+                    raise ValueError(f"sigma_per_pair[{k}] must have unit trace")
+            
+            # Go directly to efficient per-pair computation (skip full sigma build!)
+            if log_epsilon is not None:
+                log_eps = float(log_epsilon)
+            else:
+                log_eps = float(np.log(epsilon))
+            eps_val = float(np.exp(log_eps))
+            
+            return self._bell_parameters_product_sigma(eps_val, log_eps, sigma_per_pair)
         
         # Work with log ε directly for numerical stability near the boundary.
         if log_epsilon is not None:
@@ -2167,21 +2250,22 @@ class QuantumExponentialFamily:
             log_rho = U @ np.diag(log_diag) @ U.conj().T
             
         elif sigma_structure == 'product' and self.n_pairs > 1:
-            # Product sigma: can compute more efficiently per-pair
-            # But for now, fall through to general case
-            # TODO: Implement truly efficient block-diagonal computation
-            import warnings
-            warnings.warn(
-                "Product σ detected but block-diagonal optimization not yet implemented. "
-                "Using general O(D³) computation.",
-                UserWarning
+            # Product sigma: efficient per-pair computation!
+            # For σ = σ₁⊗...⊗σₙ and |Ψ⟩ = |Φ⟩⊗...⊗|Φ⟩:
+            # The marginal on pair k is: ρₖ_ε = (1-ε)|Φ⟩⟨Φ| + ε σₖ
+            # We compute θ^(k) from log(ρₖ_ε) directly.
+            # Complexity: O(n × d⁶) instead of O(d^(6n))
+            
+            # If sigma_per_pair wasn't provided, extract marginals from sigma
+            if sigma_per_pair is None:
+                sigma_per_pair = [
+                    self._partial_trace_to_pair(sigma, k) 
+                    for k in range(self.n_pairs)
+                ]
+            
+            return self._bell_parameters_product_sigma(
+                eps_val, log_eps, sigma_per_pair
             )
-            rho_eps = (1 - eps_val) * rho_bell + eps_val * sigma
-            rho_eps = (rho_eps + rho_eps.conj().T) / 2
-            eigvals, U = eigh(rho_eps)
-            eigvals = np.maximum(eigvals, np.finfo(float).tiny)
-            log_eigvals = np.log(eigvals)
-            log_rho = U @ np.diag(log_eigvals) @ U.conj().T
             
         else:
             # General case: compute ρ_ε and take matrix log

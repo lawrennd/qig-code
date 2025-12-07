@@ -653,6 +653,83 @@ class TestMultiPairExponentialFamily:
 
 class TestProductSigmaRegularisation:
     """Test sigma_per_pair for efficient product-structured regularisation."""
+
+    def test_product_sigma_matches_general(self):
+        """Product σ path should match general σ computation."""
+        qef = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        D_pair = qef.d ** 2
+        
+        # Create random per-pair sigmas
+        np.random.seed(42)
+        def random_density_matrix(d):
+            A = np.random.randn(d, d) + 1j * np.random.randn(d, d)
+            rho = A @ A.conj().T
+            return rho / np.trace(rho)
+        
+        sigma_per_pair = [random_density_matrix(D_pair) for _ in range(qef.n_pairs)]
+        
+        # Efficient path
+        theta_product = qef.get_bell_state_parameters(epsilon=0.1, sigma_per_pair=sigma_per_pair)
+        
+        # Build full sigma and use general path
+        sigma_full = np.kron(sigma_per_pair[0], sigma_per_pair[1])
+        theta_general = qef.get_bell_state_parameters(epsilon=0.1, sigma=sigma_full)
+        
+        assert np.allclose(theta_product, theta_general), \
+            f"Max diff: {np.max(np.abs(theta_product - theta_general))}"
+
+    def test_product_sigma_different_from_isotropic(self):
+        """Product of I/d² gives DIFFERENT regularisation than isotropic I/D.
+        
+        This is physically meaningful - they represent different 'directions
+        of approach' to the pure Bell state (different meridians from the
+        north pole).
+        """
+        qef = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        D_pair = qef.d ** 2
+        
+        # Per-pair I/d² (NOT same as isotropic I/D for the full state)
+        sigma_per_pair = [np.eye(D_pair) / D_pair for _ in range(qef.n_pairs)]
+        theta_product = qef.get_bell_state_parameters(epsilon=0.1, sigma_per_pair=sigma_per_pair)
+        
+        # Isotropic (sigma=None) 
+        theta_isotropic = qef.get_bell_state_parameters(epsilon=0.1)
+        
+        # They should be DIFFERENT (different regularisation directions)
+        assert not np.allclose(theta_product, theta_isotropic), \
+            "Product and isotropic should give different θ"
+        
+        # But both should reconstruct to valid states
+        rho_prod = qef.rho_from_theta(theta_product)
+        rho_iso = qef.rho_from_theta(theta_isotropic)
+        
+        # Both valid density matrices
+        assert np.isclose(np.trace(rho_prod), 1.0)
+        assert np.isclose(np.trace(rho_iso), 1.0)
+        assert np.all(np.linalg.eigvalsh(rho_prod) > -1e-10)
+        assert np.all(np.linalg.eigvalsh(rho_iso) > -1e-10)
+
+    def test_product_sigma_three_pairs(self):
+        """Test product σ with three pairs."""
+        qef = QuantumExponentialFamily(n_pairs=3, d=2, pair_basis=True)
+        D_pair = qef.d ** 2
+        
+        np.random.seed(123)
+        def random_density_matrix(d):
+            A = np.random.randn(d, d) + 1j * np.random.randn(d, d)
+            rho = A @ A.conj().T
+            return rho / np.trace(rho)
+        
+        sigma_per_pair = [random_density_matrix(D_pair) for _ in range(qef.n_pairs)]
+        
+        # Should complete quickly (efficient path)
+        theta = qef.get_bell_state_parameters(epsilon=0.1, sigma_per_pair=sigma_per_pair)
+        
+        # Check shape
+        assert theta.shape == (qef.n_params,)
+        
+        # Check finite
+        assert np.all(np.isfinite(theta))
     
     def test_sigma_per_pair_basic(self):
         """Test sigma_per_pair constructs product sigma."""
