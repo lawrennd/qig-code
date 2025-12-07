@@ -19,9 +19,10 @@ def gell_mann_generators(d: int) -> List[np.ndarray]:
     For d=3, this gives the eight Gell-Mann matrices.
     
     The construction follows the standard pattern:
-    - Symmetric matrices: |j⟩⟨k| + |k⟩⟨j| for j < k
-    - Antisymmetric matrices: -i(|j⟩⟨k| - |k⟩⟨j|) for j < k  
-    - Diagonal matrices: sum_{l=0}^{j-1} |l⟩⟨l| - j|j⟩⟨j| for j = 1,...,d-1
+    
+    - Symmetric matrices: ``|j⟩⟨k| + |k⟩⟨j|`` for j < k
+    - Antisymmetric matrices: ``-i(|j⟩⟨k| - |k⟩⟨j|)`` for j < k  
+    - Diagonal matrices: ``sum_{l=0}^{j-1} |l⟩⟨l| - j|j⟩⟨j|`` for j = 1,...,d-1
     
     Parameters
     ----------
@@ -112,10 +113,10 @@ def bell_state(d: int) -> np.ndarray:
     """
     Create a maximally entangled state for a pair of d-level systems.
     
-    Returns the state vector |Φ⟩ = (1/√d) ∑_{j=0}^{d-1} |jj⟩.
+    Returns the state vector ``|Φ⟩ = (1/√d) ∑_{j=0}^{d-1} |jj⟩``.
     
-    For d=2 (qubits), this is the Bell state (|00⟩ + |11⟩)/√2.
-    For d=3 (qutrits), this is (|00⟩ + |11⟩ + |22⟩)/√3.
+    For d=2 (qubits), this is the Bell state ``(|00⟩ + |11⟩)/√2``.
+    For d=3 (qutrits), this is ``(|00⟩ + |11⟩ + |22⟩)/√3``.
     
     Parameters
     ----------
@@ -145,7 +146,7 @@ def bell_state_density_matrix(d: int) -> np.ndarray:
     """
     Create the density matrix of a maximally entangled pair state.
     
-    Returns ρ = |Φ⟩⟨Φ| where |Φ⟩ = (1/√d) ∑_j |jj⟩.
+    Returns ``ρ = |Φ⟩⟨Φ|`` where ``|Φ⟩ = (1/√d) ∑_j |jj⟩``.
     
     This is a pure state (Tr(ρ²) = 1) that is globally pure but locally
     maximally mixed: both marginals have entropy log(d).
@@ -251,7 +252,7 @@ def product_of_bell_states(n_pairs: int, d: int) -> np.ndarray:
     """
     Create a product state of n maximally entangled pairs.
     
-    Returns |Ψ⟩ = |Φ⟩⊗|Φ⟩⊗...⊗|Φ⟩ where |Φ⟩ is the Bell state for dimension d.
+    Returns ``|Ψ⟩ = |Φ⟩⊗|Φ⟩⊗...⊗|Φ⟩`` where ``|Φ⟩`` is the Bell state for dimension d.
     
     Parameters
     ----------

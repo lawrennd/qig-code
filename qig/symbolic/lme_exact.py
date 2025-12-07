@@ -65,10 +65,11 @@ def gell_mann_symbolic() -> List[Matrix]:
 
 def permutation_matrix() -> Matrix:
     """
-    Permutation to block basis: {|00⟩,|11⟩,|22⟩} + rest.
+    Permutation to block basis: ``{|00⟩,|11⟩,|22⟩}`` + rest.
     
-    Original: |00⟩,|01⟩,|02⟩,|10⟩,|11⟩,|12⟩,|20⟩,|21⟩,|22⟩
-    Reordered: |00⟩,|11⟩,|22⟩,|01⟩,|02⟩,|10⟩,|12⟩,|20⟩,|21⟩
+    Original: ``|00⟩,|01⟩,|02⟩,|10⟩,|11⟩,|12⟩,|20⟩,|21⟩,|22⟩``
+    
+    Reordered: ``|00⟩,|11⟩,|22⟩,|01⟩,|02⟩,|10⟩,|12⟩,|20⟩,|21⟩``
     """
     reorder = [0, 4, 8, 1, 2, 3, 5, 6, 7]
     P = sp.zeros(9, 9)
