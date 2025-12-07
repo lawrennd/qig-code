@@ -1,8 +1,27 @@
+<a href="https://colab.research.google.com/github/lawrennd/qig-code/blob/main/examples/multi_pair_regularisation.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+
 # Multi-Pair Origin Regularisation
+
+### Neil D. Lawrence
+
+### December 2025
 
 This tutorial demonstrates the regularisation machinery for multi-pair quantum systems
 at the inaccessible game origin. We explore how different choices of the regularisation
 matrix σ affect the physics and computational efficiency.
+
+```python
+# Auto-install QIG package if not available
+import os
+
+try:
+    import qig
+except ImportError:
+    print("📦 Installing QIG package...")
+    %pip install -q git+https://github.com/lawrennd/qig-code.git
+    import qig
+    print("✓ QIG package installed!")
+```
 
 ## The North Pole Analogy
 
