@@ -15,6 +15,7 @@ import numpy as np
 import pytest
 from qig.exponential_family import QuantumExponentialFamily
 from qig.core import create_lme_state, marginal_entropies
+from qig.pair_operators import bell_state, product_of_bell_states
 from tests.tolerance_framework import (
     quantum_assert_close,
     quantum_assert_scalar_close,
@@ -829,12 +830,15 @@ class TestBellStateParameters:
         with pytest.raises(ValueError, match="epsilon must be > 0"):
             exp_fam.get_bell_state_parameters(epsilon=0.0)
     
-    def test_bell_state_raises_for_multiple_pairs(self):
-        """Test that Bell state only works for single pairs."""
+    def test_bell_state_works_for_multiple_pairs(self):
+        """Test that get_bell_state_parameters works for multiple pairs."""
         exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
         
-        with pytest.raises(ValueError, match="single pair"):
-            exp_fam.get_bell_state_parameters(epsilon=1e-4)
+        # Should NOT raise - we support multiple pairs now
+        theta = exp_fam.get_bell_state_parameters(epsilon=1e-4)
+        
+        assert theta.shape == (exp_fam.n_params,)
+        assert np.all(np.isfinite(theta))
     
     def test_bell_state_raises_for_local_basis(self):
         """Test that Bell state only works for pair basis."""
@@ -858,3 +862,100 @@ class TestBellStateParameters:
         eigs = np.real(np.linalg.eigvalsh(rho))
         assert np.all(eigs > -QuantumTolerances.A['atol']), \
             f"Bell state has negative eigenvalues: {eigs[eigs < 0]}"
+
+
+class TestBellStateIndices:
+    """Test bell_state and product_of_bell_states with bell_indices parameter."""
+
+    def test_bell_state_k_parameter(self):
+        """Test bell_state with different k values."""
+        d = 2
+        
+        # k=0: |00⟩ + |11⟩
+        psi0 = bell_state(d, k=0)
+        assert psi0[0] != 0  # |00⟩ component
+        assert psi0[3] != 0  # |11⟩ component
+        
+        # k=1: |01⟩ + |10⟩
+        psi1 = bell_state(d, k=1)
+        assert psi1[1] != 0  # |01⟩ component
+        assert psi1[2] != 0  # |10⟩ component
+        
+        # Orthogonality
+        assert np.abs(np.vdot(psi0, psi1)) < 1e-10
+
+    def test_bell_state_all_maximally_entangled(self):
+        """All d Bell states should be maximally entangled."""
+        for d in [2, 3]:
+            for k in range(d):
+                psi = bell_state(d, k=k)
+                rho = np.outer(psi, psi.conj())
+                
+                # Check marginal is I/d
+                rho_tensor = rho.reshape(d, d, d, d)
+                rho_A = np.trace(rho_tensor, axis1=1, axis2=3)
+                
+                assert np.allclose(rho_A, np.eye(d) / d), \
+                    f"Marginal not I/d for d={d}, k={k}"
+
+    def test_bell_state_k_out_of_range(self):
+        """Test that k out of range raises error."""
+        d = 3
+        
+        with pytest.raises(ValueError, match="k must be in range"):
+            bell_state(d, k=3)  # k should be 0, 1, or 2
+        
+        with pytest.raises(ValueError, match="k must be in range"):
+            bell_state(d, k=-1)
+
+    def test_product_bell_states_default(self):
+        """Test product_of_bell_states with default bell_indices."""
+        psi_default = product_of_bell_states(n_pairs=2, d=2)
+        psi_explicit = product_of_bell_states(n_pairs=2, d=2, bell_indices=[0, 0])
+        
+        assert np.allclose(psi_default, psi_explicit)
+
+    def test_product_bell_states_different_indices(self):
+        """Test product_of_bell_states with different bell_indices gives orthogonal states."""
+        d = 2
+        n_pairs = 2
+        
+        psi_00 = product_of_bell_states(n_pairs, d, bell_indices=[0, 0])
+        psi_01 = product_of_bell_states(n_pairs, d, bell_indices=[0, 1])
+        psi_10 = product_of_bell_states(n_pairs, d, bell_indices=[1, 0])
+        psi_11 = product_of_bell_states(n_pairs, d, bell_indices=[1, 1])
+        
+        # All pairs should be orthogonal
+        states = [psi_00, psi_01, psi_10, psi_11]
+        for i in range(4):
+            for j in range(i + 1, 4):
+                overlap = np.abs(np.vdot(states[i], states[j]))
+                assert overlap < 1e-10, f"States {i} and {j} not orthogonal"
+
+    def test_product_bell_states_same_constraint(self):
+        """All product Bell states should have the same constraint value."""
+        from qig.core import marginal_entropies
+        d = 2
+        n_pairs = 2
+        
+        constraints = []
+        for indices in [[0, 0], [0, 1], [1, 0], [1, 1]]:
+            psi = product_of_bell_states(n_pairs, d, bell_indices=indices)
+            rho = np.outer(psi, psi.conj())
+            h = marginal_entropies(rho, dims=[d] * (2 * n_pairs))
+            constraints.append(sum(h))
+        
+        # All should have same constraint
+        for i in range(1, len(constraints)):
+            assert np.isclose(constraints[0], constraints[i]), \
+                f"Constraint values differ: {constraints}"
+
+    def test_product_bell_states_wrong_length(self):
+        """Test that wrong bell_indices length raises error."""
+        with pytest.raises(ValueError, match="must have length"):
+            product_of_bell_states(n_pairs=2, d=2, bell_indices=[0])
+
+    def test_product_bell_states_index_out_of_range(self):
+        """Test that bell_indices out of range raises error."""
+        with pytest.raises(ValueError, match="out of range"):
+            product_of_bell_states(n_pairs=2, d=2, bell_indices=[0, 2])

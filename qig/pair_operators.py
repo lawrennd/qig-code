@@ -7,7 +7,7 @@ These operators can generate entangled states, unlike local operators.
 """
 
 import numpy as np
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 
 def gell_mann_generators(d: int) -> List[np.ndarray]:
@@ -109,35 +109,55 @@ def pair_basis_generators(d: int) -> List[np.ndarray]:
     return gell_mann_generators(d**2)
 
 
-def bell_state(d: int) -> np.ndarray:
+def bell_state(d: int, k: int = 0) -> np.ndarray:
     """
     Create a maximally entangled state for a pair of d-level systems.
     
-    Returns the state vector ``|Φ⟩ = (1/√d) ∑_{j=0}^{d-1} |jj⟩``.
+    Returns the state vector ``|Φₖ⟩ = (1/√d) ∑_{j=0}^{d-1} |j, (j+k) mod d⟩``.
     
-    For d=2 (qubits), this is the Bell state ``(|00⟩ + |11⟩)/√2``.
-    For d=3 (qutrits), this is ``(|00⟩ + |11⟩ + |22⟩)/√3``.
+    For k=0, this is the standard Bell state ``(1/√d) ∑_j |jj⟩``.
     
     Parameters
     ----------
     d : int
         Dimension of each subsystem
+    k : int, default=0
+        Bell state index (0 to d-1). Different k give orthogonal states.
+        k=0: ``|00⟩ + |11⟩ + ...`` (standard)
+        k=1: ``|01⟩ + |12⟩ + |20⟩ + ...`` (cyclic shift)
         
     Returns
     -------
     np.ndarray
         State vector of length d², normalized
         
+    Notes
+    -----
+    All d Bell states are maximally entangled with the same properties:
+    - Global purity: S(ρ) = 0
+    - Marginals: ρ_A = ρ_B = I/d
+    - Entanglement: maximal for dimension d
+    
+    The states are mutually orthogonal: ``⟨Φₖ|Φₗ⟩ = δₖₗ``
+        
     Examples
     --------
-    >>> psi = bell_state(d=2)
+    >>> psi = bell_state(d=2, k=0)  # |00⟩ + |11⟩
     >>> psi
     array([0.70710678+0.j, 0.        +0.j, 0.        +0.j, 0.70710678+0.j])
+    
+    >>> psi = bell_state(d=2, k=1)  # |01⟩ + |10⟩
+    >>> psi
+    array([0.        +0.j, 0.70710678+0.j, 0.70710678+0.j, 0.        +0.j])
     """
+    if not 0 <= k < d:
+        raise ValueError(f"k must be in range [0, d-1]=[0, {d-1}], got {k}")
+    
     psi = np.zeros(d**2, dtype=complex)
     for j in range(d):
-        # |jj⟩ corresponds to index j*d + j in the tensor product basis
-        psi[j * d + j] = 1.0
+        # |j, (j+k) mod d⟩ corresponds to index j*d + ((j+k) mod d)
+        second_index = (j + k) % d
+        psi[j * d + second_index] = 1.0
     psi = psi / np.sqrt(d)
     return psi
 
@@ -248,11 +268,15 @@ def multi_pair_basis(n_pairs: int, d: int) -> Tuple[List[np.ndarray], List[int]]
     return operators, pair_indices
 
 
-def product_of_bell_states(n_pairs: int, d: int) -> np.ndarray:
+def product_of_bell_states(
+    n_pairs: int, 
+    d: int, 
+    bell_indices: Optional[List[int]] = None
+) -> np.ndarray:
     """
     Create a product state of n maximally entangled pairs.
     
-    Returns ``|Ψ⟩ = |Φ⟩⊗|Φ⟩⊗...⊗|Φ⟩`` where ``|Φ⟩`` is the Bell state for dimension d.
+    Returns ``|Ψ⟩ = |Φₖ₁⟩⊗|Φₖ₂⟩⊗...⊗|Φₖₙ⟩`` where each ``|Φₖ⟩`` is a Bell state.
     
     Parameters
     ----------
@@ -260,6 +284,9 @@ def product_of_bell_states(n_pairs: int, d: int) -> np.ndarray:
         Number of pairs
     d : int
         Dimension of each subsystem
+    bell_indices : list of int, optional
+        Which Bell state (k=0,...,d-1) to use for each pair.
+        If None, uses k=0 (standard Bell state) for all pairs.
         
     Returns
     -------
@@ -273,13 +300,37 @@ def product_of_bell_states(n_pairs: int, d: int) -> np.ndarray:
     - All 2n marginals maximally mixed: S(ρ_i) = log(d) for all i
     - Pairs are entangled, but no cross-pair entanglement
     - Total marginal entropy: C = 2n·log(d)
-    """
-    psi = bell_state(d)
     
-    # Tensor product of n copies
-    result = psi
-    for _ in range(n_pairs - 1):
-        result = np.kron(result, psi)
+    Different ``bell_indices`` give orthogonal product states that share
+    the same constraint value C and marginal entropies, but represent
+    different "origins" in the exponential family.
+    
+    Examples
+    --------
+    >>> # Standard: |Φ₀⟩⊗|Φ₀⟩ = (|00⟩+|11⟩)⊗(|00⟩+|11⟩)
+    >>> psi = product_of_bell_states(n_pairs=2, d=2)
+    
+    >>> # Mixed: |Φ₀⟩⊗|Φ₁⟩ = (|00⟩+|11⟩)⊗(|01⟩+|10⟩)
+    >>> psi = product_of_bell_states(n_pairs=2, d=2, bell_indices=[0, 1])
+    """
+    if bell_indices is None:
+        bell_indices = [0] * n_pairs
+    
+    if len(bell_indices) != n_pairs:
+        raise ValueError(
+            f"bell_indices must have length {n_pairs}, got {len(bell_indices)}"
+        )
+    
+    for i, k in enumerate(bell_indices):
+        if not 0 <= k < d:
+            raise ValueError(
+                f"bell_indices[{i}]={k} out of range [0, {d-1}]"
+            )
+    
+    # Tensor product of Bell states with specified indices
+    result = bell_state(d, k=bell_indices[0])
+    for i in range(1, n_pairs):
+        result = np.kron(result, bell_state(d, k=bell_indices[i]))
     
     return result
 
