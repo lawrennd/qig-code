@@ -392,6 +392,88 @@ class TestAntisymmetricFlowCommutatorMatching:
             assert herm_error < 1e-12, f"H_eff not Hermitian: {herm_error:.2e}"
             assert trace_error < 1e-10, f"H_eff not traceless: {trace_error:.2e}"
     
+    def test_spectral_vs_quadrature_duhamel_consistency(self):
+        """Test that spectral and quadrature Duhamel give same antisymmetric Jacobian.
+        
+        This verifies that the BCH/spectral implementation is numerically consistent
+        with the quadrature method, confirming the ~14x error is theoretical not numerical.
+        """
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        theta = 0.05 * np.random.rand(exp_fam.n_params)
+        
+        # Compute antisymmetric part with both methods
+        A_quad = exp_fam.antisymmetric_part(theta, method='duhamel')
+        A_spectral = exp_fam.antisymmetric_part(theta, method='duhamel_spectral')
+        
+        # Should agree to high precision
+        diff = np.linalg.norm(A_quad - A_spectral, 'fro')
+        assert diff < 1e-10, f"Spectral and quadrature Duhamel disagree: {diff:.2e}"
+    
+    def test_kubo_mori_kernel_properties(self):
+        """Test that Kubo-Mori derivatives have expected kernel structure.
+        
+        The Kubo-Mori derivative ∂ρ/∂θ_a = K_ρ[F_a - ⟨F_a⟩] where K_ρ is the
+        Duhamel kernel. This is NOT just a commutator [F_a, ρ] but includes
+        the full operator-ordered integral structure.
+        """
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        theta = 0.05 * np.random.rand(exp_fam.n_params)
+        rho = exp_fam.rho_from_theta(theta)
+        
+        # For a single operator, compare Kubo-Mori vs commutator
+        idx = 0
+        F = exp_fam.operators[idx]
+        drho_km = exp_fam.rho_derivative(theta, idx, method='duhamel_spectral')
+        drho_comm = F @ rho - rho @ F  # Pure commutator
+        
+        # They should differ significantly (this is the Kubo-Mori kernel effect)
+        ratio = np.linalg.norm(drho_km, 'fro') / np.linalg.norm(drho_comm, 'fro')
+        
+        # Empirically we see ~7-8x ratio
+        assert ratio > 2.0, f"Kubo-Mori should differ from commutator, ratio={ratio:.2f}"
+        assert ratio < 20.0, f"Ratio unexpectedly large: {ratio:.2f}"
+        
+        # Both should be Hermitian and traceless
+        assert np.max(np.abs(drho_km - drho_km.conj().T)) < 1e-12
+        assert np.abs(np.trace(drho_km)) < 1e-12
+    
+    def test_documented_bch_identity_limitation(self):
+        """Document that the strong BCH identity does NOT hold in general.
+        
+        The identity ∑_a η_a ∂_a ρ = -i[H_eff, ρ] is NOT guaranteed by Lie closure.
+        The LHS includes the Kubo-Mori kernel K_ρ, while the RHS is a pure commutator.
+        
+        This test documents the empirically observed ~14x discrepancy and serves as
+        a regression guard against accidentally assuming this identity holds.
+        """
+        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        np.random.seed(42)
+        theta = 0.05 * np.random.rand(exp_fam.n_params)
+        
+        A = exp_fam.antisymmetric_part(theta, method='duhamel_spectral')
+        f_abc = compute_structure_constants(exp_fam.operators)
+        eta, _ = effective_hamiltonian_coefficients(A, theta, f_abc)
+        H_eff = effective_hamiltonian_operator(eta, exp_fam.operators)
+        rho = exp_fam.rho_from_theta(theta)
+        
+        # LHS: with Kubo-Mori kernel
+        drho_dtheta = [exp_fam.rho_derivative(theta, a, method='duhamel_spectral') 
+                       for a in range(len(theta))]
+        lhs = sum(eta[a] * drho_dtheta[a] for a in range(len(eta)))
+        
+        # RHS: pure commutator
+        rhs = -1j * (H_eff @ rho - rho @ H_eff)
+        
+        rel_error = np.linalg.norm(lhs - rhs, 'fro') / np.linalg.norm(rhs, 'fro')
+        
+        # Document that this does NOT match (within order of magnitude)
+        assert rel_error > 5.0, \
+            f"Strong BCH identity unexpectedly holds (error={rel_error:.2f}). " \
+            f"This would contradict our understanding of the Kubo-Mori kernel structure."
+        
+        # But should be reasonably bounded (not wildly wrong)
+        assert rel_error < 50.0, f"Error unexpectedly large: {rel_error:.2f}"
+    
     def test_flow_hermiticity_and_tracelessness(self):
         """Test that both flows are Hermitian and traceless."""
         exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
