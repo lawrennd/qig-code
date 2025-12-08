@@ -1,7 +1,7 @@
 ---
 id: "2025-12-08_bch-duhamel-implementation"
 title: "Implement BCH-based Duhamel derivatives for Lie-closed bases"
-status: "proposed"
+status: "in_progress"
 priority: "high"
 created: "2025-12-08"
 updated: "2025-12-08"
@@ -126,23 +126,23 @@ CIP-0009 (Hamiltonian extraction from antisymmetric flow) has been **implemented
 
 ## Acceptance Criteria
 
-- [ ] Implement a **BCH/spectral Duhamel kernel** (e.g. eigenbasis formula or explicit adjoint/BCH) that:
-  - [ ] Matches high-precision numerical quadrature to ~1e-10 on representative examples, and
-  - [ ] Avoids explicit s-quadrature in small finite-dimensional cases (qutrit pairs, etc.).
+- [x] Implement a **BCH/spectral Duhamel kernel** (e.g. eigenbasis formula or explicit adjoint/BCH) that:
+  - [x] Matches high-precision numerical quadrature to ~1e-10 on representative examples, and
+  - [x] Avoids explicit s-quadrature in small finite-dimensional cases (qutrit pairs, etc.).
 - [ ] Analyse the **strong BCH identity** currently assumed:
   - [ ] Determine whether there exist natural choices of \(\eta\) (possibly incorporating the inverse of the Kubo–Mori kernel) for which
         \(\sum_a \eta_a \partial_a \rho = -i[H_\mathrm{eff},\rho]\) holds, or
   - [ ] Clearly document why this equality does **not** hold in general and what the correct relationship is between the antisymmetric GENERIC sector, the Duhamel kernel, and \(H_\mathrm{eff}\).
 - [ ] Update CIP-0009 verification to use the **corrected formulation**, i.e. tests that separately:
-  - [ ] Verify structural Hamiltonian properties (already done), and
+  - [x] Verify structural Hamiltonian properties (already done), and
   - [ ] Verify the most accurate identity that actually holds, given the Kubo–Mori kernel structure.
-- [ ] Add tests that:
-  - [ ] Validate the BCH/spectral Duhamel implementation itself, and
-  - [ ] Guard against reintroducing the over-strong identity without explicit justification.
-- [ ] Update documentation (paper + docs) explaining:
-  - [ ] How Lie closure enables analytic evaluation of the Duhamel kernel via BCH,
-  - [ ] That the Kubo–Mori structure is encoded in a nontrivial operator function \(K_\rho = f(\mathrm{ad}_H)\), and
-  - [ ] What is (and is not) true about identities of the form \(\sum_a \eta_a \partial_a \rho = -i[H_\mathrm{eff},\rho]\).
+- [x] Add tests that:
+  - [x] Validate the BCH/spectral Duhamel implementation itself, and
+  - [x] Guard against reintroducing the over-strong identity without explicit justification.
+- [x] Update documentation (paper + docs) explaining:
+  - [x] How Lie closure enables analytic evaluation of the Duhamel kernel via BCH,
+  - [x] That the Kubo–Mori structure is encoded in a nontrivial operator function \(K_\rho = f(\mathrm{ad}_H)\), and
+  - [x] What is (and is not) true about identities of the form \(\sum_a \eta_a \partial_a \rho = -i[H_\mathrm{eff},\rho]\).
 
 ## References
 
@@ -175,3 +175,20 @@ CIP-0009 (Hamiltonian extraction from antisymmetric flow) has been **implemented
 - Empirical tests show ~14x relative error in BCH identity
 - Current implementation uses numerical integration, not BCH formulas
 - Backlog task created to track investigation
+
+### 2025-12-08 (later)
+- Implemented spectral/BCH Duhamel kernel `duhamel_derivative_spectral` in `qig.duhamel`
+  and wired it into `QuantumExponentialFamily.rho_derivative` as `method='duhamel_spectral'`.
+- Added regression tests comparing spectral vs quadrature Duhamel and both vs finite
+  differences (`TestRhoDerivativeNumerical` in `tests/test_pair_exponential_family.py`).
+- Updated API docs (`docs/source/api/duhamel.rst`, `docs/source/api/exponential_family.rst`)
+  to explain quadrature vs spectral Duhamel and how this realises the Lie-closure/BCH
+  story.
+- Expanded theory docs (`docs/source/theory/quantum_exponential_families.rst`) with an
+  explanation of why Duhamel integrals appear, and how our Lie-closed exponential-family
+  viewpoint repackages the Kubo–Mori structure as a finite-dimensional kernel
+  \(K_\rho = f(\mathrm{ad}_H)\) rather than dropping it.
+- Adjusted the origin paper (`the-inaccessible-game-origin.tex`) to weaken the over-strong
+  claim that the Duhamel term simply “produces the commutator form”, clarifying that the
+  commutator comes from categorical unitarity and that the Duhamel/BKM kernel is encoded
+  rather than discarded.
