@@ -142,28 +142,32 @@ im1 = ax1.imshow(A, cmap='RdBu', vmin=-np.max(np.abs(A)), vmax=np.max(np.abs(A))
 ax.set_title('Antisymmetric Jacobian A')
 ax.set_xlabel('Parameter index b')
 ax.set_ylabel('Parameter index a')
-plt.colorbar(im1, ax=ax1)
+plt.colorbar(im1, ax=ax)
+plt.savefig('./diagrams/antisymmetric_jacobian_A.png', dpi=150)
+```
+```python
+fig, ax = plt.subplots(figsize=big_figsize)
 
 # Antisymmetry check
 antisym_check = A + A.T
 im2 = ax2.imshow(antisym_check, cmap='viridis')
-ax2.set_title('Antisymmetry Check: A + Aᵀ (should be ~0)')
-ax2.set_xlabel('Parameter index b')
-ax2.set_ylabel('Parameter index a')
-plt.colorbar(im2, ax=ax2)
+ax.set_title('Antisymmetry Check: A + Aᵀ (should be ~0)')
+ax.set_xlabel('Parameter index b')
+ax.set_ylabel('Parameter index a')
+plt.colorbar(im2, ax=ax)
 
 plt.tight_layout()
-# plt.savefig('antisymmetric_jacobian.png', dpi=150)
+plt.savefig('./diagrams/antisymmetric_jacobian_A-AT.png', dpi=150)
 ```
 
 ## 4. Lie Structure Constants: The Key to Extraction
 
 ### 4.1 What Are Structure Constants?
 
-Since our operators form a **Lie algebra**, their commutators close:
-
-$$[F_a, F_b] = 2i \sum_c f_{abc} F_c$$
-
+Since our operators form a **Lie algebra**, their commutators close
+$$
+[F_a, F_b] = 2i \sum_c f_{abc} F_c.
+$$
 The coefficients $f_{abc}$ are the **Lie structure constants**. They satisfy:
 - $f_{abc} = -f_{bac}$ (antisymmetry in first two indices)
 - Jacobi identity: $\sum_{\text{cyclic}} f_{ab}^d f_{dc}^e = 0$
@@ -186,32 +190,33 @@ print(f"Non-zero entries: {n_nonzero} / {n_total} ({100*n_nonzero/n_total:.1f}%)
 ### 4.3 The Extraction Formula: Geometric Intuition
 
 Here's the key insight. The antisymmetric flow in parameter space is:
-
-$$\dot{\theta}_a = A_{ab} \theta_b$$
-
-This must be equivalent to the von Neumann evolution in density-matrix space:
-
-$$\dot{\rho} = -i[H_{\text{eff}}, \rho]$$
-
-If $H_{\text{eff}} = \sum_c \eta_c F_c$, then by the chain rule:
-
-$$\dot{\rho} = \sum_a \frac{\partial \rho}{\partial \theta_a} \dot{\theta}_a = \sum_a \frac{\partial \rho}{\partial \theta_a} (A_{ab} \theta_b)$$
-
-The commutator $[F_c, \rho]$ can be related to the parameter-space flow through the structure constants and Kubo-Mori derivatives. After careful calculation (involving the Kubo-Mori kernel structure), this yields:
-
-$$A_{ab} \theta_b = \sum_c f_{abc} \eta_c$$
-
+$$
+\dot{\theta}_a = A_{ab} \theta_b.
+$$
+This must be equivalent to the von Neumann evolution in density-matrix space
+$$
+\dot{\rho} = -i[H_{\text{eff}}, \rho].
+$$
+If $H_{\text{eff}} = \sum_c \eta_c F_c$, then by the chain rule
+$$
+\dot{\rho} = \sum_a \frac{\partial \rho}{\partial \theta_a} \dot{\theta}_a = \sum_a \frac{\partial \rho}{\partial \theta_a} (A_{ab} \theta_b).
+$$
+The commutator $[F_c, \rho]$ can be related to the parameter-space flow through the structure constants and Kubo-Mori derivatives. After careful calculation (involving the Kubo-Mori kernel structure), this yields
+$$
+A_{ab} \theta_b = \sum_c f_{abc} \eta_c.
+$$
 This is a **linear system** for the Hamiltonian coefficients $\eta_c$!
 
 ## 5. Solving for the Hamiltonian Coefficients
 
 ### 5.1 The Linear System
 
-The extraction formula $A_{ab} \theta_b = \sum_c f_{abc} \eta_c$ can be rewritten as:
+The extraction formula $A_{ab} \theta_b = \sum_c f_{abc} \eta_c$ can be rewritten as
+$$
+\text{lhs}_a = \text{rhs}_{ac} \cdot \eta_c
+$$
+where
 
-$$\text{lhs}_a = \text{rhs}_{ac} \cdot \eta_c$$
-
-where:
 - $\text{lhs}_a = A_{ab} \theta_b$ (vector of length $n$)
 - $\text{rhs}_{ac} = f_{abc}$ (matrix of shape $n \times n$)
 
@@ -237,28 +242,19 @@ print(f"  ||A @ θ||: {np.linalg.norm(lhs):.4e}")
 print(f"  ||f @ η||: {np.linalg.norm(rhs):.4e}")
 ```
 
-Output:
-```
-Hamiltonian coefficients η shape: (15,)
-Solution residual: 3.45e-07
-Condition number: 1.23e+02
-
-Extraction formula error: 3.45e-07
-  ||A @ θ||: 2.1234e-03
-  ||f @ η||: 2.1234e-03
-```
-
-The extraction is **highly accurate** (residual ~1e-7).
+The extraction is *highly accurate* (residual ~1e-7).
 
 ## 6. Building the Effective Hamiltonian Operator
 
 ### 6.1 From Coefficients to Operator
 
-Given coefficients $\eta_c$, we construct:
+Given coefficients $\eta_c$, we construct
+$$
+H_{\text{eff}} = \sum_c \eta_c F_c.
+$$
 
-$$H_{\text{eff}} = \sum_c \eta_c F_c$$
+This must be
 
-This must be:
 - **Hermitian**: $H_{\text{eff}}^\dagger = H_{\text{eff}}$ (physical observables are Hermitian)
 - **Traceless**: $\text{Tr}[H_{\text{eff}}] = 0$ (gauge freedom in Hamiltonian)
 
@@ -274,17 +270,19 @@ print(f"Max Hermiticity error: {np.max(np.abs(H_eff - H_eff.conj().T)):.2e}")
 print(f"Trace: {np.trace(H_eff):.2e}")
 print(f"Frobenius norm: {np.linalg.norm(H_eff, 'fro'):.4e}")
 
-# Visualize
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+# Visualise
+fig, ax = plt.subplots(1, 2, figsize=(10, 4))
 
 # Real part
-im1 = ax1.imshow(np.real(H_eff), cmap='RdBu', 
+im1 = ax.imshow(np.real(H_eff), cmap='RdBu', 
                   vmin=-np.max(np.abs(H_eff)), vmax=np.max(np.abs(H_eff)))
-ax1.set_title('Re(H_eff)')
+ax.set_title('Re(H_eff)')
 plt.colorbar(im1, ax=ax1)
 
+
+fig, ax = plt.subplots(1, 2, figsize=(10, 4))
 # Imaginary part
-im2 = ax2.imshow(np.imag(H_eff), cmap='RdBu',
+im2 = ax.imshow(np.imag(H_eff), cmap='RdBu',
                   vmin=-np.max(np.abs(H_eff)), vmax=np.max(np.abs(H_eff)))
 ax2.set_title('Im(H_eff)')
 plt.colorbar(im2, ax=ax2)
@@ -295,7 +293,7 @@ plt.tight_layout()
 
 ### 6.3 Physical Interpretation
 
-The eigenvalues of $H_{\text{eff}}$ give the **energy levels** of the effective system:
+The eigenvalues of $H_{\text{eff}}$ give the **energy levels** of the effective system.
 
 ```python
 eigenvalues = np.linalg.eigvalsh(H_eff)
@@ -314,37 +312,38 @@ print(f"Excited state splitting: ΔE = {eigenvalues[-1] - eigenvalues[0]:.6f}")
 
 ### 7.1 The Complete Symbolic Expression
 
-Given a parameterized state $\rho(\theta)$ in a quantum exponential family, the effective Hamiltonian has the explicit symbolic form:
-
-$$H_{\text{eff}}(\theta) = \sum_{c=1}^{n} \eta_c(\theta) F_c$$
-
-where the coefficients $\eta_c(\theta)$ are determined by solving:
-
-$$\sum_c f_{abc} \eta_c = A_{ab}(\theta) \theta_b$$
-
-This is a **linear map** from the antisymmetric Jacobian to Hamiltonian coefficients:
-
-$$\eta = \mathcal{L}^{-1}[A \theta]$$
-
+Given a parameterized state $\rho(\theta)$ in a quantum exponential family, the effective Hamiltonian has the explicit symbolic form
+$$
+H_{\text{eff}}(\theta) = \sum_{c=1}^{n} \eta_c(\theta) F_c.
+$$
+where the coefficients $\eta_c(\theta)$ are determined by solving
+$$
+\sum_c f_{abc} \eta_c = A_{ab}(\theta) \theta_b.
+$$
+This is a **linear map** from the antisymmetric Jacobian to Hamiltonian coefficients
+$$
+\eta = \mathcal{L}^{-1}[A \theta],
+$$
 where $\mathcal{L}$ is the linear operator defined by the structure constants.
 
 ### 7.2 Matrix Form of the Extraction
 
-In matrix notation, define the $n \times n$ matrix $\mathbf{F}$ where:
-
-$$\mathbf{F}_{ac} = f_{abc}$$
-
-(summing over the repeated index $b$ in the Einstein convention). Then:
-
-$$\mathbf{F} \cdot \boldsymbol{\eta} = A \boldsymbol{\theta}$$
-
+In matrix notation, define the $n \times n$ matrix $\mathbf{F}$ where
+$$
+\mathbf{F}_{ac} = f_{abc},
+$$
+(summing over the repeated index $b$ in the Einstein convention). Then
+$$
+\mathbf{F} \cdot \boldsymbol{\eta} = A \boldsymbol{\theta}.
+$$
 This is solved via least-squares when overdetermined:
-
-$$\boldsymbol{\eta} = (\mathbf{F}^T \mathbf{F})^{-1} \mathbf{F}^T (A \boldsymbol{\theta})$$
+$$
+\boldsymbol{\eta} = (\mathbf{F}^T \mathbf{F})^{-1} \mathbf{F}^T (A \boldsymbol{\theta}).
+$$
 
 ### 7.3 Geometric Interpretation
 
-The extraction formula represents a **change of basis** from the natural parameter tangent space to the Lie algebra:
+The extraction formula represents a *change of basis* from the natural parameter tangent space to the Lie algebra.
 
 ```
 Natural parameters θ  →  Parameter flow Aθ  →  Lie algebra element η  →  Hamiltonian H_eff
@@ -367,21 +366,21 @@ These hold **exactly** at the symbolic level.
 ### 8.2 The Extraction Identity
 
 The fundamental identity relating antisymmetric flow to Hamiltonian structure:
-
-$$\boxed{A_{ab} \theta_b = \sum_c f_{abc} \eta_c}$$
-
+$$
+\boxed{A_{ab} \theta_b = \sum_c f_{abc} \eta_c}.
+$$
 This can be understood as: the antisymmetric Jacobian acting on parameters produces a vector in tangent space that, when contracted with structure constants, yields Lie algebra coefficients.
 
 ### 8.3 Dependence on Parameter Point
 
-The Hamiltonian coefficients $\eta_c$ are **functions of $\theta$**:
-
-$$\eta_c = \eta_c(\theta)$$
-
-because both $A(\theta)$ and the extraction formula depend on the parameter point. The full symbolic solution is:
-
-$$\eta_c(\theta) = \sum_{a,b} [\mathbf{F}^\dagger (\mathbf{F} \mathbf{F}^\dagger)^{-1}]_{ca} A_{ab}(\theta) \theta_b$$
-
+The Hamiltonian coefficients $\eta_c$ are **functions of $\theta$**
+$$
+\eta_c = \eta_c(\theta)
+$$
+because both $A(\theta)$ and the extraction formula depend on the parameter point. The full symbolic solution is
+$$
+\eta_c(\theta) = \sum_{a,b} [\mathbf{F}^\dagger (\mathbf{F} \mathbf{F}^\dagger)^{-1}]_{ca} A_{ab}(\theta) \theta_b
+$$
 where $\mathbf{F}_{ac} = f_{abc}$ is the structure constant matrix.
 
 ## 9. Summary: The Symbolic Extraction Pipeline
@@ -395,12 +394,13 @@ where $\mathbf{F}_{ac} = f_{abc}$ is the structure constant matrix.
 
 ### 9.2 Symbolic Output
 
-$$\boxed{H_{\text{eff}}(\theta) = \sum_{c=1}^{n} \eta_c(\theta) F_c}$$
-
+$$
+\boxed{H_{\text{eff}}(\theta) = \sum_{c=1}^{n} \eta_c(\theta) F_c}
+$$
 where
-
-$$\boxed{\eta_c(\theta) = \sum_a [\mathcal{L}^{-1}]_{ca} (A \theta)_a}$$
-
+$$
+\boxed{\eta_c(\theta) = \sum_a [\mathcal{L}^{-1}]_{ca} (A \theta)_a}
+$$
 and $\mathcal{L}$ is the linear operator $\mathcal{L}_{ac} = f_{abc}$ (structure constant contraction).
 
 ### 9.3 Key Properties
