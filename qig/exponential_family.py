@@ -370,12 +370,16 @@ class QuantumExponentialFamily:
         """
         Compute ∂ρ/∂θ_a using the correct quantum formula.
         
-        Two methods available:
+        Three main methods available.
         1. 'sld': Symmetric Logarithmic Derivative (fast, ~5% error)
             ∂ρ/∂θ = (1/2)[ρ(F - ⟨F⟩I) + (F - ⟨F⟩I)ρ]
         
-        2. 'duhamel': Duhamel exponential formula (slower, ~5e-6 error)
+        2. 'duhamel': Duhamel exponential formula with numerical quadrature
+           (slower, ~5e-6 error for n_points≈200)
             ∂ρ/∂θ = ∫₀¹ exp(sH)(F - ⟨F⟩I)exp((1-s)H) ds
+        
+        3. 'duhamel_spectral' / 'duhamel_bch': Duhamel formula via spectral/BCH
+           representation of H (no explicit s-quadrature, high precision).
         
         ⚠️ QUANTUM ALERT: Simple ρ(F - ⟨F⟩I) is WRONG for non-commuting operators!
         
@@ -417,12 +421,20 @@ class QuantumExponentialFamily:
             # Symmetric logarithmic derivative (fast approximation)
             drho = 0.5 * (rho @ F_centered + F_centered @ rho)
         elif method == 'duhamel':
-            # High-precision Duhamel formula
+            # High-precision Duhamel formula via numerical quadrature
             from qig.duhamel import duhamel_derivative, compute_H_from_theta
             H, K, psi = compute_H_from_theta(self.operators, theta)
             drho = duhamel_derivative(rho, H, F_centered, n_points)
+        elif method in ('duhamel_spectral', 'duhamel_bch'):
+            # Duhamel via spectral/BCH representation of H (no explicit s-quadrature)
+            from qig.duhamel import duhamel_derivative_spectral, compute_H_from_theta
+            H, K, psi = compute_H_from_theta(self.operators, theta)
+            drho = duhamel_derivative_spectral(rho, H, F_centered)
         else:
-            raise ValueError(f"Unknown method: {method}. Use 'sld' or 'duhamel'")
+            raise ValueError(
+                f"Unknown method: {method}. "
+                "Use 'sld', 'duhamel', or 'duhamel_spectral'/'duhamel_bch'"
+            )
         
         return drho
     

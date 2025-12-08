@@ -448,6 +448,48 @@ class TestRhoDerivativeNumerical:
                                'numerical_validation',  # Category D_numerical for analytical vs FD
                                f"Two-pair ρ derivative parameter {a} mismatch")
 
+    def test_single_pair_duhamel_spectral_matches_fd(self, single_pair_family):
+        """Test spectral/BCH Duhamel ρ derivative for single pair."""
+        exp_fam = single_pair_family
+
+        # Test at maximally mixed state
+        theta = np.zeros(exp_fam.n_params)
+
+        for a in range(exp_fam.n_params):
+            # Analytical derivative (spectral/BCH Duhamel)
+            rho_deriv_analytical = exp_fam.rho_derivative(theta, a, method='duhamel_spectral')
+
+            # Numerical derivative (finite difference)
+            rho_deriv_numerical = finite_difference_rho_derivative(exp_fam, theta, a)
+
+            # Compare with analytical derivative precision (Category D)
+            quantum_assert_close(
+                rho_deriv_analytical,
+                rho_deriv_numerical,
+                'jacobian',
+                f"Spectral Duhamel ρ derivative parameter {a} analytical vs numerical mismatch",
+            )
+
+    def test_single_pair_duhamel_spectral_vs_quadrature(self, single_pair_family):
+        """Spectral/BCH Duhamel should agree with quadrature-based Duhamel."""
+        exp_fam = single_pair_family
+
+        # Use a small random θ away from the origin to test nontrivial H
+        np.random.seed(7)
+        theta = np.random.normal(0, 0.2, exp_fam.n_params)
+
+        for a in range(min(5, exp_fam.n_params)):  # First few parameters for speed
+            rho_duhamel = exp_fam.rho_derivative(theta, a, method='duhamel', n_points=200)
+            rho_spectral = exp_fam.rho_derivative(theta, a, method='duhamel_spectral')
+
+            # Use the numerical_validation category: both are high-precision analytical variants
+            quantum_assert_close(
+                rho_spectral,
+                rho_duhamel,
+                'numerical_validation',
+                f"Spectral vs quadrature Duhamel mismatch for parameter {a}",
+            )
+
 
 class TestFisherMetricNumerical:
     """Test Fisher metric analytical vs numerical computation."""

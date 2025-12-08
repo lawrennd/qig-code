@@ -13,7 +13,7 @@ operator ordering and preserves Hermiticity.
 """
 
 import numpy as np
-from scipy.linalg import expm
+from scipy.linalg import expm, eigh
 from scipy.integrate import quad_vec
 
 
@@ -137,6 +137,68 @@ def duhamel_derivative_simpson(
         
         drho += weight * integrand
     
+    return drho
+
+
+def duhamel_derivative_spectral(
+    rho: np.ndarray,
+    H: np.ndarray,
+    F_centered: np.ndarray,
+) -> np.ndarray:
+    """
+    Compute ∂ρ/∂θ using the Duhamel formula via the spectral representation of H.
+    
+    This evaluates the Fréchet derivative of the matrix exponential
+        D exp_H[F_centered] = ∫₀¹ e^{(1-s)H} F_centered e^{sH} ds
+    exactly (up to diagonalisation error), by working in the eigenbasis of H.
+    
+    In that basis we have, for H = U diag(λ) U†,
+        (D exp_H[F_centered])_{ij} =
+            { e^{λ_i} F_{ij}          if i = j,
+              F_{ij} (e^{λ_i} - e^{λ_j}) / (λ_i - λ_j)  if i ≠ j }.
+    
+    Parameters
+    ----------
+    rho : ndarray, shape (D, D)
+        Density matrix (unused, included for API symmetry with duhamel_derivative)
+    H : ndarray, shape (D, D)
+        Hamiltonian H = ∑ θ_a F_a - ψ(θ)I (Hermitian)
+    F_centered : ndarray, shape (D, D)
+        Centered operator F - ⟨F⟩I
+    
+    Returns
+    -------
+    drho : ndarray, shape (D, D)
+        Derivative ∂ρ/∂θ (exact up to eigen-decomposition accuracy)
+    """
+    # Diagonalise H (Hermitian)
+    evals, U = eigh(H)
+    U_dag = U.conj().T
+
+    # Transform F_centered into eigenbasis of H
+    X_tilde = U_dag @ F_centered @ U
+
+    # Build kernel K_ij = (e^{λ_i} - e^{λ_j}) / (λ_i - λ_j),
+    # with degenerate / diagonal limit K_ij → e^{λ_i} when λ_i = λ_j.
+    lam_i = evals[:, None]
+    lam_j = evals[None, :]
+    denom = lam_i - lam_j
+
+    with np.errstate(divide="ignore", invalid="ignore"):
+        K = (np.exp(lam_i) - np.exp(lam_j)) / denom
+
+    # Handle degenerate eigenvalues (including the diagonal) by taking the limit
+    # (e^{λ_i} - e^{λ_j}) / (λ_i - λ_j) → e^{λ_i} as λ_j → λ_i.
+    degenerate = np.abs(denom) < 1e-12
+    # Use average eigenvalue in the exponent so that when λ_i = λ_j we get e^{λ_i}.
+    exp_avg = np.exp(0.5 * (lam_i + lam_j))
+    K[degenerate] = exp_avg[degenerate]
+
+    # Apply kernel elementwise in eigenbasis
+    d_rho_tilde = K * X_tilde
+
+    # Transform back to original basis
+    drho = U @ d_rho_tilde @ U_dag
     return drho
 
 
