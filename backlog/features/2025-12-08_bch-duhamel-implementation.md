@@ -192,3 +192,18 @@ CIP-0009 (Hamiltonian extraction from antisymmetric flow) has been **implemented
   claim that the Duhamel term simply “produces the commutator form”, clarifying that the
   commutator comes from categorical unitarity and that the Duhamel/BKM kernel is encoded
   rather than discarded.
+
+### 2025-12-08 (final)
+- Added CIP-0009 validation tests implementing our originally envisaged test suite:
+  - test_spectral_vs_quadrature_duhamel_consistency: Confirms spectral/BCH and quadrature
+    Duhamel agree to ~1e-10, proving ~14x BCH identity error is theoretical not numerical
+  - test_kubo_mori_kernel_properties: Documents that K_ρ[F] differs from [F,ρ] by ~7-8x
+    due to operator-ordered integral kernel structure
+  - test_documented_bch_identity_limitation: Regression guard documenting that the
+    strong identity ∑_a η_a ∂_a ρ = -i[H_eff, ρ] does NOT hold (~14x error) because
+    LHS includes Kubo-Mori kernel while RHS is pure commutator
+- Key empirical finding: Spectral Duhamel gives SAME ~14x error as numerical method,
+  definitively confirming the issue is the theoretical assumption itself, not numerical
+  accuracy. The Kubo-Mori kernel K_ρ = f(ad_H) with f(z)=(e^z-1)/z is fundamental and
+  cannot be "simplified away" to a bare commutator.
+- All tests pass and properly document what does and doesn't hold.
