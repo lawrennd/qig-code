@@ -39,13 +39,17 @@ jobs:
     - name: Run notebook test (default configuration)
       run: |
         python tests/test_notebook.py
+
+    - name: Run notebook smoke tests (integration)
+      run: |
+        pytest -m integration tests/test_notebook.py::test_origin_paper_simulation_experiments_smoke -v
     
     - name: Upload executed notebook
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: executed-notebook-default
-        path: /tmp/CIP-0002_Migration_Validation_executed.ipynb
+        path: /tmp/*_executed.ipynb
 
   test-notebook-quick:
     name: Test Notebook (Quick Config)
@@ -72,13 +76,20 @@ jobs:
         DYNAMICS_T_MAX: 0.5
       run: |
         python tests/test_notebook.py
+
+    - name: Run notebook smoke tests (integration)
+      env:
+        DYNAMICS_POINTS: 5
+        DYNAMICS_T_MAX: 0.5
+      run: |
+        pytest -m integration tests/test_notebook.py::test_origin_paper_simulation_experiments_smoke -v
     
     - name: Upload executed notebook
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: executed-notebook-quick
-        path: /tmp/CIP-0002_Migration_Validation_executed.ipynb
+        path: /tmp/*_executed.ipynb
 
   test-notebook-custom:
     name: Test Notebook (Custom Config)
@@ -106,11 +117,18 @@ jobs:
         DYNAMICS_POINTS: ${{ github.event.inputs.dynamics_points }}
       run: |
         python tests/test_notebook.py
+
+    - name: Run notebook smoke tests (integration)
+      env:
+        QUTRIT_DIM: ${{ github.event.inputs.qutrit_dim }}
+        DYNAMICS_POINTS: ${{ github.event.inputs.dynamics_points }}
+      run: |
+        pytest -m integration tests/test_notebook.py::test_origin_paper_simulation_experiments_smoke -v
     
     - name: Upload executed notebook
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: executed-notebook-custom
-        path: /tmp/CIP-0002_Migration_Validation_executed.ipynb
+        path: /tmp/*_executed.ipynb
 

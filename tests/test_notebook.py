@@ -750,6 +750,42 @@ def test_boring_game_dynamics_full():
         f"Boring game dynamics notebook validation failed: {notebook_path.name}"
 
 
+@integration_test
+def test_origin_paper_simulation_experiments_smoke():
+    """Smoke test for origin paper simulation experiments notebook.
+
+    This notebook is a curated collection of experiments aligned to
+    *The Origin of the Inaccessible Game* paper:
+    - classical origin paradox vs quantum (negative conditional entropy)
+    - boundary regularisation and θ-scaling
+    - entropy-time stepping
+    - constraint drift vs projection
+    - GENERIC decomposition hooks
+    - qutrit optimality score (log d)/d
+
+    To run:
+      pytest -m integration tests/test_notebook.py::test_origin_paper_simulation_experiments_smoke -v
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+
+    if not HAS_EXECUTE_PREPROCESSOR:
+        pytest.skip("nbformat/ExecutePreprocessor not installed")
+
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "origin_paper_simulation_experiments.ipynb"
+
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+
+    # Run smoke test: focus on install/import/plot config + first experiment header
+    success, error_msg = run_notebook_smoke_test(notebook_path, max_cells=8, timeout=120)
+
+    if not success:
+        pytest.fail(f"Origin paper notebook smoke test failed: {error_msg}")
+
+
 if __name__ == "__main__":
     main()
 
