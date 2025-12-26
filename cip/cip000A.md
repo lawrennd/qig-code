@@ -330,12 +330,13 @@ Specifically, it provides:
   - [x] **Bonus**: Also implemented 2nd and 3rd order Fréchet derivatives
   - [x] **Bonus**: Added `psi_hessian_block()` and `third_cumulant_contraction(method='block')`
   - [x] All tests passing in `tests/test_block_frechet.py`
-- [ ] **Phase 2: Performance analysis and documentation** (In Progress)
-  - [ ] Benchmark suite comparing all methods across matrix sizes
-  - [x] Update `docs/source/api/duhamel.rst` with block-matrix method (Completed 2025-12-26)
-  - [x] Create `docs/duhamel_methods_comparison.md` with detailed comparison (Completed 2025-12-26)
+- [x] **Phase 2: Performance analysis and documentation** (Completed 2025-12-26)
+  - [x] Benchmark suite comparing all methods across matrix sizes (commit 9e4af34)
+  - [x] Update `docs/source/api/duhamel.rst` with block-matrix method (commit 84a98a2)
+  - [x] Create `docs/duhamel_methods_comparison.md` with detailed comparison (commit 84a98a2)
   - [x] Add method selection guidance (included in comparison doc)
   - [x] Add performance comparison table (included in both docs)
+  - [x] Integrated with QuantumTolerances framework for consistent validation
 - [ ] **Phase 3: Extensions** (Optional)
   - [ ] Multi-directional block method (all derivatives at once)
   - [ ] Condition number estimation using block method
