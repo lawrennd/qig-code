@@ -211,6 +211,18 @@ class TestDuhamelBenchmarks:
         if 'Block' in results.methods:
             err = results.methods['Block']['accuracy']['max_abs_error']
             assert err < tol, f"Block error {err:.2e} exceeds tolerance {tol:.2e}"
+
+    @pytest.mark.slow
+    def test_benchmark_qutrit_pair(self):
+        """Benchmark on qutrit pair (n=9, entangled pair case)."""
+        results = benchmark_system(n_sites=2, d=3, verbose=True)
+
+        # Spectral and block should still meet numerical-vs-FD tolerance
+        tol = QuantumTolerances.D_numerical['atol']
+        for name in ('Spectral', 'Block'):
+            if name in results.methods:
+                err = results.methods[name]['accuracy']['max_abs_error']
+                assert err < tol, f"{name} error {err:.2e} exceeds tolerance {tol:.2e}"
     
     @pytest.mark.slow
     def test_benchmark_comparison_table(self):
