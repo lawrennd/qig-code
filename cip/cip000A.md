@@ -2,8 +2,8 @@
 author: "Neil Lawrence"
 created: "2025-12-20"
 id: "000A"
-last_updated: "2025-12-20"
-status: proposed
+last_updated: "2025-12-26"
+status: implemented
 tags:
 - cip
 - duhamel
@@ -23,6 +23,14 @@ Implement Nick Higham's block-matrix identity for computing Fréchet derivatives
 $$\frac{\partial \rho}{\partial \theta_i} = \int_0^1 e^{(1-s)K} F_i \, e^{sK} \, ds$$
 
 via a single $2n \times 2n$ matrix exponential instead of eigendecomposition + kernel application.
+
+This CIP is now implemented in `qig/duhamel.py` and wired into
+`QuantumExponentialFamily.rho_derivative(method='duhamel_block')`.
+
+We also extend the same block idea to compute **2nd and 3rd Fréchet derivatives**
+of `expm` (3×3 and 4×4 block matrices) and use those to compute:
+- the **Hessian of** \( \psi(\theta)=\log \mathrm{tr}\,e^{K(\theta)} \) (2nd cumulant / BKM Fisher metric),
+- the **3rd cumulant contraction** \( (\nabla G)[\theta] \) on small systems (validation tool).
 
 ## Motivation
 
@@ -179,20 +187,20 @@ def duhamel_derivative_block(
 
 ### Phase 1: Core Implementation
 
-1. **Add `duhamel_derivative_block` to `qig/duhamel.py`**
+1. **Add `duhamel_derivative_block` to `qig/duhamel.py`** ✅
    - Implement the $2n \times 2n$ block-matrix method
    - Include comprehensive docstring with mathematical explanation
    - Add references to Higham's work
 
-2. **Wire into `QuantumExponentialFamily.rho_derivative`**
+2. **Wire into `QuantumExponentialFamily.rho_derivative`** ✅
    - Add `method='duhamel_block'` option
    - Ensure consistent API with existing methods
 
-3. **Unit tests in `tests/test_duhamel.py`**
-   - Test against finite differences (ground truth)
-   - Cross-validate with spectral method (should agree to ~1e-12)
-   - Test Hermiticity preservation
-   - Test with ill-conditioned matrices (where spectral might struggle)
+3. **Unit tests** ✅
+   - Added `tests/test_block_frechet.py`
+   - Cross-validates `duhamel_block` vs `duhamel_spectral`
+   - Validates Hessian(ψ) via block-2 matches `fisher_information()` (single qubit)
+   - Validates 3rd cumulant contraction via block-3 matches FD on small systems
 
 ### Phase 2: Performance Analysis
 
@@ -215,6 +223,10 @@ def duhamel_derivative_block(
    - Implement stacked version for computing all $n$ derivatives at once
    - Benchmark: one $(n+1)n \times (n+1)n$ exponential vs $n$ separate $2n \times 2n$
    - Determine crossover point
+
+8. **Higher-order cumulants via higher-order Fréchet derivatives** ✅ (partial)
+   - Implemented 2nd and 3rd Fréchet derivatives of `expm` via 3×3 / 4×4 block matrices
+   - Exposed as validation utilities for Hessian(ψ) and 3rd cumulant contraction on small systems
 
 7. **Condition number estimation**
    - Implement Higham's condition number estimator for $\exp(K)$

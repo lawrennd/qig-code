@@ -337,10 +337,19 @@ class QuantumExponentialFamily:
         """
         Compute ρ(θ) = exp(K(θ) - ψ(θ)) where K(θ) = ∑ θ_a F_a.
         """
+        # Numerical stability:
+        # ρ = expm(K) / Tr(expm(K)) is invariant under K -> K - cI.
+        # Shifting by the max eigenvalue avoids overflow/underflow in expm(K)
+        # for large ||theta|| (common near pure-state limits).
         K = np.zeros((self.D, self.D), dtype=complex)
         for theta_a, F_a in zip(theta, self.operators):
             K += theta_a * F_a
-        rho_unnorm = expm(K)
+
+        # K is Hermitian for real theta and Hermitian generators.
+        lambda_max = float(np.max(np.linalg.eigvalsh(K).real))
+        K_shift = K - lambda_max * np.eye(self.D, dtype=complex)
+
+        rho_unnorm = expm(K_shift)
         Z = np.trace(rho_unnorm)
         rho = rho_unnorm / Z
         return rho
@@ -352,7 +361,10 @@ class QuantumExponentialFamily:
         This is the log partition function for the exponential family.
         """
         K = sum(theta_a * F_a for theta_a, F_a in zip(theta, self.operators))
-        return np.log(np.trace(expm(K))).real
+        lambda_max = float(np.max(np.linalg.eigvalsh(K).real))
+        K_shift = K - lambda_max * np.eye(self.D, dtype=complex)
+        Z_shift = np.trace(expm(K_shift))
+        return float(lambda_max + np.log(Z_shift).real)
 
     # Backward compatibility alias
     def log_partition(self, theta: np.ndarray) -> float:
@@ -380,6 +392,9 @@ class QuantumExponentialFamily:
         
         3. 'duhamel_spectral' / 'duhamel_bch': Duhamel formula via spectral/BCH
            representation of H (no explicit s-quadrature, high precision).
+
+        4. 'duhamel_block': Higham block-matrix identity for the Fréchet derivative
+           (one 2D×2D matrix exponential; no eigendecomposition, no quadrature).
         
         ⚠️ QUANTUM ALERT: Simple ρ(F - ⟨F⟩I) is WRONG for non-commuting operators!
         
@@ -425,6 +440,11 @@ class QuantumExponentialFamily:
             from qig.duhamel import duhamel_derivative, compute_H_from_theta
             H, K, psi = compute_H_from_theta(self.operators, theta)
             drho = duhamel_derivative(rho, H, F_centered, n_points)
+        elif method == 'duhamel_block':
+            # Higham block-matrix identity (Fréchet derivative via a single expm on 2D×2D)
+            from qig.duhamel import duhamel_derivative_block, compute_H_from_theta
+            H, K, psi = compute_H_from_theta(self.operators, theta)
+            drho = duhamel_derivative_block(rho, H, F_centered)
         elif method in ('duhamel_spectral', 'duhamel_bch'):
             # Duhamel via spectral/BCH representation of H (no explicit s-quadrature)
             from qig.duhamel import duhamel_derivative_spectral, compute_H_from_theta
@@ -433,7 +453,7 @@ class QuantumExponentialFamily:
         else:
             raise ValueError(
                 f"Unknown method: {method}. "
-                "Use 'sld', 'duhamel', or 'duhamel_spectral'/'duhamel_bch'"
+                "Use 'sld', 'duhamel', 'duhamel_block', or 'duhamel_spectral'/'duhamel_bch'"
             )
         
         return drho
@@ -963,8 +983,149 @@ class QuantumExponentialFamily:
             return self._third_cumulant_contraction_fd(theta)
         elif method == 'analytic':
             return self._third_cumulant_contraction_analytic(theta)
+        elif method == 'block':
+            return self._third_cumulant_contraction_block(theta)
         else:
-            raise ValueError(f"Unknown method '{method}'. Use 'fd' or 'analytic'.")
+            raise ValueError(f"Unknown method '{method}'. Use 'fd', 'analytic', or 'block'.")
+
+    def psi_hessian_block(
+        self, theta: np.ndarray, param_indices: Optional[List[int]] = None
+    ) -> np.ndarray:
+        """
+        Compute Hessian of ψ(θ) = log Tr(exp(K(θ))) via block Fréchet derivatives.
+
+        This returns the (selected) 2nd cumulant matrix:
+            ∂²ψ/∂θ_a∂θ_b
+
+        Notes
+        -----
+        This method is intended for validation / small systems. It scales as
+        O(m²) block matrix exponentials, where m = len(param_indices) (or n_params).
+        """
+        from scipy.linalg import expm
+        from qig.duhamel import expm_frechet_block_2
+
+        if param_indices is None:
+            param_indices = list(range(self.n_params))
+        m = len(param_indices)
+
+        # Build K(θ) = Σ θ_a F_a
+        K = np.zeros((self.D, self.D), dtype=complex)
+        for theta_a, F_a in zip(theta, self.operators):
+            K += theta_a * F_a
+
+        expK = expm(K)
+        Z = np.trace(expK)
+        Z_real = float(np.real(Z))
+        if not np.isfinite(Z_real) or abs(Z) < 1e-300:
+            raise FloatingPointError("Trace(exp(K)) is not finite; reduce ||theta||.")
+
+        # First derivatives of Z: dZ_a = Tr(exp(K) F_a)
+        dZ = np.zeros(m, dtype=float)
+        for i, a in enumerate(param_indices):
+            dZ[i] = float(np.real(np.trace(expK @ self.operators[a])))
+
+        # Second derivatives of Z via block trick: d2Z_ab = Tr(D² exp_K[F_a, F_b])
+        d2Z = np.zeros((m, m), dtype=float)
+        for i, a in enumerate(param_indices):
+            E = self.operators[a]
+            for j, b in enumerate(param_indices[i:], start=i):
+                F = self.operators[b]
+                # The 3×3 block construction gives an *ordered* second-derivative piece.
+                # The true 2nd Fréchet derivative is symmetric in (E, F), so we sum both
+                # orderings (no 1/2 factor).
+                d2_ef = np.trace(expm_frechet_block_2(K, E, F))
+                d2_fe = np.trace(expm_frechet_block_2(K, F, E))
+                d2_real = float(np.real(d2_ef + d2_fe))
+                d2Z[i, j] = d2_real
+                d2Z[j, i] = d2_real
+
+        # Hessian of log Z: ψ'' = Z''/Z - (Z'/Z)(Z'/Z)^T
+        H = d2Z / Z_real - np.outer(dZ, dZ) / (Z_real * Z_real)
+        return 0.5 * (H + H.T)
+
+    def _third_cumulant_contraction_block(self, theta: np.ndarray) -> np.ndarray:
+        """
+        Compute (∇G)[θ] using 3rd derivatives of ψ via block Fréchet derivatives.
+
+        This is intended for small systems (e.g. single qubit / qutrit) and
+        validation. For larger models use method='fd' (default).
+        """
+        from itertools import permutations
+        from scipy.linalg import expm
+        from qig.duhamel import expm_frechet_block_2, expm_frechet_block_3
+
+        n = self.n_params
+        if n > 20:
+            raise ValueError(
+                "method='block' is intended for small n_params (≤20). "
+                "Use method='fd' for larger systems."
+            )
+
+        # Build K(θ) and direction ΔK = Σ θ_a F_a = K itself.
+        K = np.zeros((self.D, self.D), dtype=complex)
+        for theta_a, F_a in zip(theta, self.operators):
+            K += theta_a * F_a
+        K_dir = K
+
+        expK = expm(K)
+        Z = np.trace(expK)
+        Z_real = float(np.real(Z))
+        if not np.isfinite(Z_real) or abs(Z) < 1e-300:
+            raise FloatingPointError("Trace(exp(K)) is not finite; reduce ||theta||.")
+
+        # First derivatives dZ_a and dZ_K
+        dZ = np.array([float(np.real(np.trace(expK @ F_a))) for F_a in self.operators])
+        dZK = float(np.real(np.trace(expK @ K_dir)))
+
+        # Second derivatives needed: d2Z_ab (all pairs) and d2Z_aK (vector)
+        d2Z = np.zeros((n, n), dtype=float)
+        for a in range(n):
+            E = self.operators[a]
+            for b in range(a, n):
+                F = self.operators[b]
+                # Sum both orderings to obtain the symmetric 2nd Fréchet derivative.
+                d2_ef = np.trace(expm_frechet_block_2(K, E, F))
+                d2_fe = np.trace(expm_frechet_block_2(K, F, E))
+                val = float(np.real(d2_ef + d2_fe))
+                d2Z[a, b] = val
+                d2Z[b, a] = val
+
+        d2Z_aK = np.zeros(n, dtype=float)
+        for a in range(n):
+            E = self.operators[a]
+            d2_eK = np.trace(expm_frechet_block_2(K, E, K_dir))
+            d2_Ke = np.trace(expm_frechet_block_2(K, K_dir, E))
+            d2Z_aK[a] = float(np.real(d2_eK + d2_Ke))
+
+        # Third derivative contraction: ψ3(F_a, F_b, K_dir)
+        contraction = np.zeros((n, n), dtype=float)
+        for a in range(n):
+            E = self.operators[a]
+            for b in range(a, n):
+                F = self.operators[b]
+
+                # The 4×4 block construction yields ordered 3rd-derivative pieces.
+                # The true 3rd Fréchet derivative is symmetric multilinear, so we sum
+                # over all 3! orderings.
+                dirs = (E, F, K_dir)
+                d3_sum = 0.0 + 0.0j
+                for perm in permutations(dirs, 3):
+                    d3_sum += np.trace(expm_frechet_block_3(K, perm[0], perm[1], perm[2]))
+                d3Z = float(np.real(d3_sum))
+
+                # ψ3 = Z'''/Z - (Z'' Z' + perms)/Z^2 + 2 Z'Z'Z'/Z^3
+                term1 = d3Z / Z_real
+                term2 = (
+                    d2Z[a, b] * dZK + d2Z_aK[a] * dZ[b] + d2Z_aK[b] * dZ[a]
+                ) / (Z_real * Z_real)
+                term3 = 2.0 * dZ[a] * dZ[b] * dZK / (Z_real * Z_real * Z_real)
+                val = term1 - term2 + term3
+
+                contraction[a, b] = val
+                contraction[b, a] = val
+
+        return 0.5 * (contraction + contraction.T)
     
     def _third_cumulant_contraction_fd(self, theta: np.ndarray, eps: float = 1e-5) -> np.ndarray:
         """
@@ -1719,8 +1880,11 @@ class QuantumExponentialFamily:
         # Compute K(θ) = ∑ θ_a F_a
         K = sum(theta_a * F_a for theta_a, F_a in zip(theta, self.operators))
 
-        # Compute exp(K) once
-        exp_K = expm(K)
+        # Shift for stability. Since exp(K) = exp(c) exp(K-cI), the scalar cancels
+        # in Tr(exp(K) F_a) / Tr(exp(K)).
+        lambda_max = float(np.max(np.linalg.eigvalsh(K).real))
+        K_shift = K - lambda_max * np.eye(self.D, dtype=complex)
+        exp_K = expm(K_shift)
 
         # Compute normalization Z = Tr(exp(K))
         Z = np.trace(exp_K)
@@ -2228,13 +2392,13 @@ class QuantumExponentialFamily:
             if epsilon <= 0:
                 raise ValueError("epsilon must be > 0 (pure Bell state has θ → -∞)")
             log_eps = float(np.log(epsilon))
-        
-        # Clamp log ε to avoid underflow
-        min_log_eps = float(np.log(np.finfo(float).tiny))
-        if log_eps < min_log_eps:
-            log_eps = min_log_eps
-        
-        eps_val = float(np.exp(log_eps))
+
+        # IMPORTANT:
+        # - For σ = I/D (isotropic), we can keep working in log-space even when
+        #   log_eps is far below float64 underflow (≈ -708). This avoids artificial
+        #   saturation in θ when exploring extreme log_eps.
+        # - For more general σ (including per-pair σₖ), we must materialize
+        #   (1-ε)ρ + εσ in float64, so ε will underflow; those paths clamp.
         D = self.D
         
         # Get Bell state (product of n_pairs Bell states)
@@ -2261,6 +2425,10 @@ class QuantumExponentialFamily:
             eigvals_bell, U = eigh(rho_bell)
             idx_max = int(np.argmax(eigvals_bell.real))
             
+            # ε may underflow for very negative log_eps; in that limit λ₀→1 so
+            # log(λ₀)→0, while log(λ_⊥)=log_eps-log(D) remains well-defined.
+            min_log_eps = float(np.log(np.finfo(float).tiny))
+            eps_val = float(np.exp(log_eps)) if log_eps >= min_log_eps else 0.0
             factor = eps_val * (1.0 - 1.0 / D)
             log_lambda0 = np.log1p(-factor) if factor < 1.0 else np.log(np.finfo(float).tiny)
             log_lambda_perp = log_eps - np.log(D)
@@ -2283,6 +2451,12 @@ class QuantumExponentialFamily:
                     for k in range(self.n_pairs)
                 ]
             
+            # Need ε in float64 arithmetic in the per-pair path; clamp to avoid
+            # underflow producing singular logs.
+            min_log_eps = float(np.log(np.finfo(float).tiny))
+            log_eps_clamped = max(log_eps, min_log_eps)
+            eps_val = float(np.exp(log_eps_clamped))
+
             return self._bell_parameters_product_sigma(
                 eps_val, log_eps, sigma_per_pair, bell_indices
             )
@@ -2298,6 +2472,12 @@ class QuantumExponentialFamily:
                     UserWarning
                 )
             
+            # Need ε in float64 arithmetic; clamp to avoid underflow producing
+            # a singular pure state and -inf in the log.
+            min_log_eps = float(np.log(np.finfo(float).tiny))
+            log_eps_clamped = max(log_eps, min_log_eps)
+            eps_val = float(np.exp(log_eps_clamped))
+
             rho_eps = (1 - eps_val) * rho_bell + eps_val * sigma
             
             # Ensure Hermitian and compute log via eigendecomposition

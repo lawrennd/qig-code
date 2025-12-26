@@ -84,6 +84,123 @@ def duhamel_derivative(
     return drho
 
 
+def duhamel_derivative_block(
+    rho: np.ndarray,
+    H: np.ndarray,
+    F_centered: np.ndarray,
+) -> np.ndarray:
+    """
+    Compute ∂ρ/∂θ using Higham's block-matrix identity (Fréchet derivative of exp).
+
+    This evaluates the same Duhamel integral as `duhamel_derivative_spectral`:
+
+        D exp_H[F_centered] = ∫₀¹ e^{(1-s)H} F_centered e^{sH} ds
+
+    but without eigendecomposition or explicit quadrature. Instead, form the 2n×2n
+    block matrix:
+
+        B = [[H, F_centered],
+             [0,        H]]
+
+    Then:
+
+        exp(B) = [[exp(H), D exp_H[F_centered]],
+                  [0,      exp(H)]]
+
+    so the (1,2) block is the desired derivative.
+
+    Notes
+    -----
+    - Cost is one `expm` on a (2D)×(2D) matrix.
+    - For Hermitian H and Hermitian F_centered, the exact result is Hermitian;
+      we symmetrise to guard against tiny numerical asymmetry.
+
+    References
+    ----------
+    - Higham, N. J. (2008). Functions of Matrices: Theory and Computation. SIAM.
+      Chapter 10.
+    - Al-Mohy, A. H., & Higham, N. J. (2009). Computing the Fréchet derivative of
+      the matrix exponential, with an application to condition number estimation.
+      SIAM J. Matrix Anal. Appl., 30(4), 1639–1657.
+    """
+    n = H.shape[0]
+    if H.shape != (n, n) or F_centered.shape != (n, n):
+        raise ValueError("H and F_centered must be square matrices of the same shape.")
+
+    Z = np.zeros((n, n), dtype=complex)
+    block = np.block([[H, F_centered], [Z, H]])
+    exp_block = expm(block)
+    drho = exp_block[:n, n:]
+    return 0.5 * (drho + drho.conj().T)
+
+
+def expm_frechet_block_1(A: np.ndarray, E: np.ndarray) -> np.ndarray:
+    """
+    First Fréchet derivative of exp at A in direction E via 2×2 block trick.
+
+    Returns D exp_A[E].
+    """
+    n = A.shape[0]
+    if A.shape != (n, n) or E.shape != (n, n):
+        raise ValueError("A and E must be square matrices of the same shape.")
+    Z = np.zeros((n, n), dtype=complex)
+    block = np.block([[A, E], [Z, A]])
+    exp_block = expm(block)
+    return exp_block[:n, n:]
+
+
+def expm_frechet_block_2(A: np.ndarray, E: np.ndarray, F: np.ndarray) -> np.ndarray:
+    """
+    Second Fréchet derivative of exp at A in directions (E, F) via 3×3 block trick.
+
+    Constructs the 3n×3n block matrix:
+
+        [[A, E, 0],
+         [0, A, F],
+         [0, 0, A]]
+
+    Then (1,3) block of exp is D² exp_A[E, F].
+    """
+    n = A.shape[0]
+    if A.shape != (n, n) or E.shape != (n, n) or F.shape != (n, n):
+        raise ValueError("A, E, F must be square matrices of the same shape.")
+    Z = np.zeros((n, n), dtype=complex)
+    block = np.block([[A, E, Z], [Z, A, F], [Z, Z, A]])
+    exp_block = expm(block)
+    return exp_block[:n, 2 * n : 3 * n]
+
+
+def expm_frechet_block_3(
+    A: np.ndarray, E: np.ndarray, F: np.ndarray, G: np.ndarray
+) -> np.ndarray:
+    """
+    Third Fréchet derivative of exp at A in directions (E, F, G) via 4×4 block trick.
+
+    Constructs the 4n×4n block matrix:
+
+        [[A, E, 0, 0],
+         [0, A, F, 0],
+         [0, 0, A, G],
+         [0, 0, 0, A]]
+
+    Then (1,4) block of exp is D³ exp_A[E, F, G].
+    """
+    n = A.shape[0]
+    if (
+        A.shape != (n, n)
+        or E.shape != (n, n)
+        or F.shape != (n, n)
+        or G.shape != (n, n)
+    ):
+        raise ValueError("A, E, F, G must be square matrices of the same shape.")
+    Z = np.zeros((n, n), dtype=complex)
+    block = np.block(
+        [[A, E, Z, Z], [Z, A, F, Z], [Z, Z, A, G], [Z, Z, Z, A]]
+    )
+    exp_block = expm(block)
+    return exp_block[:n, 3 * n : 4 * n]
+
+
 def duhamel_derivative_simpson(
     rho: np.ndarray,
     H: np.ndarray, 
@@ -233,10 +350,14 @@ def compute_H_from_theta(operators: list, theta: np.ndarray) -> tuple:
     for theta_a, F_a in zip(theta, operators):
         K += theta_a * F_a
     
-    # Compute ψ = log Tr[exp(K)]
-    exp_K = expm(K)
-    Z = np.trace(exp_K)
-    psi = np.log(Z).real
+    # Compute ψ = log Tr[exp(K)] with a stabilising shift.
+    # exp(K) / Tr(exp(K)) is invariant under K -> K - cI, so shifting by the
+    # largest eigenvalue reduces overflow/underflow for large ||theta||.
+    lambda_max = float(np.max(np.linalg.eigvalsh(K).real))
+    K_shift = K - lambda_max * np.eye(D, dtype=complex)
+    exp_K_shift = expm(K_shift)
+    Z_shift = np.trace(exp_K_shift)
+    psi = float(lambda_max + np.log(Z_shift).real)
     
     # H = K - ψ I (normalized Hamiltonian)
     H = K - psi * np.eye(D, dtype=complex)
