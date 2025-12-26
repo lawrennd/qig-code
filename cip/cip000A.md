@@ -321,20 +321,22 @@ Specifically, it provides:
 
 ## Implementation Status
 
-- [ ] Phase 1: Core implementation
-  - [ ] Add `duhamel_derivative_block` to `qig/duhamel.py`
-  - [ ] Wire into `QuantumExponentialFamily.rho_derivative` with `method='duhamel_block'`
-  - [ ] Unit tests: correctness vs finite differences
-  - [ ] Unit tests: cross-validation with spectral method
-  - [ ] Unit tests: Hermiticity preservation
-  - [ ] Unit tests: ill-conditioned matrices
-- [ ] Phase 2: Performance analysis and documentation
+- [x] **Phase 1: Core implementation** (Completed 2025-12-26, commit 49ec2a5)
+  - [x] Add `duhamel_derivative_block` to `qig/duhamel.py`
+  - [x] Wire into `QuantumExponentialFamily.rho_derivative` with `method='duhamel_block'`
+  - [x] Unit tests: correctness vs finite differences
+  - [x] Unit tests: cross-validation with spectral method
+  - [x] Unit tests: Hermiticity preservation
+  - [x] **Bonus**: Also implemented 2nd and 3rd order Fréchet derivatives
+  - [x] **Bonus**: Added `psi_hessian_block()` and `third_cumulant_contraction(method='block')`
+  - [x] All tests passing in `tests/test_block_frechet.py`
+- [ ] **Phase 2: Performance analysis and documentation** (In Progress)
   - [ ] Benchmark suite comparing all methods across matrix sizes
-  - [ ] Update `docs/source/api/duhamel.rst` with block-matrix method
-  - [ ] Create `docs/duhamel_methods_comparison.md` with detailed comparison
-  - [ ] Add method selection guidance to user guide
-  - [ ] Add performance comparison table to documentation
-- [ ] Phase 3: Extensions (optional)
+  - [x] Update `docs/source/api/duhamel.rst` with block-matrix method (Completed 2025-12-26)
+  - [x] Create `docs/duhamel_methods_comparison.md` with detailed comparison (Completed 2025-12-26)
+  - [x] Add method selection guidance (included in comparison doc)
+  - [x] Add performance comparison table (included in both docs)
+- [ ] **Phase 3: Extensions** (Optional)
   - [ ] Multi-directional block method (all derivatives at once)
   - [ ] Condition number estimation using block method
   - [ ] Example notebook demonstrating all methods
