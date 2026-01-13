@@ -293,6 +293,8 @@ See the `examples/` directory:
 
 - **`boring_game_dynamics.ipynb`**: Analysis of why the inaccessible game becomes "boring" from the LME origin when constrained and unconstrained dynamics coincide because the marginal entropy constraint is automatically satisfied along the gradient flow [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lawrennd/qig-code/blob/main/examples/boring_game_dynamics.ipynb)
 
+- **`origin_two_qutrit_worked_example.ipynb`**: Minimal, self-contained worked example for the origin paper (two qutrits): LME origin state, marginal entropy saturation, multi-information, marginal-preserving (gauge) directions, and the entropy-time interval [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lawrennd/qig-code/blob/main/examples/origin_two_qutrit_worked_example.ipynb)
+
 - **`multi_pair_regularisation.ipynb`**: Tutorial demonstrating CIP-0008 regularisation machinery for multi-pair systems—the "north pole" analogy, isotropic/product/general σ choices, different origins via `bell_indices`, and block-diagonal Fisher information with performance benchmarks [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lawrennd/qig-code/blob/main/examples/multi_pair_regularisation.ipynb)
 
 ## Citation

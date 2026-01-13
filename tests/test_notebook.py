@@ -641,6 +641,41 @@ def test_entropy_time_paths_smoke():
         pytest.fail(f"Entropy time paths notebook smoke test failed: {error_msg}")
 
 
+@integration_test
+def test_origin_two_qutrit_worked_example_smoke():
+    """Smoke test for the two-qutrit worked example notebook.
+    
+    This notebook implements the concrete two-qutrit example from
+    *The Origin of the Inaccessible Game*:
+    - LME origin state construction
+    - Global/marginal entropies and multi-information
+    - Marginal-preserving (gauge) directions via local commutators
+    - Entropy-time interval computation
+    
+    To run:
+      pytest -m integration tests/test_notebook.py::test_origin_two_qutrit_worked_example_smoke -v
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+    
+    if not HAS_EXECUTE_PREPROCESSOR:
+        pytest.skip("nbformat/ExecutePreprocessor not installed")
+    
+    # Find notebook
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "origin_two_qutrit_worked_example.ipynb"
+    
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+    
+    # Run smoke test (first 8 cells covers imports + core example)
+    success, error_msg = run_notebook_smoke_test(notebook_path, max_cells=8, timeout=120)
+    
+    if not success:
+        pytest.fail(f"Two-qutrit worked example notebook smoke test failed: {error_msg}")
+
+
 @full_notebook_test
 def test_entropy_time_paths_full():
     """Full execution test for entropy time paths notebook.
