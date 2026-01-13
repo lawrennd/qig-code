@@ -168,13 +168,17 @@ drho = 0.5 * (F_centered @ rho + rho @ F_centered)
 | **Block** | $O(8n^3)$ | Machine ε | **High** | $O(4n^2)$ | **Ill-conditioned** |
 | **SLD** | $O(n^2)$ | ~10⁻³ | High | $O(n^2)$ | Fast approximation |
 
-## When to Use Each Method
+## When to Use Each Method (block is the default)
+
+### Use Block-Matrix (Default) When:
+- You want maximum robustness (ill-conditioned or near-degenerate spectra)
+- You prefer a single well-tested `expm` path (no eigendecomposition)
+- Small to medium systems ($n \leq 100$) or when conditioning is suspect
 
 ### Use Spectral When:
 - $H$ is well-conditioned (eigenvalues well-separated)
-- You need machine-precision accuracy
-- You're computing many derivatives (can reuse eigendecomposition)
-- $n$ is small to medium (up to ~1000)
+- You need machine-precision accuracy and eigendecomp is cheap
+- You're computing many derivatives and can reuse the eigendecomposition
 - You want to align with BCH/Lie-algebraic theory
 
 ### Use Block-Matrix When:

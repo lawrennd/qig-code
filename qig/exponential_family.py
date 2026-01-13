@@ -422,8 +422,9 @@ class QuantumExponentialFamily:
         ✅ Distinguish quantum vs classical: Uses quantum formulas
         ✅ Respect Hilbert space structure: Preserves Hermiticity
         """
-        method = kwargs.get('method', 'sld')
-        n_points = kwargs.get('n_points', 200)  # n=200 gives ~3.6e-06 error; n=100→1.5e-05
+        # Default: Higham block-matrix Fréchet derivative (robust, no eigendecomp)
+        method = kwargs.get('method', 'duhamel_block')
+        n_points = kwargs.get('n_points', 200)  # legacy quadrature control
         
         rho = self.rho_from_theta(theta)
         F_a = self.operators[a]
@@ -453,7 +454,7 @@ class QuantumExponentialFamily:
         else:
             raise ValueError(
                 f"Unknown method: {method}. "
-                "Use 'sld', 'duhamel', 'duhamel_block', or 'duhamel_spectral'/'duhamel_bch'"
+                "Use 'duhamel_block' (default), 'duhamel_spectral', 'duhamel', or 'sld'"
             )
         
         return drho
@@ -505,15 +506,15 @@ class QuantumExponentialFamily:
         if method != 'numerical_duhamel':
             raise ValueError(f"Only 'numerical_duhamel' supported, got {method}")
         
-        # Compute ∂ρ/∂θ_a at θ + ε·e_b
+        # Compute ∂ρ/∂θ_a at θ + ε·e_b using block Duhamel by default
         theta_plus = theta.copy()
         theta_plus[b] += eps
-        drho_a_plus = self.rho_derivative(theta_plus, a, method='duhamel', n_points=n_points)
+        drho_a_plus = self.rho_derivative(theta_plus, a, method='duhamel_block', n_points=n_points)
         
         # Compute ∂ρ/∂θ_a at θ - ε·e_b
         theta_minus = theta.copy()
         theta_minus[b] -= eps
-        drho_a_minus = self.rho_derivative(theta_minus, a, method='duhamel', n_points=n_points)
+        drho_a_minus = self.rho_derivative(theta_minus, a, method='duhamel_block', n_points=n_points)
         
         # Central difference
         d2rho = (drho_a_plus - drho_a_minus) / (2 * eps)
@@ -939,7 +940,7 @@ class QuantumExponentialFamily:
 
         return C, grad_C
 
-    def third_cumulant_contraction(self, theta: np.ndarray, method: str = 'fd') -> np.ndarray:
+    def third_cumulant_contraction(self, theta: np.ndarray, method: str = 'block') -> np.ndarray:
         """
         Compute (∇G)[θ], the third cumulant tensor contracted with θ.
         
@@ -959,7 +960,8 @@ class QuantumExponentialFamily:
             Natural parameters
         method : str, optional
             Method for computing the third cumulant:
-            - 'fd' (default): Finite differences of Fisher metric (fast, accurate)
+            - 'block' (default): Block Fréchet derivatives (robust, small systems)
+            - 'fd': Finite differences of Fisher metric (fast, accurate)
             - 'analytic': Analytic perturbation theory (slow, approximate)
         
         Returns
@@ -979,12 +981,12 @@ class QuantumExponentialFamily:
         The finite difference method is much faster (~100-500×) and avoids
         expensive ∂ρ/∂θ computations.
         """
-        if method == 'fd':
+        if method == 'block':
+            return self._third_cumulant_contraction_block(theta)
+        elif method == 'fd':
             return self._third_cumulant_contraction_fd(theta)
         elif method == 'analytic':
             return self._third_cumulant_contraction_analytic(theta)
-        elif method == 'block':
-            return self._third_cumulant_contraction_block(theta)
         else:
             raise ValueError(f"Unknown method '{method}'. Use 'fd', 'analytic', or 'block'.")
 

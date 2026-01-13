@@ -13,7 +13,7 @@ derivatives,
 where :math:`\rho = e^{H}` with
 :math:`H = \sum_a \theta_a F_a - \psi(\theta) I`.
 
-Conceptually there are three evaluation strategies:
+Conceptually there are three evaluation strategies (default is block-matrix):
 
 - **Quadrature-based Duhamel** (``duhamel_derivative``,
   ``duhamel_derivative_simpson``):
@@ -54,7 +54,7 @@ Conceptually there are three evaluation strategies:
     algebra, and can be evaluated analytically (up to diagonalisation error)
     without explicit :math:`s`-quadrature.
 
-- **Block-matrix Duhamel** (``duhamel_derivative_block``):
+- **Block-matrix Duhamel** (``duhamel_derivative_block``) **(default)**:
 
   - Uses Higham's block-matrix identity to compute the Fréchet derivative
     via a single :math:`2n \times 2n` matrix exponential:
@@ -74,15 +74,15 @@ Conceptually there are three evaluation strategies:
   - Best for small to medium systems (:math:`n \leq 100`) when numerical
     robustness is important.
 
-Method Selection
-----------------
+Method Selection (block is default)
+-----------------------------------
 
 =========== ===================== ================= ====================
 Method      Cost                  Accuracy          Best For
 =========== ===================== ================= ====================
 Quadrature  50 ``expm`` calls     ~10⁻⁵             Validation
 Spectral    1 ``eigh`` + kernel   Machine precision Well-conditioned H
-**Block**   1 ``expm`` (2n×2n)    Machine precision **Ill-conditioned H**
+**Block**   1 ``expm`` (2n×2n)    Machine precision **Default / Robust**
 SLD         2 evaluations         ~10⁻³             Fast approximation
 =========== ===================== ================= ====================
 
@@ -92,12 +92,12 @@ the test suite (see ``TestRhoDerivativeNumerical`` in
 ``tests/test_block_frechet.py``).
 
 For small finite-dimensional examples, both the spectral and block methods achieve
-machine precision. Choose based on your needs:
+machine precision. Block is the default and generally preferred for robustness; choose spectral when eigendecomposition is cheap and well-conditioned:
 
+- **Block (default)**: More robust for ill-conditioned problems; leverages highly-optimized
+  ``expm`` without eigendecomposition; avoids spectral instability
 - **Spectral**: Faster when eigendecomposition is cheap and well-conditioned;
   aligns with the adjoint/BCH structure in theory
-- **Block**: More robust for ill-conditioned problems; leverages highly-optimized
-  ``expm`` without eigendecomposition
 
 See **CIP-000A** for detailed comparison and implementation notes.
 
