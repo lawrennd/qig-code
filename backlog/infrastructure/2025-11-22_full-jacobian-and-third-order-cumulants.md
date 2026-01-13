@@ -1,18 +1,20 @@
 ---
-id: "2025-11-22_full-jacobian-and-third-order-cumulants"
-title: "Implement analytic full Jacobian and third-order Kubo–Mori cumulants"
-status: "Completed"
-priority: "Medium"
-created: "2025-11-22"
-last_updated: "2025-12-01"
-owner: "Neil D. Lawrence"
-github_issue: ""
-dependencies: ""
+category: infrastructure
+created: '2025-11-22'
+dependencies: ''
+github_issue: ''
+id: 2025-11-22_full-jacobian-and-third-order-cumulants
+last_updated: '2025-12-01'
+owner: Neil D. Lawrence
+priority: Medium
+related_cips: []
+status: Completed
 tags:
 - backlog
 - infrastructure
 - geometry
 - jacobian
+title: Implement analytic full Jacobian and third-order Kubo–Mori cumulants
 ---
 
 # Task: Implement analytic full Jacobian and third-order Kubo–Mori cumulants
@@ -122,5 +124,3 @@ anchors it to existing exploratory scripts and tests.
   - Not used by core qig module
   
 **Result**: Clean analytic API fully integrated into qig module, well-tested, and used throughout the codebase.
-
-

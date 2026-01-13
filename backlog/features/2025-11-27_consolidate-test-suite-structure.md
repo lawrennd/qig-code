@@ -1,16 +1,18 @@
 ---
-author: "Neil D. Lawrence"
-created: "2025-11-27"
-id: "2025-11-27_consolidate-test-suite-structure"
-last_updated: "2025-12-01"
-status: completed
-priority: medium
+author: Neil D. Lawrence
+category: features
+created: '2025-11-27'
+id: 2025-11-27_consolidate-test-suite-structure
+last_updated: '2025-12-01'
+priority: Medium
+related_cips: []
+status: Completed
 tags:
 - cip-0004
 - testing
 - refactoring
 - code-organization
-title: "Consolidate Test Suite to Mirror qig Module Structure"
+title: Consolidate Test Suite to Mirror qig Module Structure
 ---
 
 # Task: Consolidate Test Suite to Mirror qig Module Structure
@@ -288,4 +290,3 @@ All consolidation work has been successfully completed:
 - ✅ Better maintainability and onboarding
 
 This task is part of CIP-0004 Phase 2 and was completed alongside the tolerance framework implementation.
-

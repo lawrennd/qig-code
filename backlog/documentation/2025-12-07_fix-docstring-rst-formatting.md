@@ -1,11 +1,14 @@
 ---
-id: 2025-12-07_fix-docstring-rst-formatting
-title: Fix docstring RST formatting for Sphinx documentation
-status: completed
-priority: medium
-created: 2025-12-07
-owner: null
+category: documentation
+created: &id001 2025-12-07
 dependencies: []
+id: 2025-12-07_fix-docstring-rst-formatting
+last_updated: *id001
+owner: null
+priority: Medium
+related_cips: []
+status: Completed
+title: Fix docstring RST formatting for Sphinx documentation
 ---
 
 # Task: Fix docstring RST formatting for Sphinx documentation

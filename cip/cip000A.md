@@ -1,9 +1,9 @@
 ---
-author: "Neil Lawrence"
-created: "2025-12-20"
-id: "000A"
-last_updated: "2025-12-26"
-status: implemented
+author: Neil Lawrence
+created: '2025-12-20'
+id: 000A
+last_updated: '2025-12-26'
+status: Implemented
 tags:
 - cip
 - duhamel
@@ -11,7 +11,7 @@ tags:
 - matrix-exponential
 - numerical-methods
 - higham
-title: "Block-Matrix Method for Fréchet Derivatives (Higham's Trick)"
+title: Block-Matrix Method for Fréchet Derivatives (Higham's Trick)
 ---
 
 # CIP-000A: Block-Matrix Method for Fréchet Derivatives (Higham's Trick)
@@ -375,4 +375,3 @@ Specifically, it provides:
 - **CIP-0009**: Hamiltonian extraction from antisymmetric flow
 - **CIP-0006**: GENERIC decomposition framework
 - **Backlog 2025-12-08**: BCH-Duhamel implementation and validation
-

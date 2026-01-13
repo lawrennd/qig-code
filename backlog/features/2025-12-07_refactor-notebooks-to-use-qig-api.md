@@ -1,11 +1,14 @@
 ---
-id: 2025-12-07_refactor-notebooks-to-use-qig-api
-title: Refactor boring_game_dynamics and entropy_time_paths notebooks to use qig API
-status: completed
-priority: medium
-created: 2025-12-07
-owner: null
+category: features
+created: &id001 2025-12-07
 dependencies: []
+id: 2025-12-07_refactor-notebooks-to-use-qig-api
+last_updated: *id001
+owner: null
+priority: Medium
+related_cips: []
+status: Completed
+title: Refactor boring_game_dynamics and entropy_time_paths notebooks to use qig API
 ---
 
 # Task: Refactor notebooks to use qig API

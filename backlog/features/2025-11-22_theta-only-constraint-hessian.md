@@ -1,19 +1,21 @@
 ---
-id: "2025-11-22_theta-only-constraint-hessian"
-title: "Replace Duhamel-based Hessian with FD of θ-only gradient"
-status: "Completed"
-priority: "Medium"
-created: "2025-11-22"
-last_updated: "2025-11-22"
-owner: "Assistant"
-github_issue: ""
-dependencies: "2025-11-22_theta-only-constraint-gradient"
+category: features
+created: '2025-11-22'
+dependencies: 2025-11-22_theta-only-constraint-gradient
+github_issue: ''
+id: 2025-11-22_theta-only-constraint-hessian
+last_updated: '2025-11-22'
+owner: Assistant
+priority: Medium
+related_cips: []
+status: Completed
 tags:
 - backlog
 - optimization
 - performance
 - constraint-hessian
 - completed
+title: Replace Duhamel-based Hessian with FD of θ-only gradient
 ---
 
 # Task: FD-based Constraint Hessian

@@ -1,11 +1,15 @@
 ---
-id: 2025-12-07_notebooks-natural-parameter-dynamics
-title: Refactor notebooks to use natural parameter (θ) dynamics instead of density matrix (ρ) space
-status: completed
-priority: high
-created: 2025-12-07
-owner: null
+category: features
+created: &id001 2025-12-07
 dependencies: []
+id: 2025-12-07_notebooks-natural-parameter-dynamics
+last_updated: *id001
+owner: null
+priority: High
+related_cips: []
+status: Completed
+title: Refactor notebooks to use natural parameter (θ) dynamics instead of density
+  matrix (ρ) space
 ---
 
 # Task: Refactor notebooks to use natural parameter dynamics

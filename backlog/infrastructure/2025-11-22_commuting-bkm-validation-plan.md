@@ -1,19 +1,21 @@
 ---
-id: "2025-11-22_commuting-bkm-validation-plan"
-title: "Validate and repair BKM metric via commuting/diagonal toy families"
-status: "Completed"
-priority: "High"
-created: "2025-11-22"
-last_updated: "2025-11-22"
-owner: "Assistant"
-github_issue: ""
-dependencies: ""
+category: infrastructure
+created: '2025-11-22'
+dependencies: ''
+github_issue: ''
+id: 2025-11-22_commuting-bkm-validation-plan
+last_updated: '2025-11-22'
+owner: Assistant
+priority: High
+related_cips: []
+status: Completed
 tags:
 - backlog
 - infrastructure
 - information-geometry
 - bkm-metric
 - completed
+title: Validate and repair BKM metric via commuting/diagonal toy families
 ---
 
 # Task: Validate and repair BKM metric via commuting/diagonal toy families
@@ -241,5 +243,3 @@ Task created with Proposed status. Establishes a concrete plan to validate and
 repair the BKM metric implementation by first working in commuting/diagonal
 toy families where the second Kubo–Mori cumulant can be derived and checked
 analytically.
-
-

@@ -1,17 +1,19 @@
 ---
-id: "2025-11-22_qig-docs-and-tests-refactor"
-title: "Refactor quantum game documentation and test narratives"
-status: "Closed"
-priority: "Medium"
-created: "2025-11-22"
-last_updated: "2025-12-01"
-owner: "Neil D. Lawrence"
-github_issue: ""
-dependencies: ""
+category: documentation
+created: '2025-11-22'
+dependencies: ''
+github_issue: ''
+id: 2025-11-22_qig-docs-and-tests-refactor
+last_updated: '2025-12-01'
+owner: Neil D. Lawrence
+priority: Medium
+related_cips: []
+status: Completed
 tags:
 - backlog
 - documentation
 - testing
+title: Refactor quantum game documentation and test narratives
 ---
 
 # Task: Refactor quantum game documentation and test narratives
@@ -101,5 +103,3 @@ implemented, and ties it into the broader `qig` refactor.
 **Remaining Issue**: One reference to finite differences for Jacobi identity (README line 126)
 
 **Decision**: Task as written is obsolete. The documentation is already mostly correct. If the single FD reference needs fixing, it can be done as a minor update without a full backlog task. CIP-0005 (Sphinx documentation) will be the proper venue for comprehensive documentation improvements.
-
-

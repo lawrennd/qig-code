@@ -1,19 +1,21 @@
 ---
-id: "2025-12-01_cip0004-documentation-completion"
-title: "Complete CIP-0004 Developer Documentation (Migration Guide & Training Materials)"
-status: "Proposed"
-priority: "Low"
-created: "2025-12-01"
-last_updated: "2025-12-01"
-owner: "Neil D. Lawrence"
-github_issue: ""
-dependencies: "CIP-0004 (completed)"
+category: documentation
+created: '2025-12-01'
+dependencies: CIP-0004 (completed)
+github_issue: ''
+id: 2025-12-01_cip0004-documentation-completion
+last_updated: '2025-12-01'
+owner: Neil D. Lawrence
+priority: Low
+related_cips: []
+status: Proposed
 tags:
 - backlog
 - documentation
 - testing
 - developer-experience
 - training
+title: Complete CIP-0004 Developer Documentation (Migration Guide & Training Materials)
 ---
 
 # Task: Complete CIP-0004 Developer Documentation
@@ -103,4 +105,3 @@ Task created to track remaining documentation work from CIP-0004. Core implement
 - ✅ Test inventory catalogued
 
 Remaining work is purely documentation to improve developer experience.
-

@@ -1,11 +1,14 @@
 ---
-id: 2025-12-07_clarify-dynamics-api
-title: Clarify InaccessibleGameDynamics API - when to use which method
-status: completed
-priority: high
-created: 2025-12-07
-owner: null
+category: features
+created: &id001 2025-12-07
 dependencies: []
+id: 2025-12-07_clarify-dynamics-api
+last_updated: *id001
+owner: null
+priority: High
+related_cips: []
+status: Completed
+title: Clarify InaccessibleGameDynamics API - when to use which method
 ---
 
 # Task: Clarify InaccessibleGameDynamics API

@@ -1,18 +1,20 @@
 ---
-id: "2025-12-01_consolidate-root-python-scripts"
-title: "Consolidate and clean up Python scripts in project root"
-status: "Proposed"
-priority: "Medium"
-created: "2025-12-01"
-last_updated: "2025-12-01"
-owner: "Neil D. Lawrence"
-github_issue: ""
-dependencies: ""
+category: infrastructure
+created: '2025-12-01'
+dependencies: ''
+github_issue: ''
+id: 2025-12-01_consolidate-root-python-scripts
+last_updated: '2025-12-01'
+owner: Neil D. Lawrence
+priority: Medium
+related_cips: []
+status: Proposed
 tags:
 - backlog
 - infrastructure
 - cleanup
 - refactoring
+title: Consolidate and clean up Python scripts in project root
 ---
 
 # Task: Consolidate and Clean Up Python Scripts in Project Root
@@ -128,4 +130,3 @@ git commit -m "Remove legacy scripts superseded by qig package"
 ### 2025-12-01
 
 Task created following cleanup of redundant Markdown documentation. Many of these scripts were documented in the now-deleted README_VALIDATION.md and README_quantum_simulation.md files, suggesting they are legacy code from the pre-qig-package era.
-

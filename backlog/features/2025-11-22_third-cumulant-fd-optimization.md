@@ -1,16 +1,17 @@
 ---
-id: 2025-11-22_third-cumulant-fd-optimization
-title: Optimize Third Cumulant Using Finite Differences
-status: Completed
-priority: High
-created: "2025-11-22"
-last_updated: "2025-11-22"
-owner: AI Assistant
-related_cips:
-  - CIP-0001
+category: features
+created: '2025-11-22'
 dependencies:
-  - 2025-11-22_theta-only-constraint-gradient
-  - 2025-11-22_theta-only-constraint-hessian
+- 2025-11-22_theta-only-constraint-gradient
+- 2025-11-22_theta-only-constraint-hessian
+id: 2025-11-22_third-cumulant-fd-optimization
+last_updated: '2025-11-22'
+owner: AI Assistant
+priority: High
+related_cips:
+- "0001"
+status: Completed
+title: Optimize Third Cumulant Using Finite Differences
 ---
 
 # Task: Optimize Third Cumulant Using Finite Differences
@@ -180,4 +181,3 @@ This completes the "quantum gradient optimization trilogy":
 2. θ-only constraint Hessian (1300-2600×)
 3. FD third cumulant (~100-500×)
 → Combined Jacobian speedup: **85×**
-

@@ -1,13 +1,19 @@
 ---
-id: 2025-11-22_entangled-pair-exponential-family
-title: Implement exponential family with entangled pairs and interaction terms
-status: Completed
-priority: High
+category: features
 created: 2025-11-22
+dependencies: []
+id: 2025-11-22_entangled-pair-exponential-family
 last_updated: 2025-11-22
 owner: Neil D. Lawrence
-tags: [quantum, entanglement, exponential-family, pairs]
-dependencies: []
+priority: High
+related_cips: []
+status: Completed
+tags:
+- quantum
+- entanglement
+- exponential-family
+- pairs
+title: Implement exponential family with entangled pairs and interaction terms
 ---
 
 # Task: Implement exponential family with entangled pairs and interaction terms
@@ -374,4 +380,3 @@ F_alpha_i = np.eye(d**2) ⊗ ... ⊗ F_alpha ⊗ ... ⊗ np.eye(d**2)
 - All acceptance criteria met except trajectory integration (deferred)
 - Jacobian corrected and fully validated for entangled systems
 - Ready for quantum inaccessible game dynamics exploration
-

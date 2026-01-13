@@ -1,12 +1,15 @@
 ---
-id: "2025-12-02_symbolic-qubit-su4-pair"
-title: "Symbolic Computation for Qubit Pairs (su(4) basis)"
-status: ready
-priority: high
-created: "2025-12-02"
-owner: ""
+category: features
+created: '2025-12-02'
 dependencies:
-  - "CIP-0007 Phase 4 (qutrits complete)"
+- CIP-0007 Phase 4 (qutrits complete)
+id: 2025-12-02_symbolic-qubit-su4-pair
+last_updated: '2025-12-02'
+owner: ''
+priority: High
+related_cips: []
+status: Ready
+title: Symbolic Computation for Qubit Pairs (su(4) basis)
 ---
 
 # Task: Symbolic Computation for Qubit Pairs (su(4) basis)
@@ -90,4 +93,3 @@ This is simpler than the qutrit case:
 ### 2025-12-02
 Task created. Qutrit implementation (su9_pair.py) complete and validated.
 Ready to begin qubit implementation following same pattern.
-

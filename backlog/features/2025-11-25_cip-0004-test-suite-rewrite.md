@@ -1,16 +1,20 @@
 ---
-author: "Neil D. Lawrence"
-created: "2025-11-25"
-id: "2025-11-25_cip-0004-test-suite-rewrite"
-last_updated: "2025-12-01"
-status: completed
+author: Neil D. Lawrence
+category: features
+created: '2025-11-25'
+id: 2025-11-25_cip-0004-test-suite-rewrite
+last_updated: '2025-12-01'
+priority: Medium
+related_cips:
+- "0004"
+status: Completed
 tags:
 - cip-implementation
 - testing
 - tolerances
 - quality-assurance
 - quantum-validation
-title: "Implement CIP-0004: Comprehensive Test Suite Rewrite with Rigorous Tolerances"
+title: 'Implement CIP-0004: Comprehensive Test Suite Rewrite with Rigorous Tolerances'
 ---
 
 # Task: Implement CIP-0004: Comprehensive Test Suite Rewrite with Rigorous Tolerances

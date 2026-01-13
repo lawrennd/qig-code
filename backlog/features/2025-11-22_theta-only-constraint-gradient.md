@@ -1,19 +1,21 @@
 ---
-id: "2025-11-22_theta-only-constraint-gradient"
-title: "Implement θ-only constraint gradient using BKM inner products"
-status: "Completed"
-priority: "High"
-created: "2025-11-22"
-last_updated: "2025-11-22"
-owner: "Assistant"
-github_issue: ""
-dependencies: "None (pure optimization)"
+category: features
+created: '2025-11-22'
+dependencies: None (pure optimization)
+github_issue: ''
+id: 2025-11-22_theta-only-constraint-gradient
+last_updated: '2025-11-22'
+owner: Assistant
+priority: High
+related_cips: []
+status: Completed
 tags:
 - backlog
 - optimization
 - performance
 - constraint-gradient
 - completed
+title: Implement θ-only constraint gradient using BKM inner products
 ---
 
 # Task: θ-only Constraint Gradient

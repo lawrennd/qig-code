@@ -55,8 +55,8 @@ def main():
     print(f"   Antisymmetric norm: {np.linalg.norm(results['A'], 'fro'):.6f}")
     print(f"   Symmetric norm: {np.linalg.norm(results['S'], 'fro'):.6f}")
     
-    # Visualize the decomposition
-    print("\n5. Creating visualizations...")
+    # Visualise the decomposition
+    print("\n5. Creating visualisations...")
     visualize_decomposition(results)
     
     # Method 2: Using the class directly for more control

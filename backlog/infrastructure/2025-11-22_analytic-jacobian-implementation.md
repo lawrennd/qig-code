@@ -1,18 +1,21 @@
 ---
-id: "2025-11-22_analytic-jacobian-implementation"
-title: "Implement Analytic Jacobian for Quantum Dynamics"
-status: "Completed"
-priority: "High"
-created: "2025-11-22"
-last_updated: "2025-11-22"
+category: infrastructure
+created: '2025-11-22'
+dependencies: 2025-11-22_remove-numerical-gradients (partial - BKM metric and marginal
+  entropy gradient done)
+github_issue: ''
+id: 2025-11-22_analytic-jacobian-implementation
+last_updated: '2025-11-22'
 owner: Neil D. Lawrence
-github_issue: ""
-dependencies: "2025-11-22_remove-numerical-gradients (partial - BKM metric and marginal entropy gradient done)"
+priority: High
+related_cips: []
+status: Completed
 tags:
 - backlog
 - infrastructure
 - quantum
 - jacobian
+title: Implement Analytic Jacobian for Quantum Dynamics
 ---
 
 # Task: Implement Analytic Jacobian for Quantum Dynamics
@@ -402,4 +405,3 @@ print(f"||∇C - ∇H|| / ||∇H|| = {rel_diff:.6f}")  # ≈ 1.11 (110%!)
 - `test_constraint_hessian.py` ✅ Step 3 (SLD baseline)
 - `test_constraint_hessian_duhamel.py` ✅ Step 3 (Duhamel precision)
 - All BKM tests (integral, spectral, commuting, non-commuting) ✅
-

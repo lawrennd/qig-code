@@ -1,18 +1,20 @@
 ---
-id: "2025-11-22_remove-numerical-gradients"
-title: "Remove numerical gradient computations from quantum game code"
-status: "Completed"
-priority: "High"
-created: "2025-11-22"
-last_updated: "2025-12-01"
-owner: "Neil D. Lawrence"
-github_issue: ""
-dependencies: ""
+category: infrastructure
+created: '2025-11-22'
+dependencies: ''
+github_issue: ''
+id: 2025-11-22_remove-numerical-gradients
+last_updated: '2025-12-01'
+owner: Neil D. Lawrence
+priority: High
+related_cips: []
+status: Completed
 tags:
 - backlog
 - infrastructure
 - optimisation
 - numerical-stability
+title: Remove numerical gradient computations from quantum game code
 ---
 
 # Task: Remove numerical gradient computations from quantum game code
@@ -209,5 +211,3 @@ The final acceptance criterion (performance benchmarking) is implicitly satisfie
 - Core library uses analytic methods (inherently faster than finite differences)
 - Scripts import from `qig` module (which has no numerical gradients)
 - No multi-minute runtimes reported in recent testing
-
-

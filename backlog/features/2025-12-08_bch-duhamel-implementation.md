@@ -1,17 +1,19 @@
 ---
-id: "2025-12-08_bch-duhamel-implementation"
-title: "Implement BCH-based Duhamel derivatives for Lie-closed bases"
-status: "in_progress"
-priority: "high"
-created: "2025-12-08"
-updated: "2025-12-08"
-tags:
-  - duhamel
-  - bch
-  - lie-algebra
-  - theoretical-validation
+category: features
+created: '2025-12-08'
+id: 2025-12-08_bch-duhamel-implementation
+last_updated: '2025-12-08'
+priority: High
 related_cips:
-  - cip0009
+- "0009"
+status: "In Progress"
+tags:
+- duhamel
+- bch
+- lie-algebra
+- theoretical-validation
+title: Implement BCH-based Duhamel derivatives for Lie-closed bases
+updated: '2025-12-08'
 ---
 
 # Task: Implement BCH-based Duhamel derivatives for Lie-closed bases
