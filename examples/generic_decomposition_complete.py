@@ -42,7 +42,7 @@ def main():
     results = run_generic_decomposition(
         theta,
         exp_fam,
-        method='duhamel',
+        method='duhamel_block',  # Higham block Fréchet: robust, no eigendecomp
         compute_diffusion=False,
         verbose=True,
         print_summary=True
@@ -61,7 +61,7 @@ def main():
     
     # Method 2: Using the class directly for more control
     print("\n6. Alternative: Using GenericDecomposition class directly...")
-    decomp = GenericDecomposition(exp_fam, method='duhamel', compute_diffusion=False)
+    decomp = GenericDecomposition(exp_fam, method='duhamel_block', compute_diffusion=False)
     results2 = decomp.compute_all(theta, verbose=False)
     decomp.print_summary(detailed=True)
     
