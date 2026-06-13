@@ -14,6 +14,7 @@ from .core import (
     von_neumann_entropy,
     create_lme_state,
     marginal_entropies,
+    loewner_kernel,
 )
 
 __all__ = [
@@ -21,6 +22,7 @@ __all__ = [
     "von_neumann_entropy",
     "create_lme_state",
     "marginal_entropies",
+    "loewner_kernel",
 ]
 
 

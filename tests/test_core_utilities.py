@@ -20,6 +20,7 @@ from qig.core import (
     create_lme_state,
     marginal_entropies,
     generic_decomposition,
+    loewner_kernel,
 )
 from qig.exponential_family import (
     pauli_basis,
@@ -294,6 +295,230 @@ class TestGENERICDecomposition:
         
         expected_shape = (exp_family.n_params, exp_family.n_params)
         assert M.shape == expected_shape, f"Jacobian shape should be {expected_shape}"
+
+
+# ============================================================================
+# Test: Loewner Kernel
+# ============================================================================
+
+class TestLoewnerKernel:
+    """
+    Test the Loewner (Kubo-Mori / BKM) divided-difference kernel.
+
+    Mathematical properties verified:
+    - Output shapes and eigenvalue clipping
+    - Eigenvectors are unitary
+    - Kernel matrix is symmetric
+    - Diagonal entries equal eigenvalues (L'Hopital limit)
+    - Off-diagonal entries satisfy the divided-difference formula
+    - LME limit: all entries equal 1/d for rho = I/d
+    - Near-degenerate eigenvalues fall back to arithmetic mean
+    - Kernel matrix is positive semidefinite
+    - Loewner map J_rho0(X) applies correctly
+    - Kernel is finite for near-pure states
+    """
+
+    def test_output_shapes_qubit(self):
+        """Return shapes are (D,D), (D,), (D,D) for a qubit."""
+        rho = np.eye(2, dtype=complex) / 2
+        C, vals, vecs = loewner_kernel(rho)
+        assert C.shape == (2, 2)
+        assert vals.shape == (2,)
+        assert vecs.shape == (2, 2)
+
+    def test_output_shapes_qutrit(self):
+        """Return shapes are correct for a qutrit."""
+        rho = np.eye(3, dtype=complex) / 3
+        C, vals, vecs = loewner_kernel(rho)
+        assert C.shape == (3, 3)
+        assert vals.shape == (3,)
+        assert vecs.shape == (3, 3)
+
+    def test_eigenvalues_clipped_positive(self):
+        """Eigenvalues should be clipped to >= 1e-14."""
+        psi = np.array([1, 0], dtype=complex)
+        rho = np.outer(psi, psi.conj())
+        C, vals, vecs = loewner_kernel(rho)
+        assert np.all(vals >= 1e-14), "All eigenvalues must be >= 1e-14"
+
+    def test_vecs_unitary(self):
+        """Eigenvectors should form a unitary matrix."""
+        rho = np.diag([0.3, 0.7]).astype(complex)
+        C, vals, vecs = loewner_kernel(rho)
+        VtV = vecs.conj().T @ vecs
+        quantum_assert_close(
+            VtV,
+            np.eye(2),
+            "density_matrix",
+            "Eigenvectors should be unitary",
+            atol=1e-12,
+            rtol=0.0,
+        )
+
+    def test_vecs_unitary_random_qutrit(self):
+        """Eigenvectors are unitary for a random mixed qutrit state."""
+        np.random.seed(0)
+        A = np.random.randn(3, 3) + 1j * np.random.randn(3, 3)
+        rho = A @ A.conj().T
+        rho /= np.trace(rho)
+        C, vals, vecs = loewner_kernel(rho)
+        VtV = vecs.conj().T @ vecs
+        quantum_assert_close(
+            VtV,
+            np.eye(3),
+            "density_matrix",
+            "Eigenvectors should be unitary for qutrit",
+            atol=1e-12,
+            rtol=0.0,
+        )
+
+    def test_kernel_symmetric(self):
+        """C is symmetric: c(lambda_i, lambda_j) = c(lambda_j, lambda_i)."""
+        np.random.seed(42)
+        A = np.random.randn(3, 3) + 1j * np.random.randn(3, 3)
+        rho = A @ A.conj().T
+        rho /= np.trace(rho)
+        C, vals, vecs = loewner_kernel(rho)
+        assert np.allclose(C, C.T, atol=1e-12), "Kernel matrix should be symmetric"
+
+    def test_diagonal_equals_eigenvalues(self):
+        """Diagonal C[i,i] equals lambda_i (the L'Hopital limit p -> p)."""
+        rho = np.diag([0.2, 0.8]).astype(complex)
+        C, vals, vecs = loewner_kernel(rho)
+        np.testing.assert_allclose(
+            np.diag(C),
+            vals,
+            atol=1e-12,
+            err_msg="Diagonal of C should equal eigenvalues",
+        )
+
+    def test_off_diagonal_divided_difference(self):
+        """Off-diagonal C[i,j] = (lambda_i - lambda_j) / (log lambda_i - log lambda_j)."""
+        rho = np.diag([0.3, 0.7]).astype(complex)
+        C, vals, vecs = loewner_kernel(rho)
+        lam0, lam1 = vals[0], vals[1]
+        expected_01 = (lam0 - lam1) / (np.log(lam0) - np.log(lam1))
+        quantum_assert_scalar_close(
+            C[0, 1],
+            expected_01,
+            "kernel",
+            "Off-diagonal entry should satisfy divided-difference formula",
+            atol=1e-12,
+            rtol=0.0,
+        )
+
+    def test_lme_limit_maximally_mixed_qubit(self):
+        """For rho = I/2, all kernel entries equal 1/2."""
+        d = 2
+        rho = np.eye(d, dtype=complex) / d
+        C, vals, vecs = loewner_kernel(rho)
+        expected = np.ones((d, d)) / d
+        quantum_assert_close(
+            C,
+            expected,
+            "kernel",
+            "LME limit for qubit: all kernel entries should be 1/d",
+            atol=1e-12,
+            rtol=0.0,
+        )
+
+    def test_lme_limit_maximally_mixed_qutrit(self):
+        """For rho = I/3, all kernel entries equal 1/3."""
+        d = 3
+        rho = np.eye(d, dtype=complex) / d
+        C, vals, vecs = loewner_kernel(rho)
+        expected = np.ones((d, d)) / d
+        quantum_assert_close(
+            C,
+            expected,
+            "kernel",
+            "LME limit for qutrit: all kernel entries should be 1/d",
+            atol=1e-12,
+            rtol=0.0,
+        )
+
+    def test_near_degenerate_uses_arithmetic_mean(self):
+        """Near-degenerate eigenvalues below tol use arithmetic mean."""
+        eps = 1e-9
+        lam = 0.5
+        rho = np.diag([lam - eps, lam + eps]).astype(complex)
+        # With tol=1e-7 the difference 2*eps=2e-9 is treated as degenerate
+        C, vals, vecs = loewner_kernel(rho, tol=1e-7)
+        # Arithmetic mean of (lam-eps) and (lam+eps) is lam
+        quantum_assert_scalar_close(
+            C[0, 1],
+            lam,
+            "kernel",
+            "Near-degenerate off-diagonal should use arithmetic mean",
+            atol=1e-7,
+            rtol=0.0,
+        )
+
+    def test_kernel_entries_positive(self):
+        """
+        All C[i,j] entries are positive.
+
+        The logarithmic mean of two positive numbers is positive, so every
+        entry of the kernel matrix (both on-diagonal and off-diagonal) is
+        strictly positive for a full-rank density matrix.
+        """
+        np.random.seed(7)
+        A = np.random.randn(3, 3) + 1j * np.random.randn(3, 3)
+        rho = A @ A.conj().T
+        rho /= np.trace(rho)
+        C, vals, vecs = loewner_kernel(rho)
+        assert np.all(C >= -1e-14), (
+            f"All kernel entries should be positive; min = {C.min():.3e}"
+        )
+
+    def test_loewner_map_diagonal_state(self):
+        """
+        J_rho0(X) for diagonal rho is element-wise multiplication C * X
+        (since vecs = I for diagonal rho).
+        """
+        rho = np.diag([0.3, 0.7]).astype(complex)
+        C, vals, vecs = loewner_kernel(rho)
+
+        X = np.array([[1.0, 0.5 + 0.2j], [0.5 - 0.2j, -1.0]], dtype=complex)
+
+        # Apply Loewner map: rotate to eigenbasis, multiply by C, rotate back
+        X_eig = vecs.conj().T @ X @ vecs
+        JX = vecs @ (C * X_eig) @ vecs.conj().T
+
+        # For diagonal rho eigh returns identity (up to sign), so JX ≈ C * X
+        expected = C * X
+        quantum_assert_close(
+            JX,
+            expected,
+            "density_matrix",
+            "Loewner map for diagonal rho should equal C * X element-wise",
+            atol=1e-12,
+            rtol=0.0,
+        )
+
+    def test_kernel_finite_near_pure_state(self):
+        """Kernel is finite and non-negative for a near-pure state."""
+        psi = np.array([np.cos(0.1), np.sin(0.1)], dtype=complex)
+        rho = np.outer(psi, psi.conj())
+        C, vals, vecs = loewner_kernel(rho)
+        assert np.all(np.isfinite(C)), "Kernel must be finite for near-pure state"
+        assert np.all(C >= -1e-12), "Kernel entries must be non-negative"
+
+    def test_kernel_entries_bounded_by_max_eigenvalue(self):
+        """Every kernel entry c(lambda_i, lambda_j) <= max(lambda_i, lambda_j)."""
+        rho = np.diag([0.1, 0.3, 0.6]).astype(complex)
+        C, vals, vecs = loewner_kernel(rho)
+        # The logarithmic mean satisfies min(x,y) <= L(x,y) <= max(x,y)
+        for i in range(len(vals)):
+            for j in range(len(vals)):
+                assert C[i, j] <= max(vals[i], vals[j]) + 1e-12, (
+                    f"Kernel entry C[{i},{j}]={C[i,j]:.4f} exceeds "
+                    f"max(λ_{i},λ_{j})={max(vals[i],vals[j]):.4f}"
+                )
+                assert C[i, j] >= min(vals[i], vals[j]) - 1e-12, (
+                    f"Kernel entry C[{i},{j}]={C[i,j]:.4f} is below "
+                    f"min(λ_{i},λ_{j})={min(vals[i],vals[j]):.4f}"
+                )
 
 
 # ============================================================================

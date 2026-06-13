@@ -211,12 +211,77 @@ def generic_decomposition(M: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     return S, A
 
 
+def loewner_kernel(
+    rho0: np.ndarray, tol: float = 1e-12
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Compute the Loewner (Kubo-Mori / BKM) divided-difference kernel for rho0.
+
+    The kernel is defined entry-wise in the eigenbasis of rho0 as::
+
+        c(lambda_i, lambda_j) = (lambda_i - lambda_j) / (log lambda_i - log lambda_j)
+                                                              for lambda_i != lambda_j
+        c(lambda_i, lambda_i) = lambda_i                      (L'Hopital limit)
+
+    For a perturbation delta_K in the eigenbasis of rho0, the corresponding
+    first-order perturbation of rho is::
+
+        delta_rho_{ij} = c(lambda_i, lambda_j) * delta_K_{ij}
+
+    This is the Frechet derivative of exp(-K - psi(K)) pushed forward from
+    modular-generator coordinates to density-matrix coordinates.
+
+    In the LME limit (all lambda_i -> 1/d), c(lambda_i, lambda_j) -> 1/d for
+    all i, j, and the induced Fisher metric degenerates to d * Id (flat geometry).
+
+    Parameters
+    ----------
+    rho0 : array, shape (D, D)
+        Background density matrix (Hermitian, positive definite)
+    tol : float
+        Threshold below which eigenvalue differences are treated as degenerate
+
+    Returns
+    -------
+    C : array, shape (D, D)
+        Kernel matrix in the eigenbasis of rho0. C[i, j] = c(lambda_i, lambda_j).
+    vals : array, shape (D,)
+        Eigenvalues of rho0 (sorted ascending, clipped to >= 1e-14)
+    vecs : array, shape (D, D)
+        Eigenvectors of rho0 as columns (unitary matrix)
+
+    Notes
+    -----
+    To obtain the Loewner map as an operator on the full space of D x D matrices,
+    use the returned vecs to rotate: for any matrix X in the original basis,
+    X_eig = vecs.conj().T @ X @ vecs, then (J_rho0(X))_eig[i,j] = C[i,j]*X_eig[i,j],
+    then rotate back: J_rho0(X) = vecs @ (C * X_eig) @ vecs.conj().T.
+    """
+    vals, vecs = eigh(rho0)
+    vals = np.clip(vals.real, 1e-14, None)
+
+    vi = vals[:, None]   # column vector of eigenvalues
+    vj = vals[None, :]   # row vector of eigenvalues
+    diff = vi - vj
+    log_diff = np.log(vi) - np.log(vj)
+
+    C = np.zeros_like(diff)
+    non_degen = np.abs(diff) > tol
+    C[non_degen] = diff[non_degen] / log_diff[non_degen]
+    # L'Hopital limit: c(p, p) = p; for near-degenerate use arithmetic mean
+    degen = ~non_degen
+    C[degen] = 0.5 * (vi + vj)[degen]
+
+    return C, vals, vecs
+
+
 __all__ = [
     "partial_trace",
     "von_neumann_entropy",
     "create_lme_state",
     "marginal_entropies",
     "generic_decomposition",
+    "loewner_kernel",
 ]
 
 
