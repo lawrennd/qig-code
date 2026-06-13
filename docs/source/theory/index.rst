@@ -14,10 +14,10 @@ Mathematical background for quantum information geometry and the inaccessible ga
    hamiltonian_extraction
    symbolic_computation
 
-matrix exponential families
+Matrix Exponential Families
 -----------------------------
 
-*Coming soon: Mathematical theory of matrix exponential families*
+*Coming soon: Mathematical theory of Matrix Exponential Families*
 
 Topics:
 - Definition and properties

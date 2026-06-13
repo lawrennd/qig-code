@@ -1,5 +1,5 @@
 """
-Comprehensive test suite for higher-order derivatives in matrix exponential families.
+Comprehensive test suite for higher-order derivatives in Matrix Exponential Families.
 
 This module consolidates all Jacobian and third cumulant tests from:
 - test_jacobian.py (full Jacobian M = ∂F/∂θ)

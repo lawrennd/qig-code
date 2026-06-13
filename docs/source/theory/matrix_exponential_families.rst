@@ -1,4 +1,4 @@
-matrix exponential families
+Matrix Exponential Families
 =============================
 
 *This section is under development.*

@@ -1,7 +1,7 @@
 qig.exponential_family
 ======================
 
-matrix exponential families and Fisher information geometry.
+Matrix Exponential Families and Fisher information geometry.
 
 The core class :class:`qig.exponential_family.MatrixExponentialFamily`
 provides several ways to compute the density-matrix derivatives

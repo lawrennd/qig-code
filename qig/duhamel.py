@@ -1,5 +1,5 @@
 """
-Duhamel formula for matrix exponential family derivatives.
+Duhamel formula for Matrix Exponential Family derivatives.
 
 For ρ = exp(H) where H = ∑ θ_a F_a - ψ(θ)I, the exact derivative is:
 

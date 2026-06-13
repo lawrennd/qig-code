@@ -1,6 +1,6 @@
 # Duhamel Derivative Methods: Comparison and Selection Guide
 
-This document provides a detailed comparison of the methods available in `qig` for computing Kubo-Mori (Duhamel) derivatives of matrix exponential families.
+This document provides a detailed comparison of the methods available in `qig` for computing Kubo-Mori (Duhamel) derivatives of Matrix Exponential Families.
 
 ## The Mathematical Problem
 

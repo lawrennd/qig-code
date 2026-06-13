@@ -1,5 +1,5 @@
 """
-Matrix exponential family and BKM metric interface for the quantum inaccessible game.
+Matrix Exponential Family and BKM metric interface for the quantum inaccessible game.
 
 This module contains:
 - local operator bases (Pauli, Gell-Mann, generalised Gell-Mann);

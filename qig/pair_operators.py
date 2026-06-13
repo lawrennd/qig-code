@@ -1,5 +1,5 @@
 """
-Operator bases for entangled pairs in matrix exponential families.
+Operator bases for entangled pairs in Matrix Exponential Families.
 
 This module provides generators for su(d²) Lie algebras, which act on
 the Hilbert space of a pair of d-level systems (e.g., two qubits for d=2).

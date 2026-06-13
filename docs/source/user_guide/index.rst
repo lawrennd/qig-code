@@ -12,10 +12,10 @@ Comprehensive guide to using **qig** for quantum information geometry.
    generic_decomposition
    advanced
 
-matrix exponential families
+Matrix Exponential Families
 -----------------------------
 
-*Coming soon: Detailed guide on matrix exponential families*
+*Coming soon: Detailed guide on Matrix Exponential Families*
 
 Topics:
 - Creating exponential families

@@ -1,7 +1,7 @@
 qig.analysis
 ============
 
-Utilities for analyzing matrix exponential families and dynamics.
+Utilities for analyzing Matrix Exponential Families and dynamics.
 
 .. automodule:: qig.analysis
    :members:

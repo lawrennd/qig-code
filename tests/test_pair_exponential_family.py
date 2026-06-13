@@ -1,5 +1,5 @@
 """
-Test suite for pair-based matrix exponential family.
+Test suite for pair-based Matrix Exponential Family.
 
 Tests:
 1. Initialization with pair basis

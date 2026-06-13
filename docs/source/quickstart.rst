@@ -3,7 +3,7 @@ Quick Start
 
 This quick start guide demonstrates the basic usage of **qig** for quantum information geometry.
 
-Creating a matrix exponential family
+Creating a Matrix Exponential Family
 --------------------------------------
 
 The core object is :class:`~qig.exponential_family.MatrixExponentialFamily`, which represents

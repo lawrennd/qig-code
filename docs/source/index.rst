@@ -5,7 +5,7 @@ Quantum Inaccessible Game (qig)
 
 The package provides tools for:
 
-* **matrix exponential families** on multi-qudit systems
+* **Matrix Exponential Families** on multi-qudit systems
 * **Fisher information metrics** (BKM metric) for quantum states
 * **Constrained dynamics** with information-geometric structure (GENERIC)
 * **Entanglement analysis** using pair-operator bases

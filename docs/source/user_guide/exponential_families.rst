@@ -1,4 +1,4 @@
-matrix exponential families
+Matrix Exponential Families
 =============================
 
 *This section is under development.*
@@ -6,7 +6,7 @@ matrix exponential families
 Introduction
 ------------
 
-matrix exponential families represent quantum states in the form:
+Matrix Exponential Families represent quantum states in the form:
 
 .. math::
 
