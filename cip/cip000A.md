@@ -2,8 +2,8 @@
 author: Neil Lawrence
 created: '2025-12-20'
 id: 000A
-last_updated: '2025-12-26'
-status: Implemented
+last_updated: '2026-01-13'
+status: Closed
 tags:
 - cip
 - duhamel
@@ -337,10 +337,11 @@ Specifically, it provides:
   - [x] Add method selection guidance (included in comparison doc)
   - [x] Add performance comparison table (included in both docs)
   - [x] Integrated with QuantumTolerances framework for consistent validation
-- [ ] **Phase 3: Extensions** (Optional)
-  - [ ] Multi-directional block method (all derivatives at once)
-  - [ ] Condition number estimation using block method
-  - [ ] Example notebook demonstrating all methods
+- [x] **Phase 3 (partial): Default method change** (2026-01-13, commit fc5321b)
+  - [x] Changed default Kubo-Mori method from `'duhamel'` (quadrature) to `'duhamel_block'` in `QuantumExponentialFamily`
+  - [x] Updated `docs/duhamel_methods_comparison.md` and `docs/source/api/duhamel.rst` to reflect new default
+  - [ ] Multi-directional block method (all derivatives at once) — deferred
+  - [ ] Condition number estimation — deferred
 
 ## References
 
