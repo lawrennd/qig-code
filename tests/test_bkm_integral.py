@@ -59,7 +59,7 @@ def bkm_metric_integral(rho, F_a, F_b, n_quad=50):
     integrand_vals = np.array([integrand(s) for s in s_vals])
     
     # Trapezoidal rule
-    G_ab = np.trapz(integrand_vals, s_vals)
+    G_ab = np.trapezoid(integrand_vals, s_vals)
     return G_ab
 
 
