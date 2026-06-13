@@ -99,7 +99,8 @@ machine precision. Block is the default and generally preferred for robustness; 
 - **Spectral**: Faster when eigendecomposition is cheap and well-conditioned;
   aligns with the adjoint/BCH structure in theory
 
-See **CIP-000A** for detailed comparison and implementation notes.
+See ``docs/duhamel_methods_comparison.md`` in the repository for a detailed
+benchmark-backed comparison of all methods with worked examples.
 
 References
 ----------
