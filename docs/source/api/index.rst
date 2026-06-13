@@ -14,6 +14,7 @@ Core Modules
    dynamics
    pair_operators
    duhamel
+   gibbs_lock
    analysis
    structure_constants
    generic

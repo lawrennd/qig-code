@@ -11,6 +11,98 @@ density-matrix dynamics take the von Neumann form
 
    \dot{\rho}_\text{rev} = -i[H_\text{eff}(\theta), \rho(\theta)].
 
+Gibbs-Locked Frames
+-------------------
+
+The central object of the Hamiltonian-emergence paper is a **Gibbs-locked frame**
+:math:`K_0 = \beta H`.  A Gibbs-locked frame is a fixed point of the linearised
+reversible dynamics: because :math:`[K_0, H] = [H, H] = 0` by construction, the
+commutator term :math:`i[\delta K, K_0]` in the linearised GENERIC equation
+generates only phase rotation in the eigenbasis of :math:`H`, without displacing
+:math:`K_0` itself.
+
+The background Gibbs state is
+
+.. math::
+
+   \rho_0 = \frac{e^{-\beta H}}{\operatorname{tr}(e^{-\beta H})},
+
+and the **Bohr gaps** are the eigenvalue differences of :math:`H`:
+
+.. math::
+
+   \Delta\epsilon_{ij} = \epsilon_i - \epsilon_j,
+   \qquad H \,|\!\epsilon_i\rangle = \epsilon_i\,|\!\epsilon_i\rangle.
+
+Linearised dynamics and the uniform decay rate :math:`\mu_0`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Near a Gibbs-locked background the linearised GENERIC equation decouples
+element-by-element in the eigenbasis of :math:`H`:
+
+.. math::
+
+   \frac{d}{dt}(\delta\rho)_{ij}
+   = \bigl(i\,\beta\,\Delta\epsilon_{ij} - \mu_0\bigr)\,(\delta\rho)_{ij},
+
+with analytical solution
+
+.. math::
+
+   (\delta\rho)_{ij}(t)
+   = (\delta\rho)_{ij}(0)\,
+     \exp\!\bigl[(i\,\beta\,\Delta\epsilon_{ij} - \mu_0)\,t\bigr].
+
+Here :math:`\mu_0 \geq 0` is the **uniform decay rate** that controls how
+quickly off-diagonal coherences decay.  It can be inferred from a trajectory
+via :func:`qig.gibbs_lock.infer_mu0`, which strips the oscillatory phase factor
+and fits the mean off-diagonal magnitude to :math:`e^{-\mu_0 t}`.
+
+Loewner-kernel pushforward
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In modular-generator coordinates, perturbations are described by :math:`\delta K`.
+The corresponding first-order change in the density matrix is given by the
+**Loewner (Kubo-Mori) divided-difference map**:
+
+.. math::
+
+   (\delta\rho)_{ij}
+   = c(\lambda_i, \lambda_j)\,(\delta K)_{ij},
+   \qquad
+   c(\lambda_i, \lambda_j)
+   = \frac{\lambda_i - \lambda_j}{\log\lambda_i - \log\lambda_j},
+
+where :math:`\lambda_i` are the eigenvalues of :math:`\rho_0` and the
+off-diagonal formula is extended by L'Hôpital's rule to
+:math:`c(\lambda, \lambda) = \lambda` on the diagonal.
+
+Iso-marginal perturbations are those for which the first-order change in every
+subsystem marginal is zero:
+
+.. math::
+
+   \operatorname{tr}_{\neq k}\!\bigl(J_{\rho_0}(\delta K)\bigr) = 0
+   \quad \forall\, k.
+
+The :class:`~qig.gibbs_lock.GibbsLockedFrame` class exposes both the kernel
+and the iso-marginal test:
+
+.. code-block:: python
+
+   from qig import GibbsLockedFrame
+
+   frame = GibbsLockedFrame(H, beta=2.0, dims=[3, 3])
+
+   # Loewner kernel at rho_0
+   C, vals, vecs = frame.loewner_kernel()
+
+   # Map a modular perturbation to density-matrix coordinates
+   delta_rho = frame.loewner_map(delta_K)
+
+   # Check iso-marginal condition
+   print(frame.is_iso_marginal(delta_K))   # True / False
+
 Mathematical Background
 -----------------------
 
@@ -163,6 +255,10 @@ See Also
 * :doc:`generic_structure` — GENERIC decomposition overview
 * :doc:`../api/duhamel` — Kubo-Mori (Duhamel) derivatives
 * :func:`qig.core.loewner_kernel` — Kubo-Mori divided-difference kernel
+* :mod:`qig.gibbs_lock` — :class:`~qig.gibbs_lock.GibbsLockedFrame` and
+  :func:`~qig.gibbs_lock.infer_mu0`
+* **Notebook** ``examples/gibbs_lock_hamiltonian_extraction.ipynb`` —
+  end-to-end companion for the Hamiltonian-emergence paper.
 
 References
 ----------
@@ -170,6 +266,11 @@ References
 - **Paper**: *The Inaccessible Game* — sections on GENERIC decomposition,
   categorical forcing of unitarity, and Hamiltonian reconstruction from
   :math:`A` and :math:`f_{abc}`.
+- **Paper**: *Gibbs-Lock and the Emergence of Hamiltonian Structure in the
+  Inaccessible Game* — Gibbs-locked frames, Bohr gaps, iso-marginal perturbations,
+  and the uniform decay rate :math:`\mu_0`.
 - **CIP-0009**: Explicit Hamiltonian Extraction from Antisymmetric GENERIC Flow.
+- **CIP-000C**: Gibbs-Lock API and :math:`\mu_0` Inference.
+- **CIP-000D**: Hamiltonian Paper End-to-End Companion notebook.
 - **Notebook**: ``examples/effective_hamiltonian_derivation.ipynb`` — symbolic
   derivation and numerical validation.

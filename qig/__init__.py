@@ -16,6 +16,7 @@ from .core import (
     marginal_entropies,
     loewner_kernel,
 )
+from .gibbs_lock import GibbsLockedFrame, infer_mu0
 
 __all__ = [
     "partial_trace",
@@ -23,6 +24,8 @@ __all__ = [
     "create_lme_state",
     "marginal_entropies",
     "loewner_kernel",
+    "GibbsLockedFrame",
+    "infer_mu0",
 ]
 
 
