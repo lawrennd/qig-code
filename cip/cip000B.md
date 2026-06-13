@@ -3,7 +3,8 @@ author: Neil Lawrence
 created: '2026-06-13'
 id: 000B
 last_updated: '2026-06-13'
-status: Implemented
+status: Closed
+compressed: true
 tags:
 - cip
 - loewner-kernel
