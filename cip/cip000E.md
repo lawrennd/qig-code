@@ -1,9 +1,10 @@
 ---
 id: "000E"
 title: "Generalised Bell Basis and Near-Bell Testbed Constructors"
-status: "Proposed"
+status: "Implemented"
 created: "2026-06-13"
 last_updated: "2026-06-13"
+compressed: false
 author: "Neil D. Lawrence"
 related_requirements: []
 related_cips: ["000C", "000D"]
@@ -14,8 +15,8 @@ tags: ["pair-operators", "lme", "bell-states", "testbed"]
 
 ## Status
 - [x] Proposed
-- [ ] Accepted
-- [ ] Implemented
+- [x] Accepted
+- [x] Implemented
 - [ ] Closed
 
 ## Summary
@@ -118,12 +119,12 @@ Add to `tests/test_pair_operators.py` (or a new `tests/test_bell_basis.py`):
 - `near_bell_gibbs_frame` produces a `GibbsLockedFrame` with `gibbs_lock_residual() < 1e-12` and `||ρ_A - I/d||_F < 1e-12`
 
 ## Implementation Status
-- [ ] Add `generalised_bell_basis(d)` to `pair_operators.py`
-- [ ] Add `near_bell_hamiltonian(d, delta)` to `pair_operators.py`
-- [ ] Add `near_bell_gibbs_frame(d, delta, beta)` to `pair_operators.py`
-- [ ] Export from `qig/__init__.py`
-- [ ] Write tests
-- [ ] Update companion notebook to call library functions
+- [x] Add `generalised_bell_basis(d)` to `pair_operators.py`
+- [x] Add `near_bell_hamiltonian(d, delta)` to `pair_operators.py`
+- [x] Add `near_bell_gibbs_frame(d, delta, beta)` to `pair_operators.py`
+- [x] Export from `qig/__init__.py`
+- [x] Write tests (`tests/test_bell_basis.py`, 33 tests, all passing)
+- [x] Update companion notebook to call library functions (`examples/gibbs_lock_hamiltonian_extraction.ipynb`)
 
 ## References
 

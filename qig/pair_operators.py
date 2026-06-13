@@ -335,6 +335,151 @@ def product_of_bell_states(
     return result
 
 
+def generalised_bell_basis(d: int) -> np.ndarray:
+    """
+    Construct the full generalised Bell basis for a pair of d-level systems.
+
+    The generalised Bell states are defined as
+
+    .. math::
+
+        |\\Phi_{mn}\\rangle = \\frac{1}{\\sqrt{d}} \\sum_{k=0}^{d-1}
+        \\omega^{km}\\, |k\\rangle \\otimes |(k+n)\\bmod d\\rangle,
+        \\quad \\omega = e^{2\\pi i/d}.
+
+    Parameters
+    ----------
+    d : int
+        Dimension of each subsystem (so the pair lives in :math:`\\mathbb{C}^{d^2}`).
+
+    Returns
+    -------
+    U : np.ndarray, shape (d², d²)
+        Unitary matrix whose column ``m * d + n`` is ``|Φ_{mn}⟩``.
+        Satisfies ``U.conj().T @ U = I`` (verified internally).
+
+    Notes
+    -----
+    The existing :func:`bell_state` covers only the ``m=0`` sub-family
+    (cyclic-shift Bell states).  This function returns all d² orthonormal
+    Bell states, spanning a complete basis for the pair Hilbert space.
+
+    Every column ``|Φ_{mn}⟩`` has exactly maximally mixed marginals:
+    ``Tr_B(|Φ_{mn}⟩⟨Φ_{mn}|) = I/d``.
+
+    Examples
+    --------
+    >>> U = generalised_bell_basis(d=2)
+    >>> U.shape
+    (4, 4)
+    >>> import numpy as np
+    >>> np.allclose(U.conj().T @ U, np.eye(4))
+    True
+    """
+    omega = np.exp(2j * np.pi / d)
+    D = d * d
+    U = np.zeros((D, D), dtype=complex)
+    for m in range(d):
+        for n in range(d):
+            col = m * d + n
+            for k in range(d):
+                row = k * d + (k + n) % d
+                U[row, col] = omega ** (k * m) / np.sqrt(d)
+    assert np.allclose(U.conj().T @ U, np.eye(D)), \
+        "generalised_bell_basis: result is not unitary"
+    return U
+
+
+def near_bell_hamiltonian(d: int, delta: float = 0.1) -> np.ndarray:
+    """
+    Hermitian Hamiltonian diagonal in the generalised Bell basis, suitable
+    for near-Bell Gibbs-state experiments.
+
+    The spectrum is:
+
+    - ``|Φ_{00}⟩``  eigenvalue ``0``     (ground state, reference Bell state)
+    - ``|Φ_{01}⟩``  eigenvalue ``delta`` (one neighbouring level)
+    - all others    eigenvalue ``1``
+
+    Because every Bell state has exactly maximally mixed marginals
+    (``ρ_A = I/d``), the Gibbs state ``ρ(β) = exp(-βH)/Z`` satisfies:
+
+    - **Exact LME** at every temperature (marginals = ``I/d`` for all β).
+    - **Approaches pure Bell state** as β → ∞.
+    - **Gibbs-locked**: ``K_0 = βH`` commutes with ``H`` trivially.
+
+    Parameters
+    ----------
+    d : int
+        Dimension of each subsystem.
+    delta : float, default 0.1
+        Energy gap of the neighbouring Bell level above the ground state.
+
+    Returns
+    -------
+    H : np.ndarray, shape (d², d²)
+        Hermitian matrix with the spectrum described above.
+
+    Examples
+    --------
+    >>> H = near_bell_hamiltonian(d=2, delta=0.1)
+    >>> H.shape
+    (4, 4)
+    >>> import numpy as np
+    >>> np.allclose(H, H.conj().T)
+    True
+    """
+    U = generalised_bell_basis(d)
+    D = d * d
+    # Spectrum: ground state 0, one neighbour at delta, rest at 1
+    spectrum = np.ones(D)
+    spectrum[0] = 0.0      # |Φ_{00}⟩ = column 0*d+0 = 0
+    spectrum[1] = delta    # |Φ_{01}⟩ = column 0*d+1 = 1
+    H = U @ np.diag(spectrum) @ U.conj().T
+    # Symmetrise to eliminate floating-point anti-Hermitian residuals
+    H = 0.5 * (H + H.conj().T)
+    return H
+
+
+def near_bell_gibbs_frame(d: int, delta: float = 0.1, beta: float = 5.0):
+    """
+    Convenience constructor for the canonical near-Bell testbed.
+
+    Builds a :class:`~qig.gibbs_lock.GibbsLockedFrame` from the near-Bell
+    Hamiltonian returned by :func:`near_bell_hamiltonian`.
+
+    The resulting frame has:
+
+    - Gibbs state exactly LME (marginals ``= I/d``) for every ``beta``.
+    - Gibbs-lock residual ``||[K_0, H]||_F < 1e-12`` (trivially satisfied
+      since ``K_0 = β H``).
+    - Pure-Bell limit as ``beta → ∞``.
+
+    Parameters
+    ----------
+    d : int
+        Dimension of each subsystem.
+    delta : float, default 0.1
+        Energy gap passed to :func:`near_bell_hamiltonian`.
+    beta : float, default 5.0
+        Inverse temperature for the Gibbs state.
+
+    Returns
+    -------
+    frame : GibbsLockedFrame
+        Fully initialised frame centred near the Bell-state boundary.
+
+    Examples
+    --------
+    >>> frame = near_bell_gibbs_frame(d=2, delta=0.1, beta=5.0)
+    >>> frame.gibbs_lock_residual() < 1e-10
+    True
+    """
+    from .gibbs_lock import GibbsLockedFrame
+    H = near_bell_hamiltonian(d, delta)
+    return GibbsLockedFrame(H, beta=beta, dims=[d, d])
+
+
 if __name__ == "__main__":
     # Test su(4) generators for qubit pair
     print("Testing su(4) generators for qubit pair:")

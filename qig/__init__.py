@@ -17,6 +17,17 @@ from .core import (
     loewner_kernel,
 )
 from .gibbs_lock import GibbsLockedFrame, infer_mu0
+from .pair_operators import (
+    gell_mann_generators,
+    pair_basis_generators,
+    bell_state,
+    bell_state_density_matrix,
+    multi_pair_basis,
+    product_of_bell_states,
+    generalised_bell_basis,
+    near_bell_hamiltonian,
+    near_bell_gibbs_frame,
+)
 
 __all__ = [
     "partial_trace",
@@ -26,6 +37,15 @@ __all__ = [
     "loewner_kernel",
     "GibbsLockedFrame",
     "infer_mu0",
+    "gell_mann_generators",
+    "pair_basis_generators",
+    "bell_state",
+    "bell_state_density_matrix",
+    "multi_pair_basis",
+    "product_of_bell_states",
+    "generalised_bell_basis",
+    "near_bell_hamiltonian",
+    "near_bell_gibbs_frame",
 ]
 
 
