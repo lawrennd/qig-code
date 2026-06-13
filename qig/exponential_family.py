@@ -940,7 +940,7 @@ class QuantumExponentialFamily:
 
         return C, grad_C
 
-    def third_cumulant_contraction(self, theta: np.ndarray, method: str = 'block') -> np.ndarray:
+    def third_cumulant_contraction(self, theta: np.ndarray, method: str = 'fd') -> np.ndarray:
         """
         Compute (∇G)[θ], the third cumulant tensor contracted with θ.
         

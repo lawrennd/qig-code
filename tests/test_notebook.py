@@ -821,6 +821,183 @@ def test_origin_paper_simulation_experiments_smoke():
         pytest.fail(f"Origin paper notebook smoke test failed: {error_msg}")
 
 
+@integration_test
+def test_gibbs_lock_hamiltonian_extraction_smoke():
+    """Smoke test for Gibbs-lock Hamiltonian extraction notebook (CIP-000D/000E companion).
+
+    This notebook constructs a near-Bell Gibbs-locked qutrit pair and extracts
+    an effective Hamiltonian from the antisymmetric part of the GENERIC flow.
+    Since CIP-000E, the Bell-basis setup delegates to library functions
+    (generalised_bell_basis, near_bell_hamiltonian, near_bell_gibbs_frame).
+
+    To run:
+      pytest -m integration tests/test_notebook.py::test_gibbs_lock_hamiltonian_extraction_smoke -v
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+
+    if not HAS_EXECUTE_PREPROCESSOR:
+        pytest.skip("nbformat/ExecutePreprocessor not installed")
+
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "gibbs_lock_hamiltonian_extraction.ipynb"
+
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+
+    success, error_msg = run_notebook_smoke_test(notebook_path, max_cells=8, timeout=120)
+
+    if not success:
+        pytest.fail(f"Gibbs-lock extraction notebook smoke test failed: {error_msg}")
+
+
+@integration_test
+def test_duhamel_methods_comparison_smoke():
+    """Smoke test for Duhamel methods comparison notebook (CIP-000A companion).
+
+    This notebook benchmarks spectral, Gauss-Legendre quadrature, and block-matrix
+    methods for computing Fréchet derivatives of matrix exponentials, producing
+    the data that informs the block method as the default in qig.duhamel.
+
+    To run:
+      pytest -m integration tests/test_notebook.py::test_duhamel_methods_comparison_smoke -v
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+
+    if not HAS_EXECUTE_PREPROCESSOR:
+        pytest.skip("nbformat/ExecutePreprocessor not installed")
+
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "duhamel_methods_comparison.ipynb"
+
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+
+    success, error_msg = run_notebook_smoke_test(notebook_path, max_cells=8, timeout=120)
+
+    if not success:
+        pytest.fail(f"Duhamel methods comparison notebook smoke test failed: {error_msg}")
+
+
+@integration_test
+def test_effective_hamiltonian_derivation_smoke():
+    """Smoke test for effective Hamiltonian derivation notebook (CIP-0009 companion).
+
+    This notebook derives the effective Hamiltonian from the antisymmetric part of
+    the GENERIC decomposition and validates the extraction algorithm.
+
+    To run:
+      pytest -m integration tests/test_notebook.py::test_effective_hamiltonian_derivation_smoke -v
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+
+    if not HAS_EXECUTE_PREPROCESSOR:
+        pytest.skip("nbformat/ExecutePreprocessor not installed")
+
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "effective_hamiltonian_derivation.ipynb"
+
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+
+    success, error_msg = run_notebook_smoke_test(notebook_path, max_cells=8, timeout=120)
+
+    if not success:
+        pytest.fail(f"Effective Hamiltonian derivation notebook smoke test failed: {error_msg}")
+
+
+@integration_test
+def test_hamiltonian_emergence_experiments_smoke():
+    """Smoke test for Hamiltonian emergence experiments notebook.
+
+    This notebook investigates how an effective Hamiltonian emerges from the
+    antisymmetric sector of quantum information geometry near entangled states.
+
+    To run:
+      pytest -m integration tests/test_notebook.py::test_hamiltonian_emergence_experiments_smoke -v
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+
+    if not HAS_EXECUTE_PREPROCESSOR:
+        pytest.skip("nbformat/ExecutePreprocessor not installed")
+
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "hamiltonian_emergence_experiments.ipynb"
+
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+
+    success, error_msg = run_notebook_smoke_test(notebook_path, max_cells=8, timeout=120)
+
+    if not success:
+        pytest.fail(f"Hamiltonian emergence experiments notebook smoke test failed: {error_msg}")
+
+
+@integration_test
+def test_multi_pair_regularisation_smoke():
+    """Smoke test for multi-pair regularisation notebook.
+
+    This notebook explores regularisation strategies for systems with multiple
+    entangled pairs, studying how the LME origin scales with the number of pairs.
+
+    To run:
+      pytest -m integration tests/test_notebook.py::test_multi_pair_regularisation_smoke -v
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+
+    if not HAS_EXECUTE_PREPROCESSOR:
+        pytest.skip("nbformat/ExecutePreprocessor not installed")
+
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "multi_pair_regularisation.ipynb"
+
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+
+    success, error_msg = run_notebook_smoke_test(notebook_path, max_cells=8, timeout=120)
+
+    if not success:
+        pytest.fail(f"Multi-pair regularisation notebook smoke test failed: {error_msg}")
+
+
+@integration_test
+def test_symbolic_verification_experiments_smoke():
+    """Smoke test for symbolic verification experiments notebook (CIP-0008 companion).
+
+    This notebook performs symbolic verification of the S/A decomposition and
+    validates analytic forms of the Kubo-Mori kernel using SymPy.
+
+    To run:
+      pytest -m integration tests/test_notebook.py::test_symbolic_verification_experiments_smoke -v
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+
+    if not HAS_EXECUTE_PREPROCESSOR:
+        pytest.skip("nbformat/ExecutePreprocessor not installed")
+
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "symbolic_verification_experiments.ipynb"
+
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+
+    success, error_msg = run_notebook_smoke_test(notebook_path, max_cells=8, timeout=120)
+
+    if not success:
+        pytest.fail(f"Symbolic verification experiments notebook smoke test failed: {error_msg}")
+
+
 if __name__ == "__main__":
     main()
 

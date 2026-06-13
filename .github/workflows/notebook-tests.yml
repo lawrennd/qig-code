@@ -37,12 +37,15 @@ jobs:
         pip install jupyter nbconvert
     
     - name: Run notebook test (default configuration)
+      env:
+        DYNAMICS_POINTS: 20
+        N_SAMPLE_POINTS: 8
       run: |
         python tests/test_notebook.py
 
     - name: Run notebook smoke tests (integration)
       run: |
-        pytest -m integration tests/test_notebook.py::test_origin_paper_simulation_experiments_smoke -v
+        pytest -m "integration and not slow" tests/test_notebook.py -v
     
     - name: Upload executed notebook
       if: always()
@@ -73,16 +76,14 @@ jobs:
     - name: Run notebook test (quick configuration)
       env:
         DYNAMICS_POINTS: 5
+        N_SAMPLE_POINTS: 3
         DYNAMICS_T_MAX: 0.5
       run: |
         python tests/test_notebook.py
 
     - name: Run notebook smoke tests (integration)
-      env:
-        DYNAMICS_POINTS: 5
-        DYNAMICS_T_MAX: 0.5
       run: |
-        pytest -m integration tests/test_notebook.py::test_origin_paper_simulation_experiments_smoke -v
+        pytest -m "integration and not slow" tests/test_notebook.py -v
     
     - name: Upload executed notebook
       if: always()
@@ -119,11 +120,8 @@ jobs:
         python tests/test_notebook.py
 
     - name: Run notebook smoke tests (integration)
-      env:
-        QUTRIT_DIM: ${{ github.event.inputs.qutrit_dim }}
-        DYNAMICS_POINTS: ${{ github.event.inputs.dynamics_points }}
       run: |
-        pytest -m integration tests/test_notebook.py::test_origin_paper_simulation_experiments_smoke -v
+        pytest -m "integration and not slow" tests/test_notebook.py -v
     
     - name: Upload executed notebook
       if: always()
