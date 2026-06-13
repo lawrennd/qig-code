@@ -1,5 +1,5 @@
 """
-Comprehensive test suite for higher-order derivatives in quantum exponential families.
+Comprehensive test suite for higher-order derivatives in matrix exponential families.
 
 This module consolidates all Jacobian and third cumulant tests from:
 - test_jacobian.py (full Jacobian M = ∂F/∂θ)
@@ -14,7 +14,7 @@ Tests are organized by derivative type:
 The Jacobian governs linearized dynamics around constraint manifold.
 The third cumulant describes how the Fisher metric varies with θ.
 
-Validates methods in: qig.exponential_family.QuantumExponentialFamily
+Validates methods in: qig.exponential_family.MatrixExponentialFamily
 - jacobian() → M = ∂F/∂θ
 - third_cumulant_contraction() → (∇G)[θ]
 
@@ -32,7 +32,7 @@ import numpy as np
 import pytest
 from scipy.linalg import eigh
 
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.dynamics import InaccessibleGameDynamics
 from tests.fd_helpers import (
     finite_difference_jacobian,
@@ -75,7 +75,7 @@ class TestJacobian:
         perturbations. We compare against finite differences but expect
         M to be small in magnitude.
         """
-        exp_family = QuantumExponentialFamily(n_sites=1, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=1, d=2)
         theta = np.array([0.7, 0.3, 0.5])
         
         # Verify F = 0 at this point
@@ -91,7 +91,7 @@ class TestJacobian:
     
     def test_single_qubit_duhamel(self):
         """Test Jacobian on single qubit with Duhamel method."""
-        exp_family = QuantumExponentialFamily(n_sites=1, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=1, d=2)
         theta = np.array([0.7, 0.3, 0.5])
         
         # Analytic (Duhamel)
@@ -113,7 +113,7 @@ class TestJacobian:
         C = S(ρ), the manifold has codimension 1, so M should have
         (at least) rank deficiency 1.
         """
-        exp_family = QuantumExponentialFamily(n_sites=1, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=1, d=2)
         theta = np.array([0.7, 0.3, 0.5])
         
         M = exp_family.jacobian(theta, method='duhamel', n_points=100)
@@ -137,7 +137,7 @@ class TestJacobian:
         Since F(θ) preserves the constraint exactly (a^T F = 0),
         the Jacobian should satisfy: a^T M = 0
         """
-        exp_family = QuantumExponentialFamily(n_sites=1, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=1, d=2)
         theta = np.array([0.7, 0.3, 0.5])
         
         _, a = exp_family.marginal_entropy_constraint(theta)
@@ -155,7 +155,7 @@ class TestJacobian:
     ])
     def test_multiple_systems(self, n_sites, d):
         """Test Jacobian on multi-site systems."""
-        exp_family = QuantumExponentialFamily(n_sites, d)
+        exp_family = MatrixExponentialFamily(n_sites, d)
         
         np.random.seed(42)
         theta = np.random.randn(exp_family.n_params) * 0.2
@@ -187,7 +187,7 @@ class TestJacobianAnalytic:
     ])
     def test_constraint_hessian(self, n_sites, d):
         """Test that constraint Hessian is computed correctly."""
-        exp_family = QuantumExponentialFamily(n_sites, d)
+        exp_family = MatrixExponentialFamily(n_sites, d)
         
         np.random.seed(42)
         theta = np.random.randn(exp_family.n_params) * 0.2
@@ -206,7 +206,7 @@ class TestJacobianAnalytic:
     ])
     def test_jacobian_vs_finite_difference(self, n_pairs, d):
         """Test that analytic Jacobian matches finite differences."""
-        exp_family = QuantumExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
+        exp_family = MatrixExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
         
         np.random.seed(24)
         theta = np.random.randn(exp_family.n_params)
@@ -232,7 +232,7 @@ class TestJacobianAnalytic:
 
 
 def compute_third_cumulant_contraction_fd(
-    exp_family: QuantumExponentialFamily,
+    exp_family: MatrixExponentialFamily,
     theta: np.ndarray,
     eps: float = 1e-7
 ) -> np.ndarray:
@@ -243,7 +243,7 @@ def compute_third_cumulant_contraction_fd(
     
     Parameters
     ----------
-    exp_family : QuantumExponentialFamily
+    exp_family : MatrixExponentialFamily
     theta : ndarray
     eps : float
         Finite difference step size
@@ -284,7 +284,7 @@ class TestThirdCumulant:
         # Create simple diagonal family (qutrit with diagonal operators)
         n_sites = 1
         d = 3
-        exp_family = QuantumExponentialFamily(n_sites, d)
+        exp_family = MatrixExponentialFamily(n_sites, d)
         
         # Use only diagonal operators (λ3 and λ8 from Gell-Mann)
         theta = np.zeros(exp_family.n_params)
@@ -303,7 +303,7 @@ class TestThirdCumulant:
     
     def test_single_qubit(self):
         """Test on single qubit (simplest non-commuting case)."""
-        exp_family = QuantumExponentialFamily(n_sites=1, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=1, d=2)
         theta = np.array([0.3, 0.5, 0.2])  # X, Y, Z
         
         # Compute via finite differences (use eps=1e-5 to avoid rounding errors)
@@ -323,7 +323,7 @@ class TestThirdCumulant:
         This means (∇G)[θ]_ij should equal (∇G)[θ]_ji when we swap the
         roles of i and j in the original tensor.
         """
-        exp_family = QuantumExponentialFamily(n_sites=1, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=1, d=2)
         theta = np.array([0.3, 0.5, 0.2])
         
         eps = 1e-7
@@ -351,7 +351,7 @@ class TestThirdCumulant:
     ])
     def test_multiple_systems(self, n_sites, d):
         """Test on multi-site systems."""
-        exp_family = QuantumExponentialFamily(n_sites, d)
+        exp_family = MatrixExponentialFamily(n_sites, d)
         
         np.random.seed(42)
         theta = np.random.randn(exp_family.n_params) * 0.2
@@ -381,7 +381,7 @@ class TestThirdCumulantSymmetry:
         mixed partial derivatives must commute regardless of operator non-commutativity.
         """
         # Setup: Use 1 qutrit pair (smaller system for faster testing)
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         n_params = exp_fam.n_params
         
         # Test at a non-zero point

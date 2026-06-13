@@ -54,10 +54,10 @@ Bridging numeric and symbolic:
 .. code-block:: python
 
    from qig.symbolic.lme_exact import numeric_lme_blocks_from_theta
-   from qig.exponential_family import QuantumExponentialFamily
+   from qig.exponential_family import MatrixExponentialFamily
    
    # Numeric θ from exponential family
-   qef = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+   qef = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
    theta = qef.get_bell_state_parameters(log_epsilon=-20)
    
    # Extract symbolic-style blocks

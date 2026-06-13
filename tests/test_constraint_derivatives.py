@@ -1,5 +1,5 @@
 """
-Comprehensive test suite for constraint derivatives in quantum exponential families.
+Comprehensive test suite for constraint derivatives in matrix exponential families.
 
 This module consolidates all constraint-related derivative tests from:
 - test_marginal_entropy_gradient.py (gradient ∇C)
@@ -14,7 +14,7 @@ Tests are organized by derivative order:
 
 The constraint is C(θ) = ∑ᵢ hᵢ(θ) where hᵢ = -Tr(ρᵢ log ρᵢ).
 
-Validates methods in: qig.exponential_family.QuantumExponentialFamily
+Validates methods in: qig.exponential_family.MatrixExponentialFamily
 - marginal_entropy_constraint() → (C, ∇C)
 - constraint_hessian() → ∇²C  
 - lagrange_multiplier_gradient() → ∇ν
@@ -34,7 +34,7 @@ import pytest
 from scipy.linalg import expm, logm
 
 from qig.core import partial_trace, von_neumann_entropy, marginal_entropies
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from tests.fd_helpers import (
     finite_difference_constraint_gradient,
     finite_difference_constraint_hessian
@@ -63,7 +63,7 @@ class TestMarginalEntropyGradient:
     ])
     def test_analytic_vs_finite_difference(self, n_sites, d):
         """Test that analytic gradient matches finite differences."""
-        exp_family = QuantumExponentialFamily(n_sites, d)
+        exp_family = MatrixExponentialFamily(n_sites, d)
         
         # Test at multiple parameter points
         np.random.seed(42)
@@ -82,7 +82,7 @@ class TestMarginalEntropyGradient:
     
     def test_gradient_chain_rule(self):
         """Verify gradient using numerical differentiation of C(θ)."""
-        exp_family = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=2)
         theta = np.array([0.1, 0.2, -0.1, 0.3, -0.2, 0.15])
         
         C_impl, grad_impl = exp_family.marginal_entropy_constraint(theta)
@@ -108,7 +108,7 @@ class TestConstraintHessian:
         """Test on diagonal operators where everything is classical."""
         n_sites = 1
         d = 3
-        exp_family = QuantumExponentialFamily(n_sites, d)
+        exp_family = MatrixExponentialFamily(n_sites, d)
         
         # Use only diagonal operators (λ3 and λ8 from Gell-Mann)
         theta = np.zeros(exp_family.n_params)
@@ -135,7 +135,7 @@ class TestConstraintHessian:
     
     def test_single_qubit(self):
         """Test on single qubit (simplest non-commuting case)."""
-        exp_family = QuantumExponentialFamily(n_sites=1, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=1, d=2)
         theta = np.array([0.3, 0.5, 0.2])  # X, Y, Z
         
         # Compute via finite differences
@@ -158,7 +158,7 @@ class TestConstraintHessian:
     
     def test_symmetry(self):
         """Test that ∇²C is symmetric (as it must be for any Hessian)."""
-        exp_family = QuantumExponentialFamily(n_sites=1, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=1, d=2)
         theta = np.array([0.3, 0.5, 0.2])
         
         hessian_fd = finite_difference_constraint_hessian(exp_family, theta, eps=1e-7)
@@ -173,7 +173,7 @@ class TestConstraintHessian:
     ])
     def test_multiple_systems(self, n_sites, d):
         """Test on multi-site systems."""
-        exp_family = QuantumExponentialFamily(n_sites, d)
+        exp_family = MatrixExponentialFamily(n_sites, d)
         
         np.random.seed(42)
         theta = np.random.randn(exp_family.n_params) * 0.2
@@ -202,7 +202,7 @@ class TestConstraintHessianDuhamel:
     
     def test_single_qubit_duhamel(self):
         """Test constraint Hessian with Duhamel method on single qubit."""
-        exp_family = QuantumExponentialFamily(n_sites=1, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=1, d=2)
         theta = np.array([0.3, 0.5, 0.2])  # X, Y, Z
         
         # Ground truth via finite differences
@@ -228,7 +228,7 @@ class TestConstraintHessianDuhamel:
     
     def test_diagonal_case_duhamel(self):
         """Test on diagonal operators (classical case)."""
-        exp_family = QuantumExponentialFamily(n_sites=1, d=3)
+        exp_family = MatrixExponentialFamily(n_sites=1, d=3)
         
         # Use only diagonal operators (λ3 and λ8 from Gell-Mann)
         theta = np.zeros(exp_family.n_params)
@@ -306,13 +306,13 @@ class TestLagrangeMultiplierGradient:
         """
         Test on single qubit with fast SLD method.
         
-        NOTE: For the quantum exponential family with constraint C = ∑h_i,
+        NOTE: For the matrix exponential family with constraint C = ∑h_i,
         there is a structural identity: Gθ = -∇C = -a
         
         This gives ν = (a^T Gθ)/||a||² = -||a||²/||a||² = -1 (constant!)
         Therefore ∇ν = 0 everywhere, which is CORRECT.
         """
-        exp_family = QuantumExponentialFamily(n_sites=1, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=1, d=2)
         theta = np.array([0.7, 0.3, 0.5])
         
         # Verify the structural identity Gθ = -a
@@ -339,7 +339,7 @@ class TestLagrangeMultiplierGradient:
     
     def test_single_qubit_duhamel(self):
         """Test on single qubit with high-precision Duhamel method."""
-        exp_family = QuantumExponentialFamily(n_sites=1, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=1, d=2)
         theta = np.array([0.7, 0.3, 0.5])
         
         # Analytic (Duhamel) - should be zero
@@ -353,7 +353,7 @@ class TestLagrangeMultiplierGradient:
     
     def test_diagonal_case(self):
         """Test on diagonal operators (qutrit)."""
-        exp_family = QuantumExponentialFamily(n_sites=1, d=3)
+        exp_family = MatrixExponentialFamily(n_sites=1, d=3)
         
         # Use only diagonal operators (λ3 and λ8)
         theta = np.zeros(exp_family.n_params)
@@ -379,7 +379,7 @@ class TestLagrangeMultiplierGradient:
     ])
     def test_multiple_systems(self, n_sites, d):
         """Test on multi-site systems."""
-        exp_family = QuantumExponentialFamily(n_sites, d)
+        exp_family = MatrixExponentialFamily(n_sites, d)
         
         np.random.seed(42)
         theta = np.random.randn(exp_family.n_params) * 0.2

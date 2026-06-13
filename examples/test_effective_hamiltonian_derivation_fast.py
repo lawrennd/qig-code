@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')  # Non-interactive backend for speed
 import matplotlib.pyplot as plt
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.structure_constants import compute_structure_constants
 from qig.generic import (
     effective_hamiltonian_coefficients,
@@ -20,7 +20,7 @@ def main():
     print("=" * 60)
     
     # Setup
-    exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+    exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
     print(f"✓ System: {exp_fam.n_pairs} pair, dim={exp_fam.D}, params={exp_fam.n_params}")
     
     # Parameter point

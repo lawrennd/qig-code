@@ -16,7 +16,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from qig.core import create_lme_state, marginal_entropies
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.dynamics import InaccessibleGameDynamics
 from inaccessible_game_quantum import compute_jacobian, generic_decomposition
 
@@ -46,7 +46,7 @@ def compare_time_parametrisations(n_sites=2, d=2, t_end=5.0):
         raise ValueError(f"n_sites={n_sites} must be even for pair operators")
     n_pairs = n_sites // 2
 
-    exp_family = QuantumExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
+    exp_family = MatrixExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
     theta_0 = np.random.randn(exp_family.n_params) * 0.1
     
     # Run in affine time
@@ -141,7 +141,7 @@ def generic_evolution(n_sites=2, d=2, t_end=5.0, n_samples=20):
         raise ValueError(f"n_sites={n_sites} must be even for pair operators")
     n_pairs = n_sites // 2
 
-    exp_family = QuantumExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
+    exp_family = MatrixExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
     theta_0 = np.random.randn(exp_family.n_params) * 0.1
     
     print("\nIntegrating dynamics...")
@@ -247,7 +247,7 @@ def compare_qubit_qutrit_optimality(t_end=3.0):
             continue
         n_pairs = n_sites // 2
         
-        exp_family = QuantumExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
+        exp_family = MatrixExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
         
         # Create LME state
         rho_lme, dims = create_lme_state(n_sites, d)
@@ -363,7 +363,7 @@ def entropy_gradient_geometry(n_sites=2, d=2, t_end: float = 5.0):
         raise ValueError(f"n_sites={n_sites} must be even for pair operators")
     n_pairs = n_sites // 2
 
-    exp_family = QuantumExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
+    exp_family = MatrixExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
     theta_0 = np.random.randn(exp_family.n_params) * 0.1
     
     print("\nIntegrating dynamics...")

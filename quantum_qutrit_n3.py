@@ -21,7 +21,7 @@ from typing import List, Tuple, Dict, Optional
 import warnings
 
 # Import from qig library
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.core import (
     partial_trace as qig_partial_trace,
     von_neumann_entropy as qig_von_neumann_entropy,
@@ -130,7 +130,7 @@ def compute_density_matrix(theta: np.ndarray, operators: List[np.ndarray]) -> np
     n_pairs = n_sites // 2
     
     # Create exponential family instance
-    exp_fam = QuantumExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
+    exp_fam = MatrixExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
     
     return exp_fam.rho_from_theta(theta)
 
@@ -192,7 +192,7 @@ def compute_constraint_gradient(theta: np.ndarray, operators: List[np.ndarray],
     Now uses qig.exponential_family.marginal_entropy_constraint.
     """
     n_pairs = n_sites // 2
-    exp_fam = QuantumExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
+    exp_fam = MatrixExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
     
     _, grad_C = exp_fam.marginal_entropy_constraint(theta)
     return grad_C
@@ -245,7 +245,7 @@ def solve_constrained_quantum_maxent(
         n_points = n_steps
     
     n_pairs = n_sites // 2
-    exp_fam = QuantumExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
+    exp_fam = MatrixExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
     dynamics = InaccessibleGameDynamics(exp_fam)
     
     # Filter out legacy kwargs that qig doesn't accept

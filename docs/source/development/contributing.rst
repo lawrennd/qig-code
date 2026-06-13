@@ -140,8 +140,8 @@ This creates a git filter that automatically strips outputs, execution counts, a
        
        Examples
        --------
-       >>> from qig.exponential_family import QuantumExponentialFamily
-       >>> exp_fam = QuantumExponentialFamily(d=3)
+       >>> from qig.exponential_family import MatrixExponentialFamily
+       >>> exp_fam = MatrixExponentialFamily(d=3)
        >>> theta = np.random.randn(exp_fam.n_params) * 0.1
        >>> G = exp_fam.fisher_information(theta)
        >>> assert G.shape == (exp_fam.n_params, exp_fam.n_params)

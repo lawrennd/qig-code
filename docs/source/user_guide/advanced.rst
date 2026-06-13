@@ -11,7 +11,7 @@ For studying entanglement, use pair operator bases that can create correlations.
 Kubo-Mori (Duhamel) Derivatives
 ---------------------------------
 
-For a quantum exponential family :math:`\rho(\theta) = e^H` with
+For a matrix exponential family :math:`\rho(\theta) = e^H` with
 :math:`H = \sum_a \theta_a F_a - \psi(\theta) I`, the exact derivative is
 
 .. math::
@@ -20,7 +20,7 @@ For a quantum exponential family :math:`\rho(\theta) = e^H` with
    = \int_0^1 e^{(1-s)H} \bigl(F_a - \langle F_a \rangle I\bigr) e^{sH}\,\mathrm{d}s.
 
 This is the Kubo-Mori (Duhamel) derivative, and it is what
-:meth:`~qig.exponential_family.QuantumExponentialFamily.rho_derivative` computes.
+:meth:`~qig.exponential_family.MatrixExponentialFamily.rho_derivative` computes.
 
 **Choosing a method**
 

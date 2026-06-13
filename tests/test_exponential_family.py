@@ -1,14 +1,14 @@
 """
-Test suite for quantum exponential family operations.
+Test suite for matrix exponential family operations.
 
 Tests verify:
-1. QuantumExponentialFamily initialization
+1. MatrixExponentialFamily initialization
 2. Density matrix generation (rho_from_theta)
 3. Fisher information computation
 4. Marginal entropy constraint gradient
 5. Mathematical properties (LME states, qutrit optimality)
 
-Validates: qig.exponential_family.QuantumExponentialFamily
+Validates: qig.exponential_family.MatrixExponentialFamily
 
 Run with: pytest test_exponential_family.py -v
 """
@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 
 from qig.core import create_lme_state, marginal_entropies, von_neumann_entropy
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.dynamics import InaccessibleGameDynamics
 from qig.core import generic_decomposition
 from tests.tolerance_framework import (
@@ -28,15 +28,15 @@ from tests.fd_helpers import finite_difference_fisher
 
 
 # ============================================================================
-# Test: Quantum Exponential Family
+# Test: matrix exponential family
 # ============================================================================
 
-class TestQuantumExponentialFamily:
-    """Test quantum exponential family operations."""
+class TestMatrixExponentialFamily:
+    """Test matrix exponential family operations."""
     
     def test_initialisation(self):
         """Test exponential family initialisation."""
-        exp_family = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=2)
         assert exp_family.n_sites == 2
         assert exp_family.d == 2
         assert exp_family.D == 4
@@ -44,7 +44,7 @@ class TestQuantumExponentialFamily:
     
     def test_rho_from_theta_trace_one(self):
         """Density matrix should have trace 1."""
-        exp_family = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=2)
         # Fix seed for reproducibility when comparing two sensitive numerical methods
         rng = np.random.default_rng(0)
         theta = rng.standard_normal(exp_family.n_params) * 0.1
@@ -58,7 +58,7 @@ class TestQuantumExponentialFamily:
     
     def test_rho_from_theta_hermitian(self):
         """Density matrix should be Hermitian."""
-        exp_family = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=2)
         theta = np.random.randn(exp_family.n_params) * 0.1
         rho = exp_family.rho_from_theta(theta)
         
@@ -70,7 +70,7 @@ class TestQuantumExponentialFamily:
     
     def test_rho_from_theta_positive(self):
         """Density matrix should be positive semi-definite."""
-        exp_family = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=2)
         theta = np.random.randn(exp_family.n_params) * 0.1
         rho = exp_family.rho_from_theta(theta)
         
@@ -79,7 +79,7 @@ class TestQuantumExponentialFamily:
     
     def test_fisher_information_positive_definite(self):
         """Fisher information should be positive definite."""
-        exp_family = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=2)
         theta = np.random.randn(exp_family.n_params) * 0.1
         G = exp_family.fisher_information(theta)
         
@@ -95,7 +95,7 @@ class TestQuantumExponentialFamily:
         Analytic BKM Fisher information should agree with a finite-difference
         Hessian of the log-partition function ψ(θ) for small systems.
         """
-        exp_family = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=2)
 
         # Test agreement for a small ensemble of natural-parameter values
         # drawn from a standard normal (no special "initialisation" scaling).
@@ -129,7 +129,7 @@ class TestQuantumExponentialFamily:
         Analytic BKM Fisher information should agree with a finite-difference
         Hessian of the log-partition function ψ(θ) for a small qutrit system.
         """
-        exp_family = QuantumExponentialFamily(n_sites=2, d=3)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=3)
 
         rng = np.random.default_rng(1)
 
@@ -161,7 +161,7 @@ class TestQuantumExponentialFamily:
         Hessian of the log-partition function ψ(θ) for a small d=4 system
         using the generalised Hermitian traceless basis.
         """
-        exp_family = QuantumExponentialFamily(n_sites=2, d=4)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=4)
 
         rng = np.random.default_rng(2)
 
@@ -190,7 +190,7 @@ class TestQuantumExponentialFamily:
     
     def test_marginal_entropy_constraint_gradient(self):
         """Constraint gradient should be non-zero for generic state."""
-        exp_family = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=2)
         theta = np.random.randn(exp_family.n_params) * 0.1
         
         C, grad_C = exp_family.marginal_entropy_constraint(theta)
@@ -234,7 +234,7 @@ class TestMathematicalProperties:
     @pytest.mark.slow
     def test_constraint_gradient_orthogonal_to_symmetric_flow(self):
         """Symmetric part of flow should be orthogonal to constraint gradient."""
-        exp_family = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=2)
         dynamics = InaccessibleGameDynamics(exp_family)
         
         theta = np.random.randn(exp_family.n_params) * 0.1
@@ -268,7 +268,7 @@ class TestMathematicalProperties:
 @pytest.mark.parametrize("n_sites,d", [(2, 2), (2, 3), (3, 2)])
 def test_various_systems(n_sites, d):
     """Test framework works for various system sizes."""
-    exp_family = QuantumExponentialFamily(n_sites, d)
+    exp_family = MatrixExponentialFamily(n_sites, d)
     assert exp_family.D == d ** n_sites
     assert exp_family.n_params == n_sites * (d**2 - 1)
 
@@ -326,7 +326,7 @@ class TestQutritValidation:
         from tests.tolerance_framework import quantum_assert_symmetric
         
         # Create exponential family with pair basis
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
 
         # Test at random point
         np.random.seed(42)
@@ -347,7 +347,7 @@ class TestQutritValidation:
         from tests.tolerance_framework import quantum_assert_close
         
         # Create exponential family
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
 
         # Test at random point
         np.random.seed(42)
@@ -378,7 +378,7 @@ class TestQutritValidation:
     def test_qutrit_third_cumulant(self):
         """Test third cumulant tensor computation."""
         # Create exponential family
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         
         # Test at random point
         np.random.seed(42)
@@ -395,7 +395,7 @@ class TestQutritValidation:
         from tests.tolerance_framework import quantum_assert_close
         
         # Create exponential family
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
 
         # Start near LME state (should have high mutual information)
         np.random.seed(42)
@@ -424,7 +424,7 @@ class TestSigmaValidation:
     
     def test_validate_sigma_valid(self):
         """Test validate_sigma accepts valid density matrices."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         D = exp_fam.D
         
         # Isotropic sigma
@@ -441,7 +441,7 @@ class TestSigmaValidation:
     
     def test_validate_sigma_invalid(self):
         """Test validate_sigma rejects invalid matrices."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         D = exp_fam.D
         
         # Wrong trace
@@ -463,7 +463,7 @@ class TestSigmaValidation:
     
     def test_detect_sigma_structure_isotropic(self):
         """Test detection of isotropic sigma."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         D = exp_fam.D
         
         sigma_iso = np.eye(D) / D
@@ -472,7 +472,7 @@ class TestSigmaValidation:
     
     def test_detect_sigma_structure_pure(self):
         """Test detection of pure state sigma."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         D = exp_fam.D
         
         psi = np.zeros(D, dtype=complex)
@@ -483,7 +483,7 @@ class TestSigmaValidation:
     
     def test_detect_sigma_structure_general(self):
         """Test detection of general sigma."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         D = exp_fam.D
         
         # Mixed state that's not isotropic
@@ -494,7 +494,7 @@ class TestSigmaValidation:
     
     def test_regularise_pure_state_isotropic(self):
         """Test regularise_pure_state with default isotropic sigma."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         D = exp_fam.D
         eps = 0.01
         
@@ -511,7 +511,7 @@ class TestSigmaValidation:
     
     def test_regularise_pure_state_custom_sigma(self):
         """Test regularise_pure_state with custom sigma."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         D = exp_fam.D
         eps = 0.1
         
@@ -534,7 +534,7 @@ class TestBellStateParametersWithSigma:
     
     def test_bell_parameters_isotropic(self):
         """Test get_bell_state_parameters with default isotropic sigma."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         
         theta = exp_fam.get_bell_state_parameters(epsilon=0.01)
         
@@ -545,7 +545,7 @@ class TestBellStateParametersWithSigma:
     
     def test_bell_parameters_custom_sigma(self):
         """Test get_bell_state_parameters with custom sigma."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         D = exp_fam.D
         
         # Custom sigma (projector)
@@ -559,7 +559,7 @@ class TestBellStateParametersWithSigma:
     
     def test_different_sigma_gives_different_theta(self):
         """Test that different sigma gives different theta."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         D = exp_fam.D
         
         # Isotropic
@@ -576,7 +576,7 @@ class TestBellStateParametersWithSigma:
     
     def test_bell_parameters_log_epsilon(self):
         """Test get_bell_state_parameters with log_epsilon."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         
         # These should give similar results
         theta1 = exp_fam.get_bell_state_parameters(epsilon=0.001)
@@ -590,7 +590,7 @@ class TestMultiPairExponentialFamily:
     
     def test_multipair_initialisation(self):
         """Test multi-pair exponential family initialisation."""
-        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
         
         assert exp_fam.n_pairs == 2
         assert exp_fam.d == 2
@@ -599,7 +599,7 @@ class TestMultiPairExponentialFamily:
     
     def test_multipair_bell_parameters(self):
         """Test get_bell_state_parameters for multi-pair."""
-        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
         
         theta = exp_fam.get_bell_state_parameters(epsilon=0.01)
         
@@ -608,7 +608,7 @@ class TestMultiPairExponentialFamily:
     
     def test_multipair_dynamics_constraint_preservation(self):
         """Test that multi-pair dynamics preserve constraint."""
-        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
         dynamics = InaccessibleGameDynamics(exp_fam)
         
         theta_0 = exp_fam.get_bell_state_parameters(epsilon=0.01)
@@ -623,7 +623,7 @@ class TestMultiPairExponentialFamily:
     
     def test_multipair_dynamics_entropy_increase(self):
         """Test that multi-pair dynamics increase entropy."""
-        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
         dynamics = InaccessibleGameDynamics(exp_fam)
         
         theta_0 = exp_fam.get_bell_state_parameters(epsilon=0.01)
@@ -641,7 +641,7 @@ class TestMultiPairExponentialFamily:
     
     def test_multipair_three_pairs(self):
         """Test with 3 qubit pairs (larger system)."""
-        exp_fam = QuantumExponentialFamily(n_pairs=3, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=3, d=2, pair_basis=True)
         
         assert exp_fam.D == 64  # (2^2)^3 = 64
         assert exp_fam.n_params == 45  # 3 * 15 = 45
@@ -656,7 +656,7 @@ class TestProductSigmaRegularisation:
 
     def test_product_sigma_matches_general(self):
         """Product σ path should match general σ computation."""
-        qef = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        qef = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
         D_pair = qef.d ** 2
         
         # Create random per-pair sigmas
@@ -685,7 +685,7 @@ class TestProductSigmaRegularisation:
         of approach' to the pure Bell state (different meridians from the
         north pole).
         """
-        qef = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        qef = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
         D_pair = qef.d ** 2
         
         # Per-pair I/d² (NOT same as isotropic I/D for the full state)
@@ -711,7 +711,7 @@ class TestProductSigmaRegularisation:
 
     def test_product_sigma_three_pairs(self):
         """Test product σ with three pairs."""
-        qef = QuantumExponentialFamily(n_pairs=3, d=2, pair_basis=True)
+        qef = MatrixExponentialFamily(n_pairs=3, d=2, pair_basis=True)
         D_pair = qef.d ** 2
         
         np.random.seed(123)
@@ -733,7 +733,7 @@ class TestProductSigmaRegularisation:
     
     def test_sigma_per_pair_basic(self):
         """Test sigma_per_pair constructs product sigma."""
-        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
         D_pair = 4  # d^2 = 4
         
         # Per-pair sigmas (isotropic on each pair)
@@ -750,7 +750,7 @@ class TestProductSigmaRegularisation:
     
     def test_sigma_per_pair_wrong_length(self):
         """Test sigma_per_pair rejects wrong number of matrices."""
-        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
         D_pair = 4
         
         sigma1 = np.eye(D_pair) / D_pair
@@ -763,7 +763,7 @@ class TestProductSigmaRegularisation:
     
     def test_sigma_and_sigma_per_pair_exclusive(self):
         """Test that sigma and sigma_per_pair cannot both be specified."""
-        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
         D = exp_fam.D
         D_pair = 4
         
@@ -783,7 +783,7 @@ class TestBlockDiagonalFisherInformation:
 
     def test_single_pair_matches_full(self):
         """Single pair block computation matches full computation."""
-        qef = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        qef = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         theta = qef.get_bell_state_parameters(epsilon=0.1)
         
         G_full = qef.fisher_information(theta)
@@ -793,7 +793,7 @@ class TestBlockDiagonalFisherInformation:
 
     def test_two_pairs_matches_full(self):
         """Two pairs block computation matches full computation."""
-        qef = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        qef = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
         theta = qef.get_bell_state_parameters(epsilon=0.1)
         
         G_full = qef.fisher_information(theta)
@@ -803,7 +803,7 @@ class TestBlockDiagonalFisherInformation:
 
     def test_three_pairs_matches_full(self):
         """Three pairs block computation matches full computation."""
-        qef = QuantumExponentialFamily(n_pairs=3, d=2, pair_basis=True)
+        qef = MatrixExponentialFamily(n_pairs=3, d=2, pair_basis=True)
         theta = qef.get_bell_state_parameters(epsilon=0.1)
         
         G_full = qef.fisher_information(theta)
@@ -813,7 +813,7 @@ class TestBlockDiagonalFisherInformation:
 
     def test_block_diagonal_structure(self):
         """Verify the result is actually block-diagonal."""
-        qef = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        qef = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
         theta = qef.get_bell_state_parameters(epsilon=0.1)
         
         G_block = qef.fisher_information_product(theta)
@@ -826,7 +826,7 @@ class TestBlockDiagonalFisherInformation:
 
     def test_qutrits_two_pairs(self):
         """Test with qutrits (d=3) for two pairs."""
-        qef = QuantumExponentialFamily(n_pairs=2, d=3, pair_basis=True)
+        qef = MatrixExponentialFamily(n_pairs=2, d=3, pair_basis=True)
         theta = qef.get_bell_state_parameters(epsilon=0.1)
         
         G_full = qef.fisher_information(theta)
@@ -836,7 +836,7 @@ class TestBlockDiagonalFisherInformation:
 
     def test_symmetric_positive_definite(self):
         """Fisher metric should be symmetric positive definite."""
-        qef = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        qef = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
         theta = qef.get_bell_state_parameters(epsilon=0.1)
         
         G = qef.fisher_information_product(theta)
@@ -850,7 +850,7 @@ class TestBlockDiagonalFisherInformation:
 
     def test_requires_pair_basis(self):
         """Should raise error if not using pair_basis."""
-        qef = QuantumExponentialFamily(n_sites=2, d=2, pair_basis=False)
+        qef = MatrixExponentialFamily(n_sites=2, d=2, pair_basis=False)
         theta = np.zeros(qef.n_params)
         
         with pytest.raises(ValueError, match="pair_basis"):
@@ -858,7 +858,7 @@ class TestBlockDiagonalFisherInformation:
 
     def test_check_product_flag(self):
         """Test check_product flag behaviour."""
-        qef = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        qef = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
         theta = qef.get_bell_state_parameters(epsilon=0.1)
         
         # With check_product=True (default) - should work for product state
@@ -871,7 +871,7 @@ class TestBlockDiagonalFisherInformation:
 
     def test_partial_trace_to_pair_correctness(self):
         """Test _partial_trace_to_pair gives correct marginals."""
-        qef = QuantumExponentialFamily(n_pairs=3, d=2, pair_basis=True)
+        qef = MatrixExponentialFamily(n_pairs=3, d=2, pair_basis=True)
         theta = qef.get_bell_state_parameters(epsilon=0.1)
         rho = qef.rho_from_theta(theta)
         

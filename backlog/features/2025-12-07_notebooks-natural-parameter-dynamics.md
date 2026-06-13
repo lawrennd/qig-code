@@ -19,7 +19,7 @@ title: Refactor notebooks to use natural parameter (θ) dynamics instead of dens
 The `boring_game_dynamics.ipynb` and `entropy_time_paths.ipynb` notebooks currently work in density matrix space (ρ) with manual Euler integration. This misses the whole point of the inaccessible game, which is formulated in natural parameter space (θ).
 
 The qig package provides:
-- `QuantumExponentialFamily` with `pair_basis=True` for entangled pairs
+- `MatrixExponentialFamily` with `pair_basis=True` for entangled pairs
 - `InaccessibleGameDynamics` for constrained dynamics: θ̇ = -Π_∥ G θ
 - `set_time_mode('entropy')` for entropy time parametrization
 - `get_bell_state_parameters(epsilon)` for regularized Bell state parameters
@@ -38,7 +38,7 @@ This is **classical** steepest ascent in ρ-space, not the quantum inaccessible 
 ## Desired State (Correct)
 
 The notebooks should:
-1. Use `QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)`
+1. Use `MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)`
 2. Get initial θ via `exp_family.get_bell_state_parameters(epsilon)`
 3. Use `InaccessibleGameDynamics(exp_family).solve_constrained_maxent()` for the dynamics
 4. Use `use_entropy_time=True` for entropy time parametrization
@@ -59,13 +59,13 @@ The notebooks should:
 
 ## Implementation
 
-### Use QuantumExponentialFamily
+### Use MatrixExponentialFamily
 
 ```python
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 
 # For single pair of qutrits
-exp_family = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+exp_family = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
 
 # Get Bell state parameters
 theta_bell = exp_family.get_bell_state_parameters(epsilon=0.01)
@@ -103,7 +103,7 @@ flow_norms = result['flow_norms']  # ||F|| → 0 at convergence
 ## Acceptance Criteria
 
 - [ ] Notebooks work in θ-space, not ρ-space
-- [ ] Use `QuantumExponentialFamily` with `pair_basis=True`
+- [ ] Use `MatrixExponentialFamily` with `pair_basis=True`
 - [ ] Use `InaccessibleGameDynamics.solve_constrained_maxent()` for the dynamics
 - [ ] Demonstrate constraint gradient a = ∇C
 - [ ] Show Lagrange multiplier ν = (a^T F_unc)/||a||²
@@ -114,7 +114,7 @@ flow_norms = result['flow_norms']  # ||F|| → 0 at convergence
 
 - Previous task (2025-12-07_refactor-notebooks-to-use-qig-api) only replaced utilities
 - CIP-0001: Package structure
-- `qig/exponential_family.py`: QuantumExponentialFamily class
+- `qig/exponential_family.py`: MatrixExponentialFamily class
 - `qig/dynamics.py`: InaccessibleGameDynamics class
 
 ## Progress Updates
@@ -126,7 +126,7 @@ Task created. Previous refactoring missed the point - replaced utilities but kep
 Both notebooks refactored to use θ-space dynamics:
 
 **boring_game_dynamics.ipynb**:
-- Main simulation now uses `QuantumExponentialFamily` and `solve_constrained_maxent()`
+- Main simulation now uses `MatrixExponentialFamily` and `solve_constrained_maxent()`
 - Shows key insight: ||a|| ≈ 0 at LME origin (constraint gradient is ~zero)
 - Demonstrates WHY the game is "boring": Π_∥ ≈ I because constraint is auto-satisfied
 - Multi-pair cells kept in ρ-space (θ-space init only supports n_pairs=1)

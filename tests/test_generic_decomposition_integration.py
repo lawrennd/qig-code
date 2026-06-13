@@ -8,7 +8,7 @@ pipeline, validating all properties and checking against known solutions.
 import numpy as np
 import pytest
 
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.generic_decomposition import run_generic_decomposition
 from qig.dynamics import GenericDynamics
 from qig.core import von_neumann_entropy, marginal_entropies
@@ -19,7 +19,7 @@ class TestEndToEnd2Qubit:
     
     def test_complete_pipeline_2qubit(self):
         """Test complete GENERIC decomposition for 2-qubit pair."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         # Start near LME origin
         theta = 0.1 * np.random.randn(exp_fam.n_params)
@@ -45,7 +45,7 @@ class TestEndToEnd2Qubit:
         
     def test_2qubit_dynamics_integration(self):
         """Test integration of GENERIC dynamics for 2-qubit."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         dyn = GenericDynamics(exp_fam)
         
         theta_0 = 0.1 * np.random.randn(exp_fam.n_params)
@@ -62,7 +62,7 @@ class TestEndToEnd2Qubit:
     @pytest.mark.slow
     def test_2qubit_constraint_preservation(self):
         """Test constraint preservation throughout integration."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         dyn = GenericDynamics(exp_fam)
         
         theta_0 = 0.1 * np.random.randn(exp_fam.n_params)
@@ -83,7 +83,7 @@ class TestEndToEnd2Qutrit:
     @pytest.mark.slow
     def test_complete_pipeline_2qutrit(self):
         """Test complete GENERIC decomposition for 2-qutrit pair."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         
         # Start near LME origin
         theta = 0.05 * np.random.randn(exp_fam.n_params)
@@ -109,8 +109,8 @@ class TestEndToEnd2Qutrit:
         
     def test_2qutrit_has_more_parameters(self):
         """Test qutrit system has correct dimensionality."""
-        exp_fam_qubit = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
-        exp_fam_qutrit = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam_qubit = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam_qutrit = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         
         # d²-1 parameters per pair
         assert exp_fam_qubit.n_params == 15  # 4² - 1
@@ -123,7 +123,7 @@ class TestGENERICProperties:
     
     def test_jacobian_decomposition(self):
         """Test M = S + A decomposition is exact."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         theta = 0.1 * np.random.randn(exp_fam.n_params)
         
         results = run_generic_decomposition(
@@ -142,7 +142,7 @@ class TestGENERICProperties:
         
     def test_symmetry_properties(self):
         """Test S is symmetric and A is antisymmetric."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         theta = 0.1 * np.random.randn(exp_fam.n_params)
         
         results = run_generic_decomposition(
@@ -162,7 +162,7 @@ class TestGENERICProperties:
         
     def test_hamiltonian_hermiticity(self):
         """Test H_eff is Hermitian."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         theta = 0.1 * np.random.randn(exp_fam.n_params)
         
         results = run_generic_decomposition(
@@ -178,7 +178,7 @@ class TestGENERICProperties:
         
     def test_hamiltonian_tracelessness(self):
         """Test H_eff is traceless."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         theta = 0.1 * np.random.randn(exp_fam.n_params)
         
         results = run_generic_decomposition(
@@ -198,7 +198,7 @@ class TestNumericalPrecision:
     
     def test_near_origin_stability(self):
         """Test stability near the origin."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         # Very small perturbations
         for scale in [1e-3, 1e-4, 1e-5]:
@@ -217,7 +217,7 @@ class TestNumericalPrecision:
             
     def test_different_parameter_magnitudes(self):
         """Test with different parameter magnitudes."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         for scale in [0.01, 0.1, 0.3]:
             theta = scale * np.random.randn(exp_fam.n_params)
@@ -240,7 +240,7 @@ class TestPropertyPreservation:
     
     def test_entropy_monotonicity(self):
         """Test entropy increases monotonically."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         dyn = GenericDynamics(exp_fam)
         
         theta_0 = 0.1 * np.random.randn(exp_fam.n_params)
@@ -255,7 +255,7 @@ class TestPropertyPreservation:
         
     def test_generic_structure_throughout_trajectory(self):
         """Test GENERIC structure preserved along trajectory."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         dyn = GenericDynamics(exp_fam)
         
         theta_0 = 0.1 * np.random.randn(exp_fam.n_params)
@@ -283,7 +283,7 @@ class TestKnownSolutions:
     
     def test_maximally_mixed_state(self):
         """Test at maximally mixed state (origin)."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         theta = np.zeros(exp_fam.n_params)
         results = run_generic_decomposition(
@@ -305,7 +305,7 @@ class TestKnownSolutions:
         
     def test_product_state_properties(self):
         """Test properties of product states."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2, pair_basis=False)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2, pair_basis=False)
         
         # Create a separable state (local parameters only)
         theta = np.random.randn(exp_fam.n_params) * 0.1
@@ -328,7 +328,7 @@ class TestRegressionTests:
     
     def test_specific_state_regression(self):
         """Test specific state gives consistent results."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         # Fixed seed for reproducibility
         np.random.seed(12345)
@@ -362,7 +362,7 @@ class TestPerformance:
         """Test 2-qubit computation completes in reasonable time."""
         import time
         
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         theta = 0.1 * np.random.randn(exp_fam.n_params)
         
         start = time.time()
@@ -381,7 +381,7 @@ class TestPerformance:
         """Test multiple decompositions scale reasonably."""
         import time
         
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         times = []
         for _ in range(5):
@@ -405,7 +405,7 @@ class TestEdgeCases:
     
     def test_very_small_constraint_gradient(self):
         """Test when constraint gradient is very small."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         # Near equilibrium where ||a|| → 0
         theta = 0.001 * np.random.randn(exp_fam.n_params)
@@ -421,7 +421,7 @@ class TestEdgeCases:
         
     def test_zero_parameters(self):
         """Test with all parameters zero."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         theta = np.zeros(exp_fam.n_params)
         

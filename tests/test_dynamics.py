@@ -25,7 +25,7 @@ from qig.core import (
     marginal_entropies,
     generic_decomposition,
 )
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.dynamics import InaccessibleGameDynamics
 
 
@@ -38,13 +38,13 @@ class TestConstrainedDynamics:
     
     def test_initialisation(self):
         """Test dynamics initialisation."""
-        exp_family = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=2)
         dynamics = InaccessibleGameDynamics(exp_family)
         assert dynamics.time_mode == 'affine'
     
     def test_time_mode_setting(self):
         """Test time mode switching."""
-        exp_family = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=2)
         dynamics = InaccessibleGameDynamics(exp_family)
         
         dynamics.set_time_mode('entropy')
@@ -55,7 +55,7 @@ class TestConstrainedDynamics:
     
     def test_flow_tangent_to_constraint(self):
         """Flow should be tangent to constraint manifold: a^T · θ̇ = 0."""
-        exp_family = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=2)
         dynamics = InaccessibleGameDynamics(exp_family)
         
         theta = np.random.randn(exp_family.n_params) * 0.01  # Smaller for speed
@@ -68,7 +68,7 @@ class TestConstrainedDynamics:
     
     def test_integration_preserves_constraint(self):
         """Integration should preserve marginal entropy constraint."""
-        exp_family = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=2)
         dynamics = InaccessibleGameDynamics(exp_family)
         
         theta_0 = np.random.randn(exp_family.n_params) * 0.01
@@ -85,7 +85,7 @@ class TestConstrainedDynamics:
     
     def test_entropy_monotonic_increase(self):
         """Joint entropy should increase monotonically."""
-        exp_family = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=2)
         dynamics = InaccessibleGameDynamics(exp_family)
         
         theta_0 = np.random.randn(exp_family.n_params) * 0.01
@@ -103,7 +103,7 @@ class TestConstrainedDynamics:
     def test_constrained_maxent_dynamics(self):
         """Test constrained maximum entropy dynamics using stable gradient descent."""
         # Use entangled pairs where the constrained optimization actually has work to do
-        exp_family = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)  # 1 entangled pair
+        exp_family = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)  # 1 entangled pair
         dynamics = InaccessibleGameDynamics(exp_family)
 
         np.random.seed(24)
@@ -193,7 +193,7 @@ class TestGENERICDecomposition:
     
     def test_jacobian_shape(self):
         """Jacobian should have correct shape."""
-        exp_family = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=2)
         dynamics = InaccessibleGameDynamics(exp_family)
         theta = np.random.randn(exp_family.n_params) * 0.1
         
@@ -212,7 +212,7 @@ class TestNumericalStability:
     
     def test_zero_parameters(self):
         """System should handle zero natural parameters (maximally mixed)."""
-        exp_family = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=2)
         theta_0 = np.zeros(exp_family.n_params)
         rho = exp_family.rho_from_theta(theta_0)
         
@@ -222,7 +222,7 @@ class TestNumericalStability:
     
     def test_small_parameters(self):
         """System should handle very small parameters."""
-        exp_family = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=2)
         theta_0 = np.random.randn(exp_family.n_params) * 1e-8
         
         dynamics = InaccessibleGameDynamics(exp_family)
@@ -233,11 +233,11 @@ class TestNumericalStability:
     def test_different_seeds_reproducible(self):
         """Same seed should give reproducible results."""
         np.random.seed(42)
-        exp_family1 = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family1 = MatrixExponentialFamily(n_sites=2, d=2)
         theta1 = np.random.randn(exp_family1.n_params) * 0.1
         
         np.random.seed(42)
-        exp_family2 = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family2 = MatrixExponentialFamily(n_sites=2, d=2)
         theta2 = np.random.randn(exp_family2.n_params) * 0.1
         
         assert np.allclose(theta1, theta2), "Same seed should give same parameters"
@@ -254,7 +254,7 @@ class TestIntegration:
     def test_full_validation_two_qubits(self):
         """Full validation pipeline for 2 qubits (1 entangled pair)."""
         # Create system with pair basis (1 pair = 2 sites)
-        exp_family = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_family = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         dynamics = InaccessibleGameDynamics(exp_family)
         
         # Random initial state
@@ -279,7 +279,7 @@ class TestIntegration:
     def test_full_validation_two_qutrits(self):
         """Full validation pipeline for 2 qutrits (1 entangled pair)."""
         # Create system with pair basis (1 pair = 2 sites)
-        exp_family = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_family = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         dynamics = InaccessibleGameDynamics(exp_family)
         
         # Random initial state

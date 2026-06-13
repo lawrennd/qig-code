@@ -23,7 +23,7 @@ title: Validate and repair BKM metric via commuting/diagonal toy families
 ## Description
 
 The current spectral/Kubo–Mori implementation of the BKM metric in
-`qig/exponential_family.QuantumExponentialFamily.fisher_information` does not
+`qig/exponential_family.MatrixExponentialFamily.fisher_information` does not
 yet agree with the finite-difference Hessian of the log-partition function
 ψ(θ) = log Tr(e^{K(θ)}) for generic non-commuting parameter directions, and
 can even produce non–positive-semidefinite metrics.
@@ -79,8 +79,8 @@ stone towards a correct general quantum BKM metric.
   - In this case ψ(θ) reduces to a classical log-partition function of a
     finite probability vector, and ∂²ψ can be written in closed form.
 - Consider implementing this as:
-  - a small, standalone commuting `QuantumExponentialFamily` variant; or
-  - a special case of the existing `QuantumExponentialFamily` where we only
+  - a small, standalone commuting `MatrixExponentialFamily` variant; or
+  - a special case of the existing `MatrixExponentialFamily` where we only
     select diagonal operators from the existing bases.
 - Verify:
   - that in the commuting case, the spectral BKM implementation reduces to the
@@ -108,8 +108,8 @@ commuting/diagonal families in `test_commuting_bkm.py`.
 
 **Key Results**:
 
-1. **Diagonal family construction**: Created `DiagonalQuantumExponentialFamily`
-   class that constructs quantum exponential families where all sufficient
+1. **Diagonal family construction**: Created `DiagonalMatrixExponentialFamily`
+   class that constructs matrix exponential families where all sufficient
    statistics F_a are diagonal in a fixed basis. For a D-dimensional Hilbert
    space, this uses D-1 traceless diagonal operators analogous to the diagonal
    Gell-Mann matrices.
@@ -123,7 +123,7 @@ commuting/diagonal families in `test_commuting_bkm.py`.
    Fisher information for the probability distribution over basis states.
 
 3. **Spectral implementation validation**: The spectral BKM implementation in
-   `qig.exponential_family.QuantumExponentialFamily.fisher_information` **passes
+   `qig.exponential_family.MatrixExponentialFamily.fisher_information` **passes
    all validation tests** for commuting families:
    - ✅ Spectral ≈ Analytic (relative error < 10⁻⁶)
    - ✅ Spectral ≈ Finite-difference Hessian of ψ(θ) (relative error < 10⁻⁴)
@@ -217,7 +217,7 @@ Extended validation beyond diagonal case to include:
 - Partially commuting: 3 tests ✅
 
 **Conclusion**: The spectral BKM implementation in
-`qig.exponential_family.QuantumExponentialFamily.fisher_information` is **FULLY VALIDATED** for:
+`qig.exponential_family.MatrixExponentialFamily.fisher_information` is **FULLY VALIDATED** for:
 1. ✅ Diagonal operators (simplest commuting case)
 2. ✅ Non-diagonal but commuting operators (rotated basis)
 3. ✅ Partially commuting operators (quantum-classical transition)

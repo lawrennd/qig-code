@@ -1,10 +1,10 @@
 """
-Quantum exponential family and BKM metric interface for the quantum inaccessible game.
+Matrix exponential family and BKM metric interface for the quantum inaccessible game.
 
 This module contains:
 - local operator bases (Pauli, Gell-Mann, generalised Gell-Mann);
 - construction of the full operator basis {F_a};
-- the `QuantumExponentialFamily` class providing ρ(θ), log-partition ψ(θ),
+- the `MatrixExponentialFamily` class providing ρ(θ), log-partition ψ(θ),
   Fisher/BKM metric G(θ), and the marginal-entropy constraint.
 """
 
@@ -99,7 +99,7 @@ def qutrit_basis(site: int, n_sites: int) -> List[np.ndarray]:
 
 def create_operator_basis(n_sites: int, d: int) -> Tuple[list, list]:
     """
-    Create full operator basis {F_a} for quantum exponential family.
+    Create full operator basis {F_a} for matrix exponential family.
 
     Parameters
     -----------
@@ -171,19 +171,19 @@ def create_operator_basis(n_sites: int, d: int) -> Tuple[list, list]:
 
 
 # ============================================================================
-# Quantum Exponential Family
+# matrix exponential family
 # ============================================================================
 
 
-class QuantumExponentialFamily:
+class MatrixExponentialFamily:
     """
-    Quantum exponential family: ρ(θ) = exp(∑ θ_a F_a - ψ(θ))
+    matrix exponential family: ρ(θ) = exp(∑ θ_a F_a - ψ(θ))
     """
 
     def __init__(self, n_sites: Optional[int] = None, d: int = 2, 
                  n_pairs: Optional[int] = None, pair_basis: bool = False):
         """
-        Initialise quantum exponential family.
+        Initialise matrix exponential family.
 
         Parameters
         -----------
@@ -526,7 +526,7 @@ class QuantumExponentialFamily:
         Compute Fisher information (BKM metric) G(θ) = ∇∇ψ(θ) using the
         Kubo-Mori / BKM inner product.
 
-        For a quantum exponential family ``ρ(θ) = exp(K(θ)) / Z(θ)`` with
+        For a matrix exponential family ``ρ(θ) = exp(K(θ)) / Z(θ)`` with
         ``K(θ) = ∑_a θ_a F_a``, the Bogoliubov-Kubo-Mori metric is:
 
         .. math::
@@ -2514,8 +2514,12 @@ __all__ = [
     "gell_mann_matrices",
     "qutrit_basis",
     "create_operator_basis",
-    "QuantumExponentialFamily",
+    "MatrixExponentialFamily",
+    "QuantumExponentialFamily",  # backward-compatible alias
 ]
+
+# Backward-compatible alias
+QuantumExponentialFamily = MatrixExponentialFamily
 
 
 

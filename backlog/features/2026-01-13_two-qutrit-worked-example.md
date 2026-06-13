@@ -35,7 +35,7 @@ entropy bookkeeping (marginal and joint entropies along the trajectory).
 
 ## Implementation Notes
 
-The notebook reuses `qig.core.create_lme_state`, `QuantumExponentialFamily`, and the
+The notebook reuses `qig.core.create_lme_state`, `MatrixExponentialFamily`, and the
 block-matrix Duhamel derivative (CIP-000A default) to trace the entropy-time path.
 PDF figure generation uses matplotlib with publication-quality settings.
 

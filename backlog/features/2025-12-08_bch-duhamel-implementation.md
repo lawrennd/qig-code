@@ -180,13 +180,13 @@ CIP-0009 (Hamiltonian extraction from antisymmetric flow) has been **implemented
 
 ### 2025-12-08 (later)
 - Implemented spectral/BCH Duhamel kernel `duhamel_derivative_spectral` in `qig.duhamel`
-  and wired it into `QuantumExponentialFamily.rho_derivative` as `method='duhamel_spectral'`.
+  and wired it into `MatrixExponentialFamily.rho_derivative` as `method='duhamel_spectral'`.
 - Added regression tests comparing spectral vs quadrature Duhamel and both vs finite
   differences (`TestRhoDerivativeNumerical` in `tests/test_pair_exponential_family.py`).
 - Updated API docs (`docs/source/api/duhamel.rst`, `docs/source/api/exponential_family.rst`)
   to explain quadrature vs spectral Duhamel and how this realises the Lie-closure/BCH
   story.
-- Expanded theory docs (`docs/source/theory/quantum_exponential_families.rst`) with an
+- Expanded theory docs (`docs/source/theory/matrix_exponential_families.rst`) with an
   explanation of why Duhamel integrals appear, and how our Lie-closed exponential-family
   viewpoint repackages the Kubo–Mori structure as a finite-dimensional kernel
   \(K_\rho = f(\mathrm{ad}_H)\) rather than dropping it.

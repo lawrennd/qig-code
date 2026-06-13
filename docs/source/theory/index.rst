@@ -6,7 +6,7 @@ Mathematical background for quantum information geometry and the inaccessible ga
 .. toctree::
    :maxdepth: 2
    
-   quantum_exponential_families
+   matrix_exponential_families
    fisher_information
    inaccessible_game
    origin_regularisation
@@ -14,10 +14,10 @@ Mathematical background for quantum information geometry and the inaccessible ga
    hamiltonian_extraction
    symbolic_computation
 
-Quantum Exponential Families
+matrix exponential families
 -----------------------------
 
-*Coming soon: Mathematical theory of quantum exponential families*
+*Coming soon: Mathematical theory of matrix exponential families*
 
 Topics:
 - Definition and properties

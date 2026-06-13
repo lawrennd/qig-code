@@ -12,14 +12,14 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.structure_constants import compute_structure_constants
 
 
 @pytest.fixture
 def qutrit_pair_family():
     """Qutrit pair with full su(9) basis (80 parameters)."""
-    return QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+    return MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
 
 
 @pytest.fixture
@@ -43,11 +43,11 @@ class TestSU9SymbolicInfrastructure:
     def test_symbolic_su9_generators(self):
         """Test symbolic su(9) generators match numerical."""
         from qig.symbolic import symbolic_su9_generators
-        from qig.exponential_family import QuantumExponentialFamily
+        from qig.exponential_family import MatrixExponentialFamily
         
         # Get symbolic and numerical generators
         symbolic_gen = symbolic_su9_generators()
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         numerical_gen = exp_fam.operators
         
         assert len(symbolic_gen) == 80, "Should have 80 generators"
@@ -63,7 +63,7 @@ class TestSU9SymbolicInfrastructure:
     def test_symbolic_su9_structure_constants(self):
         """Test symbolic su(9) structure constants."""
         from qig.symbolic import symbolic_su9_structure_constants
-        from qig.exponential_family import QuantumExponentialFamily
+        from qig.exponential_family import MatrixExponentialFamily
         
         # Get structure constants
         f_sym = symbolic_su9_structure_constants()
@@ -79,7 +79,7 @@ class TestSU9SymbolicInfrastructure:
                         f"f_{{{a},{b},{c}}} should be antisymmetric in first two indices"
         
         # Jacobi identity (sample)
-        generators = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True).operators
+        generators = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True).operators
         for a, b, c in [(0, 1, 2), (1, 2, 3), (2, 3, 4)]:
             comm_ab_c = np.trace((generators[a] @ generators[b] - 
                                   generators[b] @ generators[a]) @ generators[c])

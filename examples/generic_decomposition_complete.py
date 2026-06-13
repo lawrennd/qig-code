@@ -11,7 +11,7 @@ System: 2-qubit entangled pair with su(4) generators (15 parameters)
 import numpy as np
 import matplotlib.pyplot as plt
 
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.generic_decomposition import GenericDecomposition, run_generic_decomposition
 
 
@@ -25,7 +25,7 @@ def main():
     
     # Initialize 2-qubit system with pair basis (su(4) generators)
     print("\n1. Initialize exponential family...")
-    exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+    exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
     print(f"   System: {exp_fam.n_sites} qubits")
     print(f"   Hilbert space dimension: {exp_fam.D}")
     print(f"   Number of parameters: {exp_fam.n_params}")

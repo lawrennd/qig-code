@@ -461,7 +461,7 @@ def test_lme_numeric_symbolic_bridge_smoke():
     
     This test validates the notebook that bridges the symbolic LME decomposition
     (qig.symbolic.lme_exact) with the numeric exponential family 
-    (qig.exponential_family.QuantumExponentialFamily).
+    (qig.exponential_family.MatrixExponentialFamily).
     
     The notebook demonstrates:
     - Regularized Bell state construction with log_epsilon

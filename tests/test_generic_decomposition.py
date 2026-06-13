@@ -7,7 +7,7 @@ flow Jacobian and verification of degeneracy conditions.
 
 import pytest
 import numpy as np
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 
 
 class TestSymmetricPart:
@@ -15,7 +15,7 @@ class TestSymmetricPart:
     
     def test_symmetry_property(self):
         """Test that S = S^T."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         S = exp_fam.symmetric_part(theta)
@@ -26,7 +26,7 @@ class TestSymmetricPart:
     
     def test_reconstruction_from_parts(self):
         """Test that M = S + A."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         M = exp_fam.jacobian(theta)
@@ -43,7 +43,7 @@ class TestAntisymmetricPart:
     
     def test_antisymmetry_property(self):
         """Test that A = -A^T."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta)
@@ -54,7 +54,7 @@ class TestAntisymmetricPart:
     
     def test_trace_zero(self):
         """Test that Tr(A) = 0."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta)
@@ -69,7 +69,7 @@ class TestDegeneracyConditions:
     
     def test_diagnostics_structure(self):
         """Test that diagnostics dict has all required keys."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         diagnostics = exp_fam.verify_degeneracy_conditions(theta)
@@ -86,7 +86,7 @@ class TestDegeneracyConditions:
     
     def test_symmetry_antisymmetry_verified(self):
         """Test that S and A have correct symmetry properties."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         diagnostics = exp_fam.verify_degeneracy_conditions(theta)
@@ -97,7 +97,7 @@ class TestDegeneracyConditions:
     
     def test_reconstruction_verified(self):
         """Test that M = S + A is verified."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         diagnostics = exp_fam.verify_degeneracy_conditions(theta)
@@ -107,7 +107,7 @@ class TestDegeneracyConditions:
     
     def test_entropy_production_nonnegative(self):
         """Test that entropy production θ^T S θ ≥ 0."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         diagnostics = exp_fam.verify_degeneracy_conditions(theta)
@@ -117,7 +117,7 @@ class TestDegeneracyConditions:
     
     def test_degeneracy_at_small_theta(self):
         """Test degeneracy conditions near origin."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 1e-3 * np.random.rand(exp_fam.n_params)
         
         diagnostics = exp_fam.verify_degeneracy_conditions(theta, tol=1e-4)
@@ -133,7 +133,7 @@ class TestDifferentSystems:
     
     def test_two_qubit_system(self):
         """Test GENERIC decomposition for 2-qubit system."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)  # 6 parameters
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)  # 6 parameters
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         M = exp_fam.jacobian(theta)
@@ -147,7 +147,7 @@ class TestDifferentSystems:
     
     def test_two_qutrit_system(self):
         """Test GENERIC decomposition for 2-qutrit system."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=3)  # 16 parameters
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=3)  # 16 parameters
         theta = 0.05 * np.random.rand(exp_fam.n_params)
         
         M = exp_fam.jacobian(theta)
@@ -161,7 +161,7 @@ class TestDifferentSystems:
     
     def test_entangled_pair_system(self):
         """Test GENERIC decomposition for entangled pair (pair basis)."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)  # 15 parameters
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)  # 15 parameters
         theta = 0.05 * np.random.rand(exp_fam.n_params)
         
         M = exp_fam.jacobian(theta)

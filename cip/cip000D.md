@@ -88,10 +88,10 @@ matched-index modes are not.
 **Section 3 — GENERIC decomposition and Hamiltonian extraction**
 
 ```python
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.generic_decomposition import GENERICDecomposer, effective_hamiltonian_operator
 
-exp_fam = QuantumExponentialFamily(d=3, n_pairs=1)
+exp_fam = MatrixExponentialFamily(d=3, n_pairs=1)
 # Construct theta corresponding to frame.rho0 ...
 decomposer = GENERICDecomposer(exp_fam)
 decomposer.compute_all(theta_star)

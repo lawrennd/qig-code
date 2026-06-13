@@ -7,7 +7,7 @@ operator D[ρ] from the symmetric flow.
 
 import pytest
 import numpy as np
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.structure_constants import compute_structure_constants
 from qig.generic import (
     kubo_mori_derivatives,
@@ -25,7 +25,7 @@ class TestKuboMoriDerivatives:
     
     def test_derivatives_computed(self):
         """Test that derivatives are computed for all parameters."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         drho_dtheta = kubo_mori_derivatives(theta, exp_fam.operators, exp_fam)
@@ -40,7 +40,7 @@ class TestKuboMoriDerivatives:
     
     def test_derivatives_hermitian(self):
         """Test that Kubo-Mori derivatives are Hermitian."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         drho_dtheta = kubo_mori_derivatives(theta, exp_fam.operators, exp_fam)
@@ -55,7 +55,7 @@ class TestDiffusionOperator:
     
     def test_operator_constructed(self):
         """Test that D[ρ] is constructed."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         S = exp_fam.symmetric_part(theta)
@@ -66,7 +66,7 @@ class TestDiffusionOperator:
     
     def test_hermiticity(self):
         """Test that D[ρ] is Hermitian."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         S = exp_fam.symmetric_part(theta)
@@ -77,7 +77,7 @@ class TestDiffusionOperator:
     
     def test_trace_preservation(self):
         """Test that Tr(D[ρ]) = 0."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         S = exp_fam.symmetric_part(theta)
@@ -88,7 +88,7 @@ class TestDiffusionOperator:
     
     def test_entropy_production(self):
         """Test that entropy production is non-negative."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         S = exp_fam.symmetric_part(theta)
@@ -109,7 +109,7 @@ class TestMilburnApproximation:
     
     def test_milburn_computed(self):
         """Test that Milburn approximation computes."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta)
@@ -126,7 +126,7 @@ class TestMilburnApproximation:
     
     def test_milburn_hermitian(self):
         """Test that Milburn approximation is Hermitian."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta)
@@ -143,7 +143,7 @@ class TestMilburnApproximation:
     
     def test_milburn_trace_preserving(self):
         """Test that Milburn approximation preserves trace."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta)
@@ -164,7 +164,7 @@ class TestVerification:
     
     def test_verification_report(self):
         """Test verification report structure."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         S = exp_fam.symmetric_part(theta)
@@ -182,7 +182,7 @@ class TestVerification:
     
     def test_all_checks_pass(self):
         """Test that all verification checks pass."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         S = exp_fam.symmetric_part(theta)
@@ -200,7 +200,7 @@ class TestCrossValidation:
     
     def test_comparison_report(self):
         """Test comparison report structure."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.05 * np.random.rand(exp_fam.n_params)
         
         S = exp_fam.symmetric_part(theta)
@@ -220,7 +220,7 @@ class TestDifferentSystems:
     
     def test_two_qubit_system(self):
         """Test diffusion operator for 2-qubit system."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         S = exp_fam.symmetric_part(theta)
@@ -234,7 +234,7 @@ class TestDifferentSystems:
     
     def test_two_qutrit_system(self):
         """Test diffusion operator for 2-qutrit system."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=3)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=3)
         theta = 0.05 * np.random.rand(exp_fam.n_params)
         
         S = exp_fam.symmetric_part(theta)
@@ -250,7 +250,7 @@ class TestNearEquilibrium:
     
     def test_small_dissipation(self):
         """Test that near origin, dissipation is small."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 1e-4 * np.random.rand(exp_fam.n_params)
         
         S = exp_fam.symmetric_part(theta)
@@ -261,7 +261,7 @@ class TestNearEquilibrium:
     
     def test_positivity_preservation(self):
         """Test that positivity is preserved under time evolution."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         S = exp_fam.symmetric_part(theta)

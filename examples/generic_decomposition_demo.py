@@ -8,7 +8,7 @@ that characterize the GENERIC structure.
 
 import numpy as np
 import matplotlib.pyplot as plt
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 
 
 def demo_two_qubit_decomposition():
@@ -20,7 +20,7 @@ def demo_two_qubit_decomposition():
     print("="*70)
     
     # Initialize exponential family
-    exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+    exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
     print(f"\nSystem: {exp_fam.n_sites} qubits")
     print(f"Parameters: {exp_fam.n_params}")
     

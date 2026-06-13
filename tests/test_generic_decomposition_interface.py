@@ -8,7 +8,7 @@ convenience function.
 import numpy as np
 import pytest
 
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.generic_decomposition import GenericDecomposition, run_generic_decomposition
 
 
@@ -17,7 +17,7 @@ class TestGenericDecompositionClass:
     
     def test_initialization(self):
         """Test GenericDecomposition initialization."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         decomp = GenericDecomposition(exp_fam)
         
         assert decomp.exp_fam is exp_fam
@@ -27,7 +27,7 @@ class TestGenericDecompositionClass:
         
     def test_compute_all_basic(self):
         """Test complete computation runs successfully."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         decomp = GenericDecomposition(exp_fam, compute_diffusion=False)
         
         theta = 0.1 * np.random.randn(exp_fam.n_params)
@@ -45,7 +45,7 @@ class TestGenericDecompositionClass:
             
     def test_compute_all_with_diffusion(self):
         """Test computation with diffusion operator."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         decomp = GenericDecomposition(exp_fam, compute_diffusion=True)
         
         theta = 0.05 * np.random.randn(exp_fam.n_params)
@@ -56,7 +56,7 @@ class TestGenericDecompositionClass:
         
     def test_results_have_correct_shapes(self):
         """Test all results have expected shapes."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         decomp = GenericDecomposition(exp_fam)
         
         theta = 0.1 * np.random.randn(exp_fam.n_params)
@@ -84,7 +84,7 @@ class TestDiagnostics:
     
     def test_diagnostics_computed(self):
         """Test diagnostics are computed."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         decomp = GenericDecomposition(exp_fam)
         
         theta = 0.1 * np.random.randn(exp_fam.n_params)
@@ -105,7 +105,7 @@ class TestDiagnostics:
             
     def test_algebraic_checks_pass(self):
         """Test core algebraic properties pass."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         decomp = GenericDecomposition(exp_fam)
         
         theta = 0.1 * np.random.randn(exp_fam.n_params)
@@ -122,7 +122,7 @@ class TestDiagnostics:
         
     def test_diagnostics_with_diffusion(self):
         """Test diagnostics include diffusion operator checks."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         decomp = GenericDecomposition(exp_fam, compute_diffusion=True)
         
         theta = 0.05 * np.random.randn(exp_fam.n_params)
@@ -144,7 +144,7 @@ class TestPrintSummary:
     
     def test_print_summary_without_results(self, capsys):
         """Test print_summary before computation."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         decomp = GenericDecomposition(exp_fam)
         
         decomp.print_summary()
@@ -153,7 +153,7 @@ class TestPrintSummary:
         
     def test_print_summary_basic(self, capsys):
         """Test basic summary printing."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         decomp = GenericDecomposition(exp_fam)
         
         theta = 0.1 * np.random.randn(exp_fam.n_params)
@@ -169,7 +169,7 @@ class TestPrintSummary:
         
     def test_print_summary_detailed(self, capsys):
         """Test detailed summary printing."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         decomp = GenericDecomposition(exp_fam)
         
         theta = 0.1 * np.random.randn(exp_fam.n_params)
@@ -186,7 +186,7 @@ class TestConvenienceFunction:
     
     def test_convenience_function_basic(self):
         """Test convenience function runs."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         theta = 0.1 * np.random.randn(exp_fam.n_params)
         
         results = run_generic_decomposition(
@@ -201,7 +201,7 @@ class TestConvenienceFunction:
         
     def test_convenience_function_with_options(self):
         """Test convenience function with various options."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         theta = 0.05 * np.random.randn(exp_fam.n_params)
         
         results = run_generic_decomposition(
@@ -216,7 +216,7 @@ class TestConvenienceFunction:
         
     def test_convenience_function_prints_summary(self, capsys):
         """Test convenience function prints summary when requested."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         theta = 0.1 * np.random.randn(exp_fam.n_params)
         
         run_generic_decomposition(
@@ -234,7 +234,7 @@ class TestOriginState:
     
     def test_origin_state(self):
         """Test decomposition at θ=0 (LME origin)."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         decomp = GenericDecomposition(exp_fam)
         
         theta = np.zeros(exp_fam.n_params)
@@ -260,7 +260,7 @@ class TestMultipleStates:
     
     def test_multiple_random_states(self):
         """Test decomposition works for multiple random states."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         decomp = GenericDecomposition(exp_fam)
         
         # Test 5 random states

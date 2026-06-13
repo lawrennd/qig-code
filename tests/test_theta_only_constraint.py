@@ -8,7 +8,7 @@ and verifies performance improvements.
 import numpy as np
 import pytest
 import time
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.core import partial_trace
 from tests.tolerance_framework import quantum_assert_close, quantum_assert_symmetric
 
@@ -18,7 +18,7 @@ class TestLiftToFullSpace:
     
     def test_lift_adjoint_property_qubits(self):
         """Verify lift is adjoint of partial_trace for qubits."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         # Create random operator on subsystem 0
         d0 = exp_fam.dims[0]
@@ -42,7 +42,7 @@ class TestLiftToFullSpace:
     
     def test_lift_adjoint_property_qutrits(self):
         """Verify lift is adjoint of partial_trace for qutrits."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         
         # Test for subsystem 1
         d1 = exp_fam.dims[1]
@@ -63,7 +63,7 @@ class TestLiftToFullSpace:
     
     def test_lift_identity(self):
         """Lifting identity on subsystem i should give I ⊗ ... ⊗ I."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         I_0 = np.eye(exp_fam.dims[0], dtype=complex)
         I_full_lifted = exp_fam._lift_to_full_space(I_0, site_i=0)
@@ -77,7 +77,7 @@ class TestLiftToFullSpace:
     
     def test_lift_dimension(self):
         """Lifted operator should have full Hilbert space dimension."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         
         op_0 = np.random.randn(exp_fam.dims[0], exp_fam.dims[0])
         op_full = exp_fam._lift_to_full_space(op_0, site_i=0)
@@ -90,7 +90,7 @@ class TestBKMKernel:
     
     def test_kernel_diagonal(self):
         """Diagonal elements should equal eigenvalues."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         theta = np.random.randn(exp_fam.n_params)
         rho = exp_fam.rho_from_theta(theta)
@@ -103,7 +103,7 @@ class TestBKMKernel:
     
     def test_kernel_symmetry(self):
         """Kernel should be symmetric."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         theta = np.random.randn(exp_fam.n_params)
         rho = exp_fam.rho_from_theta(theta)
@@ -115,7 +115,7 @@ class TestBKMKernel:
     
     def test_kernel_limit(self):
         """Off-diagonal kernel should satisfy limit formula."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         theta = np.random.randn(exp_fam.n_params)
         rho = exp_fam.rho_from_theta(theta)
@@ -136,7 +136,7 @@ class TestThetaOnlyVsDuhamel:
     
     def test_qubit_pair_random_theta(self):
         """Compare θ-only vs Duhamel for random θ (qubit pair)."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         np.random.seed(24)
         theta = np.random.randn(exp_fam.n_params)
@@ -164,7 +164,7 @@ class TestThetaOnlyVsDuhamel:
     
     def test_qutrit_pair_random_theta(self):
         """Compare θ-only vs Duhamel for random θ (qutrit pair)."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         
         np.random.seed(24)
         theta = np.random.randn(exp_fam.n_params)  
@@ -189,7 +189,7 @@ class TestThetaOnlyVsDuhamel:
     
     def test_multiple_random_states(self):
         """Test on multiple random states to ensure robustness."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         max_rel_error = 0.0
         n_tests = 10
@@ -220,7 +220,7 @@ class TestPerformance:
     
     def test_qubit_pair_speedup(self):
         """Measure speedup for qubit pair (15 parameters)."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         np.random.seed(24)
         theta = np.random.randn(exp_fam.n_params)
@@ -254,7 +254,7 @@ class TestPerformance:
     
     def test_qutrit_pair_speedup(self):
         """Measure speedup for qutrit pair (80 parameters)."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         
         np.random.seed(24)
         theta = np.random.randn(exp_fam.n_params)
@@ -289,7 +289,7 @@ class TestPerformance:
     @pytest.mark.slow
     def test_two_qubit_pairs_speedup(self):
         """Measure speedup for two qubit pairs (30 parameters)."""
-        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
         
         np.random.seed(24)
         theta = np.random.randn(exp_fam.n_params)
@@ -327,7 +327,7 @@ class TestThetaOnlyHessian:
     
     def test_hessian_hermiticity(self):
         """Hessian should be symmetric (Hermitian for real matrix)."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         np.random.seed(24)
         theta = np.random.randn(exp_fam.n_params)
@@ -340,7 +340,7 @@ class TestThetaOnlyHessian:
     
     def test_fd_vs_duhamel_qubit_pair(self):
         """Compare FD θ-only method vs legacy Duhamel method for qubit pair."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         np.random.seed(24)
         theta = np.random.randn(exp_fam.n_params)
@@ -369,7 +369,7 @@ class TestThetaOnlyHessian:
     @pytest.mark.slow
     def test_fd_vs_duhamel_qutrit_pair(self):
         """Compare FD θ-only method vs legacy Duhamel method for qutrit pair."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         
         np.random.seed(24)
         theta = np.random.randn(exp_fam.n_params)
@@ -396,7 +396,7 @@ class TestThetaOnlyHessian:
     
     def test_step_size_stability(self):
         """Verify Hessian is stable across different step sizes."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         np.random.seed(24)
         theta = np.random.randn(exp_fam.n_params)
@@ -423,7 +423,7 @@ class TestThetaOnlyHessian:
     
     def test_positive_semidefinite(self):
         """For convex problems, Hessian should be positive semidefinite."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         # Test at multiple points
         for seed in range(3):
@@ -446,7 +446,7 @@ class TestHessianPerformance:
     
     def test_qubit_pair_hessian_speed(self):
         """Measure absolute performance for qubit pair (15 parameters)."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         np.random.seed(24)
         theta = np.random.randn(exp_fam.n_params)
@@ -470,7 +470,7 @@ class TestHessianPerformance:
     
     def test_qutrit_pair_hessian_speed(self):
         """Measure absolute performance for qutrit pair (80 parameters)."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         
         np.random.seed(24)
         theta = np.random.randn(exp_fam.n_params)
@@ -495,7 +495,7 @@ class TestHessianPerformance:
     @pytest.mark.slow
     def test_qubit_pair_speedup_vs_duhamel(self):
         """Compare FD θ-only vs Duhamel for qubit pair (slow - single iteration)."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         np.random.seed(24)
         theta = np.random.randn(exp_fam.n_params)

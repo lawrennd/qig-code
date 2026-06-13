@@ -71,7 +71,7 @@ Running Tests
    pytest tests/test_pair_exponential_family.py -v
    
    # Specific test
-   pytest tests/test_exponential_family.py::TestQuantumExponentialFamily::test_rho_is_hermitian -v
+   pytest tests/test_exponential_family.py::TestMatrixExponentialFamily::test_rho_is_hermitian -v
 
 Notebook Testing
 ----------------

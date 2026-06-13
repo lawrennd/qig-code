@@ -42,7 +42,7 @@ The Local Maximum Entropy (LME) origin—a product of Bell states—is like a
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.pair_operators import product_of_bell_states, bell_state
 ```
 
@@ -63,7 +63,7 @@ print(f"Hilbert space dimension: D = {D}")
 
 # Create the exponential family with pair basis
 # n_pairs + pair_basis=True uses su(d²) operators acting on each pair
-qef = QuantumExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
+qef = MatrixExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
 
 print(f"Number of natural parameters: {qef.n_params}")
 ```
@@ -258,7 +258,7 @@ import time
 def benchmark_fisher(n_pairs, d, n_trials=3):
     """Benchmark Fisher information computation."""
     D = d ** (2 * n_pairs)
-    qef = QuantumExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
+    qef = MatrixExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
     
     # Get reference theta
     theta = qef.get_bell_state_parameters(epsilon=1e-6)

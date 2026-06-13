@@ -46,9 +46,9 @@ The code provides validation:
 
 .. code-block:: python
 
-    from qig.exponential_family import QuantumExponentialFamily
+    from qig.exponential_family import MatrixExponentialFamily
     
-    qef = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+    qef = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
     
     # Check if σ is valid
     is_valid, message = qef.validate_sigma(sigma)

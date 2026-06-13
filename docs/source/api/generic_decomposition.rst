@@ -51,11 +51,11 @@ Basic Usage
 .. code-block:: python
 
     import numpy as np
-    from qig.exponential_family import QuantumExponentialFamily
+    from qig.exponential_family import MatrixExponentialFamily
     from qig.generic_decomposition import run_generic_decomposition
     
     # Initialize 2-qubit system
-    exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+    exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
     
     # Choose state near LME origin
     theta = 0.1 * np.random.randn(exp_fam.n_params)

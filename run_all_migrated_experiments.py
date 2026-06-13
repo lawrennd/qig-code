@@ -88,12 +88,12 @@ print("EXPERIMENT 2: Qubit Pair Dynamics")
 print("▶"*40)
 
 try:
-    from qig.exponential_family import QuantumExponentialFamily
+    from qig.exponential_family import MatrixExponentialFamily
     from qig.dynamics import InaccessibleGameDynamics
     from qig.core import create_lme_state, von_neumann_entropy, marginal_entropies
     
     # Initialize qubit pair system
-    exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+    exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
     dynamics = InaccessibleGameDynamics(exp_fam)
     
     # Short integration
@@ -152,7 +152,7 @@ try:
         name = 'qubit' if d == 2 else 'qutrit'
         
         # Create system
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
         
         # Create LME state
         rho_lme, dims = create_lme_state(n_sites=2, d=d)

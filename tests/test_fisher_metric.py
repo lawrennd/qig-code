@@ -12,7 +12,7 @@ Tests are organized by operator commutation structure:
 3. Partially Commuting: Mix of commuting and non-commuting operators
 4. Non-Commuting: General quantum case (diagnostic tests for known issues)
 
-Validates: qig.exponential_family.QuantumExponentialFamily.fisher_information()
+Validates: qig.exponential_family.MatrixExponentialFamily.fisher_information()
 
 CIP-0004: Uses tolerance framework with scientifically justified bounds.
 """
@@ -21,7 +21,7 @@ import numpy as np
 import pytest
 from scipy.linalg import eigh, expm
 
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from tests.fd_helpers import finite_difference_fisher
 from tests.tolerance_framework import quantum_assert_close, quantum_assert_symmetric
 
@@ -35,9 +35,9 @@ from tests.tolerance_framework import quantum_assert_close, quantum_assert_symme
 # ============================================================================
 
 
-class DiagonalQuantumExponentialFamily:
+class DiagonalMatrixExponentialFamily:
     """
-    A quantum exponential family where all sufficient statistics F_a are
+    A matrix exponential family where all sufficient statistics F_a are
     diagonal in a fixed basis.
     
     In this case:
@@ -53,7 +53,7 @@ class DiagonalQuantumExponentialFamily:
     
     def __init__(self, n_sites: int, d: int):
         """
-        Initialise diagonal quantum exponential family.
+        Initialise diagonal matrix exponential family.
         
         Parameters
         ----------
@@ -175,7 +175,7 @@ class DiagonalQuantumExponentialFamily:
         """
         Compute Fisher information using the spectral BKM implementation.
         
-        This uses the same algorithm as QuantumExponentialFamily.fisher_information
+        This uses the same algorithm as MatrixExponentialFamily.fisher_information
         but applied to our diagonal operators.
         """
         # Step 1: spectral decomposition of ρ(θ)
@@ -242,7 +242,7 @@ class TestCommutingBKMMetric:
     ])
     def test_diagonal_family_construction(self, n_sites, d):
         """Test that diagonal families are correctly constructed."""
-        family = DiagonalQuantumExponentialFamily(n_sites, d)
+        family = DiagonalMatrixExponentialFamily(n_sites, d)
         
         D = d ** n_sites
         assert family.D == D
@@ -273,7 +273,7 @@ class TestCommutingBKMMetric:
     ])
     def test_rho_is_diagonal(self, n_sites, d):
         """Test that ρ(θ) is diagonal for diagonal families."""
-        family = DiagonalQuantumExponentialFamily(n_sites, d)
+        family = DiagonalMatrixExponentialFamily(n_sites, d)
         
         # Random parameter point
         np.random.seed(42)
@@ -306,7 +306,7 @@ class TestCommutingBKMMetric:
         This is the core validation test: in the commuting case, the spectral
         implementation should reduce to the classical Fisher information.
         """
-        family = DiagonalQuantumExponentialFamily(n_sites, d)
+        family = DiagonalMatrixExponentialFamily(n_sites, d)
         
         # Test at multiple parameter points
         np.random.seed(42)
@@ -328,7 +328,7 @@ class TestCommutingBKMMetric:
     ])
     def test_bkm_positive_semidefinite(self, n_sites, d):
         """Test that the BKM metric is positive semidefinite."""
-        family = DiagonalQuantumExponentialFamily(n_sites, d)
+        family = DiagonalMatrixExponentialFamily(n_sites, d)
         
         np.random.seed(42)
         for trial in range(5):
@@ -356,7 +356,7 @@ class TestCommutingBKMMetric:
     ])
     def test_bkm_symmetry(self, n_sites, d):
         """Test that the BKM metric is symmetric."""
-        family = DiagonalQuantumExponentialFamily(n_sites, d)
+        family = DiagonalMatrixExponentialFamily(n_sites, d)
         
         np.random.seed(42)
         theta = np.random.randn(family.n_params) * 0.5
@@ -384,7 +384,7 @@ class TestCommutingBKMMetric:
         of the log-partition function:
             G_ab(θ) = ∂_a ∂_b ψ(θ)
         """
-        family = DiagonalQuantumExponentialFamily(n_sites, d)
+        family = DiagonalMatrixExponentialFamily(n_sites, d)
         
         np.random.seed(42)
         theta = np.random.randn(family.n_params) * 0.5
@@ -394,7 +394,7 @@ class TestCommutingBKMMetric:
         G_spectral = family.spectral_fisher_information(theta)
         
         # Compute finite-difference Hessian using shared helper
-        # Note: DiagonalQuantumExponentialFamily has log_partition, but fd_helpers expects psi
+        # Note: DiagonalMatrixExponentialFamily has log_partition, but fd_helpers expects psi
         # Add psi as alias if not present
         if not hasattr(family, 'psi'):
             family.psi = family.log_partition
@@ -407,21 +407,21 @@ class TestCommutingBKMMetric:
                            err_msg="Spectral BKM does not match FD Hessian")
 
 
-class TestQuantumExponentialFamilyCommutingCase:
+class TestMatrixExponentialFamilyCommutingCase:
     """
-    Test that QuantumExponentialFamily.fisher_information works correctly
+    Test that MatrixExponentialFamily.fisher_information works correctly
     when restricted to commuting operators.
     """
     
     def test_single_qubit_diagonal_only(self):
         """
-        Test QuantumExponentialFamily with only the Z operator (diagonal).
+        Test MatrixExponentialFamily with only the Z operator (diagonal).
         
         For a single qubit with only σ_z, the family is classical (diagonal)
         and the BKM metric should match the classical Fisher information.
         """
         # Create a custom family with only diagonal operators
-        family = QuantumExponentialFamily(n_sites=1, d=2)
+        family = MatrixExponentialFamily(n_sites=1, d=2)
         
         # Extract only the Z operator (index 2 in Pauli basis)
         Z_op = family.operators[2]
@@ -505,7 +505,7 @@ class TestQuantumExponentialFamilyCommutingCase:
 
 class RotatedDiagonalFamily:
     """
-    Quantum exponential family where all operators are diagonal in a shared
+    matrix exponential family where all operators are diagonal in a shared
     rotated basis (non-diagonal in computational basis but still commuting).
     
     Construction:
@@ -733,7 +733,7 @@ class TestNonDiagonalCommutingBKM:
 
 class PartiallyCommutingFamily:
     """
-    Quantum exponential family with partially commuting operators.
+    matrix exponential family with partially commuting operators.
     
     Construction for two qubits:
         F_1 = σ_z ⊗ I   (commutes with F_3)
@@ -937,7 +937,7 @@ class TestSimpleNonCommuting:
         - This is the simplest non-trivial non-commuting case
         """
         # Create full family and extract X, Y operators
-        family = QuantumExponentialFamily(n_sites=1, d=2)
+        family = MatrixExponentialFamily(n_sites=1, d=2)
         X_op = family.operators[0]  # σ_x
         Y_op = family.operators[1]  # σ_y
         
@@ -1035,7 +1035,7 @@ class TestSimpleNonCommuting:
         
         All three Pauli matrices are mutually non-commuting.
         """
-        family = QuantumExponentialFamily(n_sites=1, d=2)
+        family = MatrixExponentialFamily(n_sites=1, d=2)
         
         # Test at multiple parameter points
         np.random.seed(42)
@@ -1063,7 +1063,7 @@ class TestSimpleNonCommuting:
         
         This is the case that currently fails in test_inaccessible_game.py.
         """
-        family = QuantumExponentialFamily(n_sites=2, d=2)
+        family = MatrixExponentialFamily(n_sites=2, d=2)
         
         # Test at a single parameter point
         np.random.seed(0)

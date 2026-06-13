@@ -1,4 +1,4 @@
-Quantum Exponential Families
+matrix exponential families
 =============================
 
 *This section is under development.*
@@ -6,7 +6,7 @@ Quantum Exponential Families
 Mathematical Framework
 ----------------------
 
-A quantum exponential family is defined by:
+A matrix exponential family is defined by:
 
 .. math::
 

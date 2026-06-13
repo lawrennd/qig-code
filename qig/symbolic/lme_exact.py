@@ -18,7 +18,7 @@ In the numeric codebase, the same 9×9 Hilbert space and su(9) generators
 appear via:
 
 - `qig.pair_operators.pair_basis_generators(d=3)`, and
-- `qig.exponential_family.QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)`,
+- `qig.exponential_family.MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)`,
   whose `operators` attribute is a concrete su(9) basis.
 
 The helper `numeric_lme_blocks_from_theta` defined near the end of this file
@@ -30,7 +30,7 @@ between:
 - the symbolic block parameters (e.g. the 2×2 block entries that feed into
   quadratic eigenvalues), and
 - the numeric Bell/LME parameters θ obtained from
-  `QuantumExponentialFamily.get_bell_state_parameters`.
+  `MatrixExponentialFamily.get_bell_state_parameters`.
 """
 
 import sympy as sp
@@ -286,7 +286,7 @@ def numeric_lme_blocks_from_theta(
     This provides a bridge between:
 
     - the numeric representation used by
-      ``QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)``
+      ``MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)``
       (θ plus a concrete su(9) operator basis), and
     - the symbolic block decomposition used in this module
       (3×3 entangled block + 2×2 block + 1×1 diagonals).
@@ -300,7 +300,7 @@ def numeric_lme_blocks_from_theta(
     operators : list of np.ndarray
         List of traceless Hermitian generators (e.g., the
         ``exp_fam.operators`` attribute of a
-        ``QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)``).
+        ``MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)``).
 
     Returns
     -------

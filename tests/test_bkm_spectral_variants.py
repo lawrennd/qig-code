@@ -28,7 +28,7 @@ import numpy as np
 import pytest
 from scipy.linalg import expm
 
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from tests.tolerance_framework import quantum_assert_close
 from tests.fd_helpers import finite_difference_fisher
 
@@ -65,7 +65,7 @@ class TestLieClosedOperators:
     
     def test_single_qubit_matches_hessian(self):
         """Single qubit (su(2)): qig.fisher_information should match Hessian of ψ."""
-        exp_fam = QuantumExponentialFamily(n_sites=1, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=1, d=2)
         
         for theta_vals in [(0.3, 0.5, 0.2), (0.1, 0.1, 0.1), (0.5, 0.2, 0.3)]:
             theta = np.array(theta_vals)
@@ -79,7 +79,7 @@ class TestLieClosedOperators:
     
     def test_single_qutrit_matches_hessian(self):
         """Single qutrit (su(3)): qig.fisher_information should match Hessian of ψ."""
-        exp_fam = QuantumExponentialFamily(n_sites=1, d=3)
+        exp_fam = MatrixExponentialFamily(n_sites=1, d=3)
         
         np.random.seed(24)
         theta = np.random.randn(exp_fam.n_params)
@@ -93,7 +93,7 @@ class TestLieClosedOperators:
     
     def test_two_qubits_matches_hessian(self):
         """Two qubits (su(2)⊗su(2)): should match Hessian."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         
         np.random.seed(42)
         theta = np.random.randn(exp_fam.n_params) 
@@ -155,7 +155,7 @@ class TestPairBasisBKM:
     
     def test_qubit_pair_matches_hessian(self):
         """Qubit pair (su(4)): qig.fisher_information should match Hessian."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         
         np.random.seed(42)
         theta = np.random.randn(exp_fam.n_params) * 0.1
@@ -169,7 +169,7 @@ class TestPairBasisBKM:
     
     def test_qutrit_pair_matches_hessian(self):
         """Qutrit pair (su(9)): qig.fisher_information should match Hessian."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         
         np.random.seed(42)
         theta = np.random.randn(exp_fam.n_params) * 0.05

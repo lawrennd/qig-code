@@ -22,7 +22,7 @@ Computing Constraints
 
 .. code-block:: python
 
-   exp_fam = QuantumExponentialFamily(d=3, include_pairs=True)
+   exp_fam = MatrixExponentialFamily(d=3, include_pairs=True)
    theta = np.random.randn(exp_fam.n_params) * 0.1
    
    C, a = exp_fam.marginal_entropy_constraint(theta)

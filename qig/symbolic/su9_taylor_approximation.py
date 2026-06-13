@@ -75,10 +75,10 @@ def symbolic_su9_generators() -> List[Matrix]:
     >>> trace(generators[0])
     0
     """
-    from qig.exponential_family import QuantumExponentialFamily
+    from qig.exponential_family import MatrixExponentialFamily
     
     # Get numerical su(9) generators
-    exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+    exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
     numerical_generators = exp_fam.operators
     
     # Convert to symbolic with rationalization
@@ -129,11 +129,11 @@ def symbolic_su9_structure_constants() -> np.ndarray:
     >>> np.count_nonzero(f) / f.size  # Sparsity
     0.006
     """
-    from qig.exponential_family import QuantumExponentialFamily
+    from qig.exponential_family import MatrixExponentialFamily
     from qig.structure_constants import compute_structure_constants
     
     # Get numerical generators
-    exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+    exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
     
     # Compute structure constants
     f_abc = compute_structure_constants(exp_fam.operators)

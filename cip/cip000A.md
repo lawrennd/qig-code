@@ -26,7 +26,7 @@ $$\frac{\partial \rho}{\partial \theta_i} = \int_0^1 e^{(1-s)K} F_i \, e^{sK} \,
 via a single $2n \times 2n$ matrix exponential instead of eigendecomposition + kernel application.
 
 This CIP is now implemented in `qig/duhamel.py` and wired into
-`QuantumExponentialFamily.rho_derivative(method='duhamel_block')`.
+`MatrixExponentialFamily.rho_derivative(method='duhamel_block')`.
 
 We also extend the same block idea to compute **2nd and 3rd Fréchet derivatives**
 of `expm` (3×3 and 4×4 block matrices) and use those to compute:
@@ -67,7 +67,7 @@ and compute a **single** matrix exponential. The $(1,2)$ block of the result **i
 
 ### Why This Matters for QIG
 
-For quantum exponential families, computing the gradient of $\psi(\theta) = \log \mathrm{tr}\, e^{K(\theta)}$ requires Fréchet derivatives for each component $\theta_i$. 
+For matrix exponential families, computing the gradient of $\psi(\theta) = \log \mathrm{tr}\, e^{K(\theta)}$ requires Fréchet derivatives for each component $\theta_i$. 
 
 **Current cost:**
 - Spectral: One eigendecomposition + $n$ kernel applications + transforms
@@ -193,7 +193,7 @@ def duhamel_derivative_block(
    - Include comprehensive docstring with mathematical explanation
    - Add references to Higham's work
 
-2. **Wire into `QuantumExponentialFamily.rho_derivative`** ✅
+2. **Wire into `MatrixExponentialFamily.rho_derivative`** ✅
    - Add `method='duhamel_block'` option
    - Ensure consistent API with existing methods
 
@@ -324,7 +324,7 @@ Specifically, it provides:
 
 - [x] **Phase 1: Core implementation** (Completed 2025-12-26, commit 49ec2a5)
   - [x] Add `duhamel_derivative_block` to `qig/duhamel.py`
-  - [x] Wire into `QuantumExponentialFamily.rho_derivative` with `method='duhamel_block'`
+  - [x] Wire into `MatrixExponentialFamily.rho_derivative` with `method='duhamel_block'`
   - [x] Unit tests: correctness vs finite differences
   - [x] Unit tests: cross-validation with spectral method
   - [x] Unit tests: Hermiticity preservation
@@ -339,7 +339,7 @@ Specifically, it provides:
   - [x] Add performance comparison table (included in both docs)
   - [x] Integrated with QuantumTolerances framework for consistent validation
 - [x] **Phase 3 (partial): Default method change** (2026-01-13, commit fc5321b)
-  - [x] Changed default Kubo-Mori method from `'duhamel'` (quadrature) to `'duhamel_block'` in `QuantumExponentialFamily`
+  - [x] Changed default Kubo-Mori method from `'duhamel'` (quadrature) to `'duhamel_block'` in `MatrixExponentialFamily`
   - [x] Updated `docs/duhamel_methods_comparison.md` and `docs/source/api/duhamel.rst` to reflect new default
   - [ ] Multi-directional block method (all derivatives at once) — deferred
   - [ ] Condition number estimation — deferred

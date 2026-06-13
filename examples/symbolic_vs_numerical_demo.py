@@ -23,7 +23,7 @@ import sys
 # Add qig-code to path if running as script
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 
 
 def load_symbolic_expressions():
@@ -52,7 +52,7 @@ def evaluate_symbolic(expr, theta_sym, theta_vals):
 
 
 def compute_numerical(qef, theta_full):
-    """Compute numerical values using the QuantumExponentialFamily."""
+    """Compute numerical values using the MatrixExponentialFamily."""
     # Get the flow Jacobian and decomposition
     M = qef.jacobian(theta_full)
     A_num = 0.5 * (M - M.T)
@@ -99,8 +99,8 @@ def compare_results(theta_vals, verbose=True):
     # Load symbolic
     theta_sym, a_sym, nu_sym, grad_nu_sym, A_sym = load_symbolic_expressions()
     
-    # Create quantum exponential family (qutrit pair with su(9) basis)
-    qef = QuantumExponentialFamily(d=3, n_pairs=1, pair_basis=True)
+    # Create matrix exponential family (qutrit pair with su(9) basis)
+    qef = MatrixExponentialFamily(d=3, n_pairs=1, pair_basis=True)
     
     # Create full theta vector (80 parameters, first 4 non-zero)
     theta_full = np.zeros(80)

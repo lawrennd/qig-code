@@ -254,7 +254,7 @@ def verify_hamiltonian_evolution(H_eff: np.ndarray,
         Operator basis
     rho : np.ndarray
         Density matrix
-    exp_fam : QuantumExponentialFamily, optional
+    exp_fam : MatrixExponentialFamily, optional
         Exponential family (if provided, uses proper Kubo-Mori derivatives)
     method : str
         Method for computing derivatives ('duhamel' or 'sld')
@@ -396,7 +396,7 @@ def verify_antisymmetric_flow_equals_commutator(H_eff: np.ndarray,
         Antisymmetric part of flow Jacobian
     theta : np.ndarray, shape (n,)
         Natural parameters
-    exp_fam : QuantumExponentialFamily
+    exp_fam : MatrixExponentialFamily
         Exponential family instance (for Kubo-Mori derivatives)
     method : str
         Method for derivatives: 'duhamel' or 'sld'
@@ -524,7 +524,7 @@ def kubo_mori_derivatives(theta: np.ndarray,
         Natural parameters
     operators : List[np.ndarray]
         Operator basis {F_a}
-    exp_fam : QuantumExponentialFamily
+    exp_fam : MatrixExponentialFamily
         Exponential family instance (for using duhamel method)
         
     Returns
@@ -570,7 +570,7 @@ def diffusion_operator(S: np.ndarray,
         Symmetric part of flow Jacobian
     theta : np.ndarray, shape (n,)
         Natural parameters
-    exp_fam : QuantumExponentialFamily
+    exp_fam : MatrixExponentialFamily
         Exponential family instance
     method : str
         Method for computing Kubo-Mori derivatives
@@ -751,7 +751,7 @@ def compare_diffusion_methods(S: np.ndarray,
         Natural parameters
     H_eff : np.ndarray
         Effective Hamiltonian
-    exp_fam : QuantumExponentialFamily
+    exp_fam : MatrixExponentialFamily
         Exponential family
     gamma : float
         Decoherence rate for Milburn approximation

@@ -28,7 +28,7 @@ from qig.exponential_family import (
     create_operator_basis,
 )
 from qig.dynamics import InaccessibleGameDynamics
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from tests.tolerance_framework import (
     quantum_assert_close,
     quantum_assert_scalar_close,
@@ -287,7 +287,7 @@ class TestGENERICDecomposition:
     
     def test_jacobian_shape(self):
         """Jacobian should have correct shape."""
-        exp_family = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_family = MatrixExponentialFamily(n_sites=2, d=2)
         dynamics = InaccessibleGameDynamics(exp_family)
         theta = np.random.randn(exp_family.n_params) * 0.1
         
@@ -528,7 +528,7 @@ class TestLoewnerKernel:
 @pytest.mark.parametrize("n_sites,d", [(2, 2), (2, 3), (3, 2)])
 def test_various_systems(n_sites, d):
     """Test framework works for various system sizes."""
-    exp_family = QuantumExponentialFamily(n_sites, d)
+    exp_family = MatrixExponentialFamily(n_sites, d)
     assert exp_family.D == d ** n_sites
     assert exp_family.n_params == n_sites * (d**2 - 1)
 

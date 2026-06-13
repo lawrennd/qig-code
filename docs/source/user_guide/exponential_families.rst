@@ -1,4 +1,4 @@
-Quantum Exponential Families
+matrix exponential families
 =============================
 
 *This section is under development.*
@@ -6,7 +6,7 @@ Quantum Exponential Families
 Introduction
 ------------
 
-Quantum exponential families represent quantum states in the form:
+matrix exponential families represent quantum states in the form:
 
 .. math::
 
@@ -23,13 +23,13 @@ Creating an Exponential Family
 
 .. code-block:: python
 
-   from qig.exponential_family import QuantumExponentialFamily
+   from qig.exponential_family import MatrixExponentialFamily
    
    # Qutrit with Gell-Mann operators
-   exp_fam = QuantumExponentialFamily(d=3, basis_type='gell-mann')
+   exp_fam = MatrixExponentialFamily(d=3, basis_type='gell-mann')
    
    # With entangling pair operators
-   exp_fam_pairs = QuantumExponentialFamily(
+   exp_fam_pairs = MatrixExponentialFamily(
        d=3,
        basis_type='gell-mann',
        include_pairs=True
@@ -39,5 +39,5 @@ See Also
 --------
 
 * :mod:`qig.exponential_family` - API reference
-* :doc:`../theory/quantum_exponential_families` - Mathematical theory
+* :doc:`../theory/matrix_exponential_families` - Mathematical theory
 

@@ -1,9 +1,9 @@
 qig.exponential_family
 ======================
 
-Quantum exponential families and Fisher information geometry.
+matrix exponential families and Fisher information geometry.
 
-The core class :class:`qig.exponential_family.QuantumExponentialFamily`
+The core class :class:`qig.exponential_family.MatrixExponentialFamily`
 provides several ways to compute the density-matrix derivatives
 :math:`\partial\rho / \partial\theta_a`:
 

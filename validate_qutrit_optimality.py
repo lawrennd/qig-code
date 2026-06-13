@@ -24,7 +24,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from qig.core import create_lme_state, marginal_entropies, von_neumann_entropy
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -92,7 +92,7 @@ def compute_alpha_factor(n_sites: int, d: int, eps: float = 1e-4) -> dict:
     
     # Initialize exponential family with pair operators
     print(f"  Using pair-based operators: {n_pairs} entangled pair(s)")
-    exp_family = QuantumExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
+    exp_family = MatrixExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
     
     # Simpler approach: Measure ||∇H||_G at θ=0 (maximally mixed)
     # where we know C = n log(d) exactly. 

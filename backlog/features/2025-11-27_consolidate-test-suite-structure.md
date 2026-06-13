@@ -35,7 +35,7 @@ After completing CIP-0004 Phase 2 (tolerance framework conversion), analysis rev
 ```
 qig/
 ├── core.py                  # State utilities, entropy, partial traces
-├── exponential_family.py    # QuantumExponentialFamily + all derivatives
+├── exponential_family.py    # MatrixExponentialFamily + all derivatives
 ├── pair_operators.py        # su(d²) generators for entangled pairs
 ├── duhamel.py              # High-precision quantum derivatives
 └── dynamics.py             # InaccessibleGameDynamics
@@ -87,7 +87,7 @@ tests/
 │   │   • ~15 tests
 │   │
 │   ├── test_exponential_family.py      [NEW] Split from test_inaccessible_game
-│   │   • QuantumExponentialFamily initialization (local basis)
+│   │   • MatrixExponentialFamily initialization (local basis)
 │   │   • rho_from_theta(), log_partition()
 │   │   • Basic exponential family properties
 │   │   • ~12 tests from test_inaccessible_game.py
@@ -190,7 +190,7 @@ tests/
   - TestGENERICDecomposition class
   - ~15 tests total
 - [ ] Create `test_exponential_family.py` - extract + absorb
-  - TestQuantumExponentialFamily class from test_inaccessible_game
+  - TestMatrixExponentialFamily class from test_inaccessible_game
   - Absorb 5 tests from test_quantum_qutrit.py
   - ~17 tests total
 - [ ] Create `test_dynamics.py` - extract dynamics tests

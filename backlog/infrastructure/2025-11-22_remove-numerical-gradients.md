@@ -23,7 +23,7 @@ title: Remove numerical gradient computations from quantum game code
 
 The current quantum inaccessible game implementation uses numerical finite-difference
 approximations for several key gradients and Hessians (e.g. Fisher/BKM metric,
-constraint gradients) inside `QuantumExponentialFamily` and related routines.
+constraint gradients) inside `MatrixExponentialFamily` and related routines.
 These numerical gradients are:
 
 - computationally expensive (nested finite-difference loops with repeated `expm`);
@@ -70,7 +70,7 @@ validation and analysis pipeline, especially for CI/integration use.
     re-expressed version of the log-partition function.
 - For constraint gradients, derive analytic expressions for ∂C/∂θ where possible,
   using the chain rule through ρ(θ) and marginal traces.
-- Preserve the public API of `QuantumExponentialFamily` and `InaccessibleGameDynamics`
+- Preserve the public API of `MatrixExponentialFamily` and `InaccessibleGameDynamics`
   so that tests and scripts do not need major changes.
 - Use the existing `QIG_SHORT` mode as a benchmark: the aim is that even full
   runs (without short mode) become significantly faster once numerical gradients
@@ -80,8 +80,8 @@ validation and analysis pipeline, especially for CI/integration use.
 
 - **Core library (highest priority)**:
   - `qig/exponential_family.py`
-    - `QuantumExponentialFamily.fisher_information` (Hessian of ψ via central finite differences).
-    - `QuantumExponentialFamily.marginal_entropy_constraint` (∂C/∂θ via finite differences).
+    - `MatrixExponentialFamily.fisher_information` (Hessian of ψ via central finite differences).
+    - `MatrixExponentialFamily.marginal_entropy_constraint` (∂C/∂θ via finite differences).
   - `inaccessible_game_quantum.py`
     - Legacy copies of the same Fisher/BKM and constraint-gradient routines (to be removed once `qig` is the sole source of truth).
   - `inaccessible_game_quantum.py::compute_jacobian` (Jacobian of the flow via finite differences, used by GENERIC checks).
@@ -128,8 +128,8 @@ stable alternatives, motivated by slow runs of `advanced_analysis.py` and
 ### 2025-11-22 (later)
 
 Initial attempt made to implement a spectral/Kubo–Mori version of the BKM metric
-in `qig/exponential_family.QuantumExponentialFamily.fisher_information` and to
-switch tests to use `qig.QuantumExponentialFamily` as the ground truth. This
+in `qig/exponential_family.MatrixExponentialFamily.fisher_information` and to
+switch tests to use `qig.MatrixExponentialFamily` as the ground truth. This
 exposed that the current spectral implementation:
 
 - can produce non–positive-semidefinite metrics for generic θ; and

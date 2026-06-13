@@ -54,7 +54,7 @@ The `boring_game_dynamics.ipynb` and `entropy_time_paths.ipynb` notebooks curren
 | Entropy time scaling | `dynamics.set_time_mode('entropy')` |
 | Constraint computation | `exp_family.marginal_entropy_constraint(theta)` |
 
-### Use QuantumExponentialFamily with pair_basis=True:
+### Use MatrixExponentialFamily with pair_basis=True:
 - `get_bell_state_parameters(epsilon)` for regularized Bell states
 - `fisher_information(theta)` for BKM metric
 - `rho_from_theta(theta)` for density matrices

@@ -27,7 +27,7 @@ from qig.core import (
     create_lme_state,
     marginal_entropies,
 )
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
@@ -138,7 +138,7 @@ def qutrit_basis(site: int, n_sites: int) -> list:
 
 def create_operator_basis(n_sites: int, d: int) -> Tuple[list, list]:
     """
-    Create full operator basis {F_a} for quantum exponential family.
+    Create full operator basis {F_a} for matrix exponential family.
     
     Parameters
     -----------
@@ -222,9 +222,9 @@ def create_operator_basis(n_sites: int, d: int) -> Tuple[list, list]:
 
 
 # ============================================================================
-# Quantum Exponential Family (imported from qig.exponential_family)
+# matrix exponential family (imported from qig.exponential_family)
 # ============================================================================
-# The QuantumExponentialFamily class is now imported from qig.exponential_family
+# The MatrixExponentialFamily class is now imported from qig.exponential_family
 # which supports both local operators and pair-based operators for entanglement.
 # This migration enables the study of genuinely entangled systems as described
 # in the paper's discussion of "locally maximally entangled initial states".
@@ -232,7 +232,7 @@ def create_operator_basis(n_sites: int, d: int) -> Tuple[list, list]:
 # Legacy local class definition removed - now using qig.exponential_family
 
 # ============================================================================
-# Constrained Dynamics (kept - uses imported QuantumExponentialFamily)
+# Constrained Dynamics (kept - uses imported MatrixExponentialFamily)
 # ============================================================================
 
 
@@ -244,7 +244,7 @@ class InaccessibleGameDynamics:
     where Π_∥ projects onto constraint manifold ∑_i h_i = C
     """
     
-    def __init__(self, exp_family: QuantumExponentialFamily):
+    def __init__(self, exp_family: MatrixExponentialFamily):
         """
         Initialise dynamics for given exponential family.
         """
@@ -525,7 +525,7 @@ def validate_framework(n_sites: int, d: int, t_end: float = 5.0,
     # 1. Initialise system
     print("\n[1/6] Initializing exponential family...")
     print(f"  Using pair-based operators: {n_pairs} entangled pair(s)")
-    exp_family = QuantumExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
+    exp_family = MatrixExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
     
     # 2. Create LME initial state
     print("\n[2/6] Creating LME initial state...")

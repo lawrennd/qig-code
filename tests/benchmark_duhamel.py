@@ -19,7 +19,7 @@ import pytest
 import time
 from typing import Dict, List, Tuple
 
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from tests.tolerance_framework import QuantumTolerances
 
 
@@ -107,7 +107,7 @@ def benchmark_system(n_sites: int, d: int, verbose: bool = False) -> BenchmarkRe
         Benchmark results for all methods
     """
     # Create system
-    exp_fam = QuantumExponentialFamily(n_sites=n_sites, d=d)
+    exp_fam = MatrixExponentialFamily(n_sites=n_sites, d=d)
     n = exp_fam.n_params
     
     # Generate random parameters (small magnitude for stability)
@@ -288,7 +288,7 @@ class TestDuhamelBenchmarks:
     
     def test_benchmark_method_agreement(self):
         """Verify that spectral and block methods agree on small system."""
-        exp_fam = QuantumExponentialFamily(n_sites=1, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=1, d=2)
         theta = np.array([0.3, 0.5, 0.2])
         
         drho_spectral = exp_fam.rho_derivative(theta, 0, method='duhamel_spectral')
@@ -324,7 +324,7 @@ def test_benchmark_scaling_with_size():
     results_by_size = {}
     
     for n_sites, d in sizes:
-        exp_fam = QuantumExponentialFamily(n_sites=n_sites, d=d)
+        exp_fam = MatrixExponentialFamily(n_sites=n_sites, d=d)
         system_size = d ** n_sites
         
         theta = 0.1 * np.random.randn(exp_fam.n_params)

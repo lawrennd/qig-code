@@ -1,10 +1,10 @@
 # Duhamel Derivative Methods: Comparison and Selection Guide
 
-This document provides a detailed comparison of the methods available in `qig` for computing Kubo-Mori (Duhamel) derivatives of quantum exponential families.
+This document provides a detailed comparison of the methods available in `qig` for computing Kubo-Mori (Duhamel) derivatives of matrix exponential families.
 
 ## The Mathematical Problem
 
-For a quantum exponential family with density matrix:
+For a matrix exponential family with density matrix:
 
 $$\rho(\theta) = \exp\left(\sum_a \theta_a F_a - \psi(\theta) I\right)$$
 
@@ -217,11 +217,11 @@ All methods are cross-validated in the test suite:
 ## Example Usage
 
 ```python
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 import numpy as np
 
 # Create a single-qubit system
-exp_fam = QuantumExponentialFamily(n_sites=1, d=2)
+exp_fam = MatrixExponentialFamily(n_sites=1, d=2)
 theta = np.array([0.3, 0.5, 0.2])
 
 # Compute derivative using different methods

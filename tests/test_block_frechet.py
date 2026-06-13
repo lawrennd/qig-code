@@ -11,13 +11,13 @@ This validates:
 import numpy as np
 import pytest
 
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from tests.tolerance_framework import quantum_assert_close, quantum_assert_symmetric
 
 
 class TestBlockFrechet:
     def test_duhamel_block_matches_spectral_single_qubit(self):
-        exp_fam = QuantumExponentialFamily(n_sites=1, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=1, d=2)
         np.random.seed(0)
         theta = 0.2 * np.random.randn(exp_fam.n_params)
 
@@ -34,7 +34,7 @@ class TestBlockFrechet:
             )
 
     def test_hessian_block_matches_fisher_single_qubit(self):
-        exp_fam = QuantumExponentialFamily(n_sites=1, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=1, d=2)
         theta = np.array([0.3, 0.5, 0.2])
 
         G = exp_fam.fisher_information(theta)
@@ -49,7 +49,7 @@ class TestBlockFrechet:
         )
 
     def test_third_cumulant_contraction_block_matches_fd_single_qubit(self):
-        exp_fam = QuantumExponentialFamily(n_sites=1, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=1, d=2)
         np.random.seed(1)
         theta = 0.2 * np.random.randn(exp_fam.n_params)
 
@@ -68,7 +68,7 @@ class TestBlockFrechet:
 @pytest.mark.slow
 class TestBlockFrechetQutrit:
     def test_duhamel_block_matches_spectral_single_qutrit(self):
-        exp_fam = QuantumExponentialFamily(n_sites=1, d=3)
+        exp_fam = MatrixExponentialFamily(n_sites=1, d=3)
         np.random.seed(2)
         theta = 0.05 * np.random.randn(exp_fam.n_params)
 

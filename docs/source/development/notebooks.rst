@@ -22,7 +22,7 @@ The ``examples/`` directory contains tutorial and demonstration notebooks:
    `Open in Colab <https://colab.research.google.com/github/lawrennd/qig-code/blob/main/examples/symbolic_verification_experiments.ipynb>`__
 
 **lme_numeric_symbolic_bridge.ipynb**
-   Tutorial bridging the numeric exponential family (``QuantumExponentialFamily``)
+   Tutorial bridging the numeric exponential family (``MatrixExponentialFamily``)
    with the symbolic LME decomposition (``qig.symbolic.lme_exact``). Covers:
    
    - Regularized Bell state construction with ``log_epsilon``

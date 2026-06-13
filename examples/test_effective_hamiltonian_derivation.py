@@ -6,7 +6,7 @@ Extracts and runs all code examples from the markdown document to verify they wo
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.structure_constants import compute_structure_constants
 from qig.generic import (
     effective_hamiltonian_coefficients,
@@ -21,7 +21,7 @@ def section_1_2_setup():
     print("=" * 70)
     
     # Create a simple qubit-pair system with Lie-closed basis
-    exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+    exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
     
     print(f"System dimension: {exp_fam.D}")
     print(f"Number of parameters: {exp_fam.n_params}")
@@ -200,12 +200,12 @@ def section_10_complete_example():
     print("SECTION 10: Complete Working Example (Integrated)")
     print("=" * 70)
     
-    # 1. Create quantum exponential family
+    # 1. Create matrix exponential family
     print("=" * 60)
     print("EFFECTIVE HAMILTONIAN EXTRACTION")
     print("=" * 60)
     
-    exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+    exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
     print(f"\nSystem: {exp_fam.n_pairs} qubit pair(s)")
     print(f"Hilbert dimension: {exp_fam.D}")
     print(f"Parameters: {exp_fam.n_params}")

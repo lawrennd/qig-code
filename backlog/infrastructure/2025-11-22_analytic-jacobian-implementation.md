@@ -86,7 +86,7 @@ An analytic Jacobian will:
 
 **Files to create**:
 - `test_third_cumulant.py`: Validation tests
-- Add method to `QuantumExponentialFamily`: `third_cumulant(theta)`
+- Add method to `MatrixExponentialFamily`: `third_cumulant(theta)`
 
 ### Step 2: Constraint Hessian ∇²C
 
@@ -115,7 +115,7 @@ An analytic Jacobian will:
 
 **Files to modify**:
 - `test_constraint_hessian.py`: New test file
-- Add method to `QuantumExponentialFamily`: `constraint_hessian(theta)`
+- Add method to `MatrixExponentialFamily`: `constraint_hessian(theta)`
 
 ### Step 3: Lagrange Multiplier Gradient ∇ν
 
@@ -138,7 +138,7 @@ An analytic Jacobian will:
 
 **Files to modify**:
 - `test_lagrange_multiplier_gradient.py`: New test file
-- Add method to `QuantumExponentialFamily`: `lagrange_multiplier_gradient(theta)`
+- Add method to `MatrixExponentialFamily`: `lagrange_multiplier_gradient(theta)`
 
 ### Step 4: Assemble and Validate Jacobian
 
@@ -156,7 +156,7 @@ An analytic Jacobian will:
 
 **Files to modify**:
 - `test_jacobian_analytic.py`: Update with new implementation
-- Add method to `QuantumExponentialFamily`: `jacobian(theta)`
+- Add method to `MatrixExponentialFamily`: `jacobian(theta)`
 
 ## Quantum Derivative Principles
 
@@ -306,7 +306,7 @@ At every step, verify:
 
 ```python
 # Test entanglement and structural identity breaking
-exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
 theta = np.random.randn(exp_fam.n_params) * 0.5
 
 # Check entanglement

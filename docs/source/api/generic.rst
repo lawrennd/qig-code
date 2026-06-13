@@ -42,12 +42,12 @@ Extracting Effective Hamiltonian
 .. code-block:: python
 
     import numpy as np
-    from qig.exponential_family import QuantumExponentialFamily
+    from qig.exponential_family import MatrixExponentialFamily
     from qig.structure_constants import compute_structure_constants
     from qig.generic import effective_hamiltonian_coefficients, effective_hamiltonian_operator
     
     # Initialize system
-    exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+    exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
     theta = 0.1 * np.random.randn(exp_fam.n_params)
     
     # Compute structure constants

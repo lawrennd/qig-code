@@ -22,7 +22,7 @@ generates the reversible dynamics via the von Neumann equation $\dot{\rho} = -i[
 
 ### 1.1 The Framework
 
-The GENERIC (General Equation for Non-Equilibrium Reversible-Irreversible Coupling) framework decomposes dynamics into reversible and irreversible parts. For a quantum exponential family parameterized by natural parameters $\theta$, the flow in parameter space is
+The GENERIC (General Equation for Non-Equilibrium Reversible-Irreversible Coupling) framework decomposes dynamics into reversible and irreversible parts. For a matrix exponential family parameterized by natural parameters $\theta$, the flow in parameter space is
 $$
 \dot{\theta} = M(\theta),
 $$
@@ -39,7 +39,7 @@ where
 
 ```python
 import numpy as np
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.structure_constants import compute_structure_constants
 from qig.generic import (
     effective_hamiltonian_coefficients,
@@ -47,7 +47,7 @@ from qig.generic import (
 )
 
 # Create a simple qubit-pair system with Lie-closed basis
-exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
 
 print(f"System dimension: {exp_fam.D}")
 print(f"Number of parameters: {exp_fam.n_params}")
@@ -61,7 +61,7 @@ The `pair_basis=True` ensures our operators form a **Lie-closed algebra** (commu
 
 ### 2.1 The Exponential Family Structure
 
-A quantum exponential family has the form
+A matrix exponential family has the form
 $$
 \rho(\theta) = \frac{1}{Z(\theta)} \exp\left(\sum_a \theta_a F_a\right)
 $$
@@ -323,7 +323,7 @@ print(f"Excited state splitting: ΔE = {eigenvalues[-1] - eigenvalues[0]:.6f}")
 
 ### 7.1 The Complete Symbolic Expression
 
-Given a parameterized state $\rho(\theta)$ in a quantum exponential family, the effective Hamiltonian has the explicit symbolic form
+Given a parameterized state $\rho(\theta)$ in a matrix exponential family, the effective Hamiltonian has the explicit symbolic form
 $$
 H_{\text{eff}}(\theta) = \sum_{c=1}^{n} \eta_c(\theta) F_c.
 $$
@@ -446,7 +446,7 @@ Here's a complete script demonstrating the full pipeline:
 Complete example: Extract effective Hamiltonian from GENERIC flow
 """
 import numpy as np
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.structure_constants import compute_structure_constants
 from qig.generic import (
     effective_hamiltonian_coefficients,
@@ -454,12 +454,12 @@ from qig.generic import (
 )
 
 def main():
-    # 1. Create quantum exponential family
+    # 1. Create matrix exponential family
     print("=" * 60)
     print("EFFECTIVE HAMILTONIAN EXTRACTION")
     print("=" * 60)
     
-    exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+    exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
     print(f"\nSystem: {exp_fam.n_pairs} qubit pair(s)")
     print(f"Hilbert dimension: {exp_fam.D}")
     print(f"Parameters: {exp_fam.n_params}")

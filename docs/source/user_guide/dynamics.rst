@@ -14,9 +14,9 @@ Creating Dynamics
 .. code-block:: python
 
    from qig.dynamics import InaccessibleGameDynamics
-   from qig.exponential_family import QuantumExponentialFamily
+   from qig.exponential_family import MatrixExponentialFamily
    
-   exp_fam = QuantumExponentialFamily(d=3)
+   exp_fam = MatrixExponentialFamily(d=3)
    dynamics = InaccessibleGameDynamics(exp_fam)
 
 Solving Constrained Dynamics

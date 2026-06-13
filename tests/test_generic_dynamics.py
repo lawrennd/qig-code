@@ -11,7 +11,7 @@ This module tests the GenericDynamics class which tracks:
 import numpy as np
 import pytest
 
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.dynamics import GenericDynamics
 from qig.pair_operators import bell_state_density_matrix
 from qig.core import von_neumann_entropy, marginal_entropies
@@ -26,7 +26,7 @@ class TestGenericDynamicsInit:
         from qig.structure_constants import compute_structure_constants
         
         d = 2
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
         
         f_abc = compute_structure_constants(exp_fam.operators)
         dyn = GenericDynamics(exp_fam, structure_constants=f_abc)
@@ -37,7 +37,7 @@ class TestGenericDynamicsInit:
     def test_initialization_computes_structure_constants(self):
         """Test initialization auto-computes structure constants if not provided."""
         d = 2
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
         
         dyn = GenericDynamics(exp_fam)
         
@@ -51,7 +51,7 @@ class TestGenericDecomposition:
     def test_compute_decomposition_at_origin(self):
         """Test decomposition at LME origin."""
         d = 2
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
         dyn = GenericDynamics(exp_fam)
         
         theta_0 = np.zeros(exp_fam.n_params)
@@ -70,7 +70,7 @@ class TestGenericDecomposition:
     def test_decomposition_has_correct_shapes(self):
         """Test all components have correct shapes."""
         d = 2
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
         dyn = GenericDynamics(exp_fam)
         
         theta_0 = np.zeros(exp_fam.n_params)
@@ -89,7 +89,7 @@ class TestGenericDecomposition:
     def test_hamiltonian_is_hermitian(self):
         """Test H_eff is Hermitian."""
         d = 2
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
         dyn = GenericDynamics(exp_fam)
         
         theta_0 = 0.1 * np.random.randn(exp_fam.n_params)
@@ -105,7 +105,7 @@ class TestReversibleDynamics:
     def test_reversible_integration_runs(self):
         """Test reversible integration completes successfully."""
         d = 2
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
         dyn = GenericDynamics(exp_fam)
         
         theta_0 = 0.1 * np.random.randn(exp_fam.n_params)
@@ -118,7 +118,7 @@ class TestReversibleDynamics:
     def test_reversible_conserves_constraint(self):
         """Test reversible part preserves constraint (approximately)."""
         d = 2
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
         dyn = GenericDynamics(exp_fam)
         
         # Start near origin
@@ -145,7 +145,7 @@ class TestIrreversibleDynamics:
     def test_irreversible_integration_runs(self):
         """Test irreversible integration completes successfully."""
         d = 2
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
         dyn = GenericDynamics(exp_fam)
         
         theta_0 = 0.1 * np.random.randn(exp_fam.n_params)
@@ -158,7 +158,7 @@ class TestIrreversibleDynamics:
     def test_irreversible_increases_entropy(self):
         """Test irreversible part increases entropy."""
         d = 2
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
         dyn = GenericDynamics(exp_fam)
         
         # Start away from equilibrium
@@ -186,7 +186,7 @@ class TestFullDynamicsWithMonitoring:
     def test_integration_with_monitoring_runs(self):
         """Test monitoring integration completes."""
         d = 2
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
         dyn = GenericDynamics(exp_fam)
         
         theta_0 = 0.1 * np.random.randn(exp_fam.n_params)
@@ -204,7 +204,7 @@ class TestFullDynamicsWithMonitoring:
     def test_monitoring_tracks_generic_structure(self):
         """Test monitoring tracks GENERIC decomposition."""
         d = 2
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
         dyn = GenericDynamics(exp_fam)
         
         theta_0 = 0.1 * np.random.randn(exp_fam.n_params)
@@ -225,7 +225,7 @@ class TestFullDynamicsWithMonitoring:
     def test_monitoring_with_diffusion_operator(self):
         """Test monitoring can compute diffusion operator (expensive)."""
         d = 2
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
         dyn = GenericDynamics(exp_fam)
         
         theta_0 = 0.05 * np.random.randn(exp_fam.n_params)
@@ -249,7 +249,7 @@ class TestEntropyProduction:
     def test_entropy_production_nonnegative(self):
         """Test entropy production is non-negative."""
         d = 2
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
         dyn = GenericDynamics(exp_fam)
         
         # Sample multiple random states
@@ -263,7 +263,7 @@ class TestEntropyProduction:
     def test_cumulative_entropy_increases(self):
         """Test cumulative entropy production increases monotonically."""
         d = 2
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
         dyn = GenericDynamics(exp_fam)
         
         theta_0 = 0.1 * np.random.randn(exp_fam.n_params)
@@ -287,7 +287,7 @@ class TestConstraintPreservation:
     def test_full_dynamics_preserves_constraint(self):
         """Test full GENERIC dynamics preserves constraint."""
         d = 2
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
         dyn = GenericDynamics(exp_fam)
         
         theta_0 = 0.1 * np.random.randn(exp_fam.n_params)
@@ -310,7 +310,7 @@ class TestGenericStructurePreservation:
     def test_symmetric_antisymmetric_norms(self):
         """Test S and A norms are tracked correctly."""
         d = 2
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
         dyn = GenericDynamics(exp_fam)
         
         theta_0 = 0.1 * np.random.randn(exp_fam.n_params)

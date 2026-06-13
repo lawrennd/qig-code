@@ -20,7 +20,7 @@ title: Implement exponential family with entangled pairs and interaction terms
 
 ## Description
 
-The current `QuantumExponentialFamily` implementation uses **local operators only** (e.g., σ_x⊗I, I⊗σ_y), which can ONLY represent separable states. This makes it fundamentally inadequate for the quantum inaccessible game, which:
+The current `MatrixExponentialFamily` implementation uses **local operators only** (e.g., σ_x⊗I, I⊗σ_y), which can ONLY represent separable states. This makes it fundamentally inadequate for the quantum inaccessible game, which:
 
 1. **Starts at maximally entangled pairs** (Bell states for qubits, qutrit equivalents)
 2. **Requires entanglement to evolve** away from the origin
@@ -77,7 +77,7 @@ The quantum inaccessible game requires:
 
 **Validation:**
 ```python
-exp_family = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+exp_family = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
 assert exp_family.n_params == 15  # Full su(4)
 assert exp_family.D == 4  # 2×2 Hilbert space
 ```
@@ -120,7 +120,7 @@ assert I > 0.01, "Should be able to create entangled states"
 ### 4. Multiple Pairs ✅ COMPLETED
 
 **Support systems of n pairs:**
-- [x] `QuantumExponentialFamily(n_pairs=2, d=2)` → 30 parameters
+- [x] `MatrixExponentialFamily(n_pairs=2, d=2)` → 30 parameters
 - [x] Direct sum structure: operators act independently on each pair
 - [x] Marginal entropies: one per subsystem (2n subsystems for n pairs)
 - [x] Constraint: C = ∑_{i=1}^{2n} h_i
@@ -128,7 +128,7 @@ assert I > 0.01, "Should be able to create entangled states"
 **Example:**
 ```python
 # 2 Bell pairs
-exp_family = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+exp_family = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
 assert exp_family.n_params == 30  # 15 operators per pair
 assert exp_family.D == 16  # 4×4 Hilbert space
 assert len(exp_family.dims) == 4  # 4 subsystems
@@ -159,10 +159,10 @@ assert len(exp_family.dims) == 4  # 4 subsystems
 **Add mode flag:**
 ```python
 # Old behavior (local operators)
-exp_family_local = QuantumExponentialFamily(n_sites=2, d=2, pair_basis=False)
+exp_family_local = MatrixExponentialFamily(n_sites=2, d=2, pair_basis=False)
 
 # New behavior (pair operators)
-exp_family_pairs = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+exp_family_pairs = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
 ```
 ✅ Both modes working, all tests passing
 
@@ -329,7 +329,7 @@ F_alpha_i = np.eye(d**2) ⊗ ... ⊗ F_alpha ⊗ ... ⊗ np.eye(d**2)
   - `multi_pair_basis(n_pairs, d)`: Direct sum structure for n pairs
   - `product_of_bell_states(n_pairs, d)`: Origin state
   
-- **Extended** `QuantumExponentialFamily`:
+- **Extended** `MatrixExponentialFamily`:
   - Added `pair_basis=True` mode with `n_pairs` parameter
   - New methods: `von_neumann_entropy()`, `mutual_information()`, `purity()`
   - Placeholder `get_bell_state_parameters(epsilon)` for near-Bell states

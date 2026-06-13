@@ -7,7 +7,7 @@ antisymmetric flow using structure constants.
 
 import pytest
 import numpy as np
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.structure_constants import compute_structure_constants
 from qig.generic import (
     effective_hamiltonian_coefficients,
@@ -24,7 +24,7 @@ class TestCoefficientExtraction:
     
     def test_linear_solver_method_su2(self):
         """Test linear solver for SU(2) system."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         # Compute antisymmetric part
@@ -44,7 +44,7 @@ class TestCoefficientExtraction:
     
     def test_linear_solver_method_su3(self):
         """Test linear solver for SU(3) system."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=3)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=3)
         theta = 0.05 * np.random.rand(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta)
@@ -57,7 +57,7 @@ class TestCoefficientExtraction:
     
     def test_least_squares_method(self):
         """Test least-squares fitting method."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta)
@@ -77,7 +77,7 @@ class TestHamiltonianOperator:
     
     def test_operator_construction(self):
         """Test H_eff construction from coefficients."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         eta = 0.1 * np.random.rand(exp_fam.n_params)
         
         H_eff = effective_hamiltonian_operator(eta, exp_fam.operators)
@@ -88,7 +88,7 @@ class TestHamiltonianOperator:
     
     def test_hermiticity(self):
         """Test that H_eff is Hermitian."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta)
@@ -103,7 +103,7 @@ class TestHamiltonianOperator:
     
     def test_tracelessness(self):
         """Test that H_eff is (approximately) traceless."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta)
@@ -122,7 +122,7 @@ class TestVerification:
     
     def test_verification_report_structure(self):
         """Test that verification report has expected structure."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta)
@@ -145,7 +145,7 @@ class TestVerification:
     
     def test_hermiticity_verified(self):
         """Test that Hermiticity check passes."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta)
@@ -170,7 +170,7 @@ class TestCrossValidation:
     
     def test_cross_validation_report(self):
         """Test cross-validation report structure."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta)
@@ -186,7 +186,7 @@ class TestCrossValidation:
     
     def test_methods_agree_small_theta(self):
         """Test that methods agree for small theta."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.01 * np.random.rand(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta)
@@ -213,7 +213,7 @@ class TestDifferentSystems:
     
     def test_two_qubit_system(self):
         """Test extraction for 2-qubit system."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta)
@@ -229,7 +229,7 @@ class TestDifferentSystems:
     
     def test_two_qutrit_system(self):
         """Test extraction for 2-qutrit system."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=3)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=3)
         theta = 0.05 * np.random.rand(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta)
@@ -244,7 +244,7 @@ class TestDifferentSystems:
     
     def test_regularization_for_singular_systems(self):
         """Test regularization handling for nearly singular systems."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         
         # Near origin, system may be nearly singular
         theta = 1e-6 * np.random.rand(exp_fam.n_params)
@@ -267,7 +267,7 @@ class TestNearOrigin:
     
     def test_small_theta_extraction(self):
         """Test Hamiltonian extraction near origin."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 1e-4 * np.random.rand(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta)
@@ -281,7 +281,7 @@ class TestNearOrigin:
     
     def test_near_zero_hamiltonian(self):
         """Test that near origin, Hamiltonian is small."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2)
         theta = 1e-6 * np.ones(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta)
@@ -309,7 +309,7 @@ class TestAntisymmetricFlowCommutatorMatching:
     
     def test_hamiltonian_properties_qubit_pair(self):
         """Test that H_eff has correct structural properties for 2-qubit system."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         # Extract Hamiltonian
@@ -331,7 +331,7 @@ class TestAntisymmetricFlowCommutatorMatching:
     
     def test_hamiltonian_properties_qutrit_pair(self):
         """Test that H_eff has correct structural properties for 2-qutrit system."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         theta = 0.05 * np.random.rand(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta, method='duhamel')
@@ -350,7 +350,7 @@ class TestAntisymmetricFlowCommutatorMatching:
     
     def test_hamiltonian_properties_near_lme_origin(self):
         """Test H_eff properties near LME origin (regularized Bell state)."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         
         # Get regularized Bell state parameters
         theta = exp_fam.get_bell_state_parameters(log_epsilon=-10)
@@ -380,7 +380,7 @@ class TestAntisymmetricFlowCommutatorMatching:
           2. Verifies the BCH residual is bounded by 0.5 * ||theta||^2.
           3. Verifies that the extracted H_eff is Hermitian and traceless.
         """
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         f_abc = compute_structure_constants(exp_fam.operators)
 
         n_tests = 5
@@ -422,7 +422,7 @@ class TestAntisymmetricFlowCommutatorMatching:
         This verifies that the BCH/spectral implementation is numerically consistent
         with the quadrature method, confirming the ~14x error is theoretical not numerical.
         """
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         theta = 0.05 * np.random.rand(exp_fam.n_params)
         
         # Compute antisymmetric part with both methods
@@ -440,7 +440,7 @@ class TestAntisymmetricFlowCommutatorMatching:
         Duhamel kernel. This is NOT just a commutator [F_a, ρ] but includes
         the full operator-ordered integral structure.
         """
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         theta = 0.05 * np.random.rand(exp_fam.n_params)
         rho = exp_fam.rho_from_theta(theta)
         
@@ -470,7 +470,7 @@ class TestAntisymmetricFlowCommutatorMatching:
         This test documents the empirically observed ~14x discrepancy and serves as
         a regression guard against accidentally assuming this identity holds.
         """
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         np.random.seed(42)
         theta = 0.05 * np.random.rand(exp_fam.n_params)
         
@@ -500,7 +500,7 @@ class TestAntisymmetricFlowCommutatorMatching:
     
     def test_flow_hermiticity_and_tracelessness(self):
         """Test that both flows are Hermitian and traceless."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta, method='duhamel')
@@ -524,7 +524,7 @@ class TestAntisymmetricFlowCommutatorMatching:
     
     def test_relative_and_absolute_errors(self):
         """Test that both relative and absolute errors are reported."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         theta = 0.1 * np.random.rand(exp_fam.n_params)
         
         A = exp_fam.antisymmetric_part(theta, method='duhamel')

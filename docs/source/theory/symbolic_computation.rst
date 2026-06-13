@@ -26,7 +26,7 @@ Key results:
 Natural Parameter Interpretation
 --------------------------------
 
-The natural parameters θ in the quantum exponential family have specific meanings:
+The natural parameters θ in the matrix exponential family have specific meanings:
 
 - **θ = 0**: Maximally mixed state (ρ = I/D)
 - **θ → -∞** (large negative): Locally maximally entangled (LME/Bell) states
@@ -213,10 +213,10 @@ family parameters to the symbolic block structure:
 .. code-block:: python
 
    from qig.symbolic.lme_exact import numeric_lme_blocks_from_theta
-   from qig.exponential_family import QuantumExponentialFamily
+   from qig.exponential_family import MatrixExponentialFamily
    
    # Create numeric exponential family for qutrit pair
-   qef = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+   qef = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
    
    # Get Bell state parameters (regularized with log_epsilon for stability)
    theta = qef.get_bell_state_parameters(log_epsilon=-20)
@@ -316,5 +316,5 @@ See Also
 --------
 
 - :doc:`generic_structure` - GENERIC decomposition theory
-- :doc:`quantum_exponential_families` - Quantum exponential family background
+- :doc:`matrix_exponential_families` - matrix exponential family background
 - CIP-0007 in the repository for implementation details

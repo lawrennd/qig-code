@@ -42,11 +42,11 @@ Basic Example
 .. code-block:: python
 
     import numpy as np
-    from qig.exponential_family import QuantumExponentialFamily
+    from qig.exponential_family import MatrixExponentialFamily
     from qig.generic_decomposition import run_generic_decomposition
     
     # Initialize 2-qubit entangled pair
-    exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+    exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
     
     # Choose a state (near LME origin)
     theta = 0.1 * np.random.randn(exp_fam.n_params)
@@ -98,13 +98,13 @@ Choose your system:
 .. code-block:: python
 
     # For qubits (d=2)
-    exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+    exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
     
     # For qutrits (d=3)
-    exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+    exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
     
     # For multiple pairs
-    exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+    exp_fam = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
 
 Step 2: Choose Initial State
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

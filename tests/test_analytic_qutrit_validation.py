@@ -17,14 +17,14 @@ from numpy.testing import assert_allclose
 #     antisymmetric_part_analytical_qutrit,
 #     symmetric_part_analytical_qutrit,
 # )
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.structure_constants import compute_structure_constants
 
 
 @pytest.fixture
 def qutrit_pair_family():
     """Two-qutrit system with pair basis (80 parameters for full su(9))."""
-    return QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+    return MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
 
 
 @pytest.fixture
@@ -32,7 +32,7 @@ def qutrit_tensor_family():
     """Two-qutrit system with LOCAL tensor product basis (16 parameters)."""
     # This uses local operators: λ_k ⊗ I and I ⊗ λ_k
     # Matches our symbolic implementation
-    return QuantumExponentialFamily(n_sites=2, d=3, pair_basis=False)
+    return MatrixExponentialFamily(n_sites=2, d=3, pair_basis=False)
 
 
 @pytest.fixture
@@ -208,11 +208,11 @@ class TestSingleQutritAnalytic:
     def test_fisher_metric_numerical_validation(self):
         """Test symbolic Fisher metric matches numerical for random states."""
         from qig.symbolic import symbolic_fisher_information_single_qutrit
-        from qig.exponential_family import QuantumExponentialFamily
+        from qig.exponential_family import MatrixExponentialFamily
         import sympy as sp
         
         # Create single-qutrit family
-        exp_fam = QuantumExponentialFamily(n_sites=1, d=3)
+        exp_fam = MatrixExponentialFamily(n_sites=1, d=3)
         
         # Get symbolic expression
         theta_sym = sp.symbols('theta1:9', real=True)
@@ -244,10 +244,10 @@ class TestSingleQutritAnalytic:
         """Test symbolic entropy formula in perturbative regime."""
         from qig.symbolic import symbolic_von_neumann_entropy_single_qutrit
         from qig.core import von_neumann_entropy
-        from qig.exponential_family import QuantumExponentialFamily
+        from qig.exponential_family import MatrixExponentialFamily
         import sympy as sp
         
-        exp_fam = QuantumExponentialFamily(n_sites=1, d=3)
+        exp_fam = MatrixExponentialFamily(n_sites=1, d=3)
         
         # Get symbolic expression
         theta_sym = sp.symbols('theta1:9', real=True)

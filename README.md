@@ -7,7 +7,7 @@
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A Python package for quantum information geometry: constrained dynamics in quantum exponential families, featuring the "inaccessible game" framework for studying maximum entropy production with marginal entropy constraints.
+A Python package for quantum information geometry: constrained dynamics in matrix exponential families, featuring the "inaccessible game" framework for studying maximum entropy production with marginal entropy constraints.
 
 ## Overview
 
@@ -59,13 +59,13 @@ pip install -e ".[dev]"
 ## Quick Start
 
 ```python
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.dynamics import InaccessibleGameDynamics
 from qig.core import create_lme_state
 import numpy as np
 
 # Create a system with 1 qutrit pair (genuine entanglement!)
-exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
 dynamics = InaccessibleGameDynamics(exp_fam)
 
 # Create maximally entangled initial state
@@ -98,7 +98,7 @@ Dynamics:   θ̇ = -Π∥(G·θ)
 ```
 
 where:
-- `θ` are natural parameters of a quantum exponential family
+- `θ` are natural parameters of a matrix exponential family
 - `hᵢ` are marginal von Neumann entropies  
 - `G` is the BKM metric (quantum Fisher information)
 - `Π∥` projects onto the constraint manifold
@@ -115,12 +115,12 @@ where:
 
 ### Core Modules
 
-#### `qig.exponential_family.QuantumExponentialFamily`
+#### `qig.exponential_family.MatrixExponentialFamily`
 
-Quantum exponential family with pair operators:
+matrix exponential family with pair operators:
 
 ```python
-exp_fam = QuantumExponentialFamily(
+exp_fam = MatrixExponentialFamily(
     n_pairs=1,      # Number of entangled pairs
     d=3,            # Local dimension (qubits: d=2, qutrits: d=3)
     pair_basis=True # Use su(d²) generators per pair
@@ -177,7 +177,7 @@ Quantum derivatives using Duhamel's formula.
 ```python
 from qig.duhamel import duhamel_derivative
 
-# Precise derivatives for quantum exponential families
+# Precise derivatives for matrix exponential families
 dH_dtheta = duhamel_derivative(rho, drho_dtheta, order=10)
 ```
 
@@ -185,7 +185,7 @@ dH_dtheta = duhamel_derivative(rho, drho_dtheta, order=10)
 
 Symbolic computation for GENERIC decomposition of *qutrit* pairs.
 
-**Parameterisation**: The code uses the quantum exponential family with Gell-Mann matrices as sufficient statistics.
+**Parameterisation**: The code uses the matrix exponential family with Gell-Mann matrices as sufficient statistics.
 
 ```
 ρ(θ) = exp(K - ψ(θ)·I)   where   K = Σₐ θₐ Fₐ
@@ -231,8 +231,8 @@ exp_K = exact_exp_K_lme(theta)
 C = exact_constraint_lme(theta)
 
 # Bridge numeric θ to symbolic block structure
-from qig.exponential_family import QuantumExponentialFamily
-qef = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+from qig.exponential_family import MatrixExponentialFamily
+qef = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
 theta_numeric = qef.get_bell_state_parameters(log_epsilon=-20)
 blocks = numeric_lme_blocks_from_theta(theta_numeric, qef.operators)
 # blocks['ent_3x3'] is the 3×3 entangled block of K(θ)

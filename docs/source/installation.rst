@@ -52,10 +52,10 @@ Test that the package is correctly installed:
 .. code-block:: python
 
    import qig
-   from qig.exponential_family import QuantumExponentialFamily
+   from qig.exponential_family import MatrixExponentialFamily
    
    # Create a simple qutrit exponential family
-   exp_fam = QuantumExponentialFamily(d=3, basis_type='gell-mann')
+   exp_fam = MatrixExponentialFamily(d=3, basis_type='gell-mann')
    print(f"Created exponential family with {exp_fam.n_params} parameters")
 
 Run the test suite:

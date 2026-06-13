@@ -9,7 +9,7 @@ comprehensive results, diagnostics, and visualization.
 from typing import Dict, Any, Optional, List
 import numpy as np
 
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.structure_constants import compute_structure_constants
 from qig.generic import (
     effective_hamiltonian_coefficients,
@@ -36,14 +36,14 @@ class GenericDecomposition:
     
     Examples
     --------
-    >>> exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+    >>> exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
     >>> decomp = GenericDecomposition(exp_fam)
     >>> theta = np.random.randn(exp_fam.n_params) * 0.1
     >>> results = decomp.compute_all(theta)
     >>> decomp.print_summary()
     """
     
-    def __init__(self, exp_fam: QuantumExponentialFamily,
+    def __init__(self, exp_fam: MatrixExponentialFamily,
                  method: str = 'duhamel',
                  compute_diffusion: bool = False):
         """
@@ -51,7 +51,7 @@ class GenericDecomposition:
         
         Parameters
         ----------
-        exp_fam : QuantumExponentialFamily
+        exp_fam : MatrixExponentialFamily
             The exponential family
         method : str, optional
             Method for derivatives: 'duhamel' (accurate) or 'sld' (fast)
@@ -365,7 +365,7 @@ class GenericDecomposition:
 
 
 def run_generic_decomposition(theta: np.ndarray,
-                              exp_fam: QuantumExponentialFamily,
+                              exp_fam: MatrixExponentialFamily,
                               method: str = 'duhamel',
                               compute_diffusion: bool = False,
                               verbose: bool = True,
@@ -377,7 +377,7 @@ def run_generic_decomposition(theta: np.ndarray,
     ----------
     theta : np.ndarray
         Natural parameters
-    exp_fam : QuantumExponentialFamily
+    exp_fam : MatrixExponentialFamily
         Exponential family
     method : str, optional
         Derivative method: 'duhamel' or 'sld'
@@ -395,7 +395,7 @@ def run_generic_decomposition(theta: np.ndarray,
         
     Examples
     --------
-    >>> exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+    >>> exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
     >>> theta = np.zeros(exp_fam.n_params)
     >>> results = run_generic_decomposition(theta, exp_fam)
     """

@@ -1,5 +1,5 @@
 """
-Duhamel formula for quantum exponential family derivatives.
+Duhamel formula for matrix exponential family derivatives.
 
 For ρ = exp(H) where H = ∑ θ_a F_a - ψ(θ)I, the exact derivative is:
 
@@ -367,13 +367,13 @@ def compute_H_from_theta(operators: list, theta: np.ndarray) -> tuple:
 
 def test_duhamel_convergence():
     """Test convergence of Duhamel integration."""
-    from qig.exponential_family import QuantumExponentialFamily
+    from qig.exponential_family import MatrixExponentialFamily
     
     print("=" * 70)
     print("TESTING DUHAMEL FORMULA CONVERGENCE")
     print("=" * 70)
     
-    exp_family = QuantumExponentialFamily(n_sites=1, d=2)
+    exp_family = MatrixExponentialFamily(n_sites=1, d=2)
     theta = np.array([0.3, 0.5, 0.2])
     
     rho = exp_family.rho_from_theta(theta)

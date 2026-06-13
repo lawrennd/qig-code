@@ -1,5 +1,5 @@
 """
-Test suite for pair-based quantum exponential family.
+Test suite for pair-based matrix exponential family.
 
 Tests:
 1. Initialization with pair basis
@@ -13,7 +13,7 @@ Uses CIP-0004 tolerance framework with scientifically derived bounds.
 
 import numpy as np
 import pytest
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from qig.core import create_lme_state, marginal_entropies
 from qig.pair_operators import bell_state, product_of_bell_states
 from tests.tolerance_framework import (
@@ -30,7 +30,7 @@ class TestPairBasisInitialization:
 
     def test_single_qubit_pair(self):
         """Test initialization with a single qubit pair."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
 
         # Test basic properties (exact arithmetic - Category A)
         assert exp_fam.n_pairs == 1
@@ -44,7 +44,7 @@ class TestPairBasisInitialization:
 
     def test_single_qutrit_pair(self):
         """Test initialization with a single qutrit pair."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
 
         # Test basic properties (exact arithmetic - Category A)
         assert exp_fam.n_pairs == 1
@@ -55,7 +55,7 @@ class TestPairBasisInitialization:
 
     def test_two_qubit_pairs(self):
         """Test initialization with two qubit pairs."""
-        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
 
         # Test basic properties (exact arithmetic - Category A)
         assert exp_fam.n_pairs == 2
@@ -73,7 +73,7 @@ class TestBackwardCompatibility:
 
     def test_local_operator_fallback(self):
         """Test that local operator basis still works."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2, pair_basis=False)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2, pair_basis=False)
 
         # Test basic properties (exact arithmetic - Category A)
         assert exp_fam.n_pairs is None  # No pairs for local basis
@@ -85,11 +85,11 @@ class TestBackwardCompatibility:
     def test_pair_vs_local_parameters(self):
         """Test parameter count difference between pair and local bases."""
         # Local basis: separate su(2) × su(2) = 6 parameters
-        local_fam = QuantumExponentialFamily(n_sites=2, d=2, pair_basis=False)
+        local_fam = MatrixExponentialFamily(n_sites=2, d=2, pair_basis=False)
         assert local_fam.n_params == 6
 
         # Pair basis: joint su(4) = 15 parameters
-        pair_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        pair_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         assert pair_fam.n_params == 15
 
 
@@ -99,12 +99,12 @@ class TestOperatorProperties:
     @pytest.fixture
     def qubit_pair_family(self):
         """Fixture for single qubit pair."""
-        return QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        return MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
 
     @pytest.fixture
     def qutrit_pair_family(self):
         """Fixture for single qutrit pair."""
-        return QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        return MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
 
     def test_qubit_pair_operators(self, qubit_pair_family):
         """Test that qubit pair operators are Hermitian and traceless."""
@@ -147,7 +147,7 @@ class TestDensityMatrixProperties:
 
     def test_maximally_mixed_state(self):
         """Test density matrix at θ=0 (maximally mixed state)."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
 
         # Get maximally mixed state
         rho = exp_fam.rho_from_theta(np.zeros(exp_fam.n_params))
@@ -168,7 +168,7 @@ class TestDensityMatrixProperties:
 
     def test_positive_semidefinite(self):
         """Test that all density matrices are positive semidefinite."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
 
         # Test with random parameters
         np.random.seed(42)
@@ -184,7 +184,7 @@ class TestDensityMatrixProperties:
 
     def test_purity_bounds(self):
         """Test that purity is bounded correctly."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
 
         # Test maximally mixed state (minimum purity for 4-level system)
         rho_mixed = exp_fam.rho_from_theta(np.zeros(exp_fam.n_params))
@@ -211,7 +211,7 @@ class TestEntanglementMetrics:
 
     def test_bell_state_entanglement(self):
         """Test that Bell states are maximally entangled."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
 
         # Create Bell state |00⟩ + |11⟩ (maximally entangled)
         bell_state, dims = create_lme_state(n_sites=2, d=2)
@@ -241,7 +241,7 @@ class TestEntanglementMetrics:
 
     def test_separable_state_no_entanglement(self):
         """Test that separable states have zero mutual information."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
 
         # Create product state |00⟩⟨00|
         product_state = np.zeros((4, 4), dtype=complex)
@@ -258,7 +258,7 @@ class TestEntanglementMetrics:
 
     def test_mutual_information_nonnegative(self):
         """Test that mutual information is always non-negative."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
 
         # Test with multiple random states
         np.random.seed(42)
@@ -276,7 +276,7 @@ class TestBlockDiagonalStructure:
 
     def test_fisher_metric_symmetry(self):
         """Test that Fisher metric is symmetric."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
 
         theta = np.zeros(exp_fam.n_params)  # Maximally mixed state
         G = exp_fam.fisher_information(theta)
@@ -287,7 +287,7 @@ class TestBlockDiagonalStructure:
 
     def test_fisher_metric_positive_semidefinite(self):
         """Test that Fisher metric is positive semidefinite."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
 
         theta = np.zeros(exp_fam.n_params)
         G = exp_fam.fisher_information(theta)
@@ -300,7 +300,7 @@ class TestBlockDiagonalStructure:
 
     def test_block_diagonal_structure(self):
         """Test block-diagonal structure for multiple pairs."""
-        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
 
         theta = np.zeros(exp_fam.n_params)
         G = exp_fam.fisher_information(theta)
@@ -322,7 +322,7 @@ class TestBlockDiagonalStructure:
 
     def test_diagonal_blocks_nonzero(self):
         """Test that diagonal blocks are non-zero."""
-        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
 
         theta = np.zeros(exp_fam.n_params)
         G = exp_fam.fisher_information(theta)
@@ -348,13 +348,13 @@ class TestComputationalScaling:
         """Test parameter count scaling with system size."""
         # Test qubit pairs
         for n_pairs in [1, 2, 3]:
-            exp_fam = QuantumExponentialFamily(n_pairs=n_pairs, d=2, pair_basis=True)
+            exp_fam = MatrixExponentialFamily(n_pairs=n_pairs, d=2, pair_basis=True)
             expected_params = n_pairs * 15  # su(4) has 15 generators
             assert exp_fam.n_params == expected_params
 
         # Test qutrit pairs
         for n_pairs in [1, 2]:
-            exp_fam = QuantumExponentialFamily(n_pairs=n_pairs, d=3, pair_basis=True)
+            exp_fam = MatrixExponentialFamily(n_pairs=n_pairs, d=3, pair_basis=True)
             expected_params = n_pairs * 80  # su(9) has 80 generators
             assert exp_fam.n_params == expected_params
 
@@ -362,14 +362,14 @@ class TestComputationalScaling:
         """Test Hilbert space dimension scaling."""
         for n_pairs in [1, 2, 3]:
             for d in [2, 3]:
-                exp_fam = QuantumExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
+                exp_fam = MatrixExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
                 expected_D = (d ** (2 * n_pairs))  # Each pair contributes d²
                 assert exp_fam.D == expected_D
 
     @pytest.mark.parametrize("n_pairs,d", [(1, 2), (1, 3), (2, 2)])
     def test_density_matrix_computation(self, n_pairs, d):
         """Test that density matrices can be computed for various sizes."""
-        exp_fam = QuantumExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=n_pairs, d=d, pair_basis=True)
 
         # Test maximally mixed state
         theta = np.zeros(exp_fam.n_params)
@@ -403,12 +403,12 @@ class TestRhoDerivativeNumerical:
     @pytest.fixture
     def single_pair_family(self):
         """Fixture for single qubit pair."""
-        return QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        return MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
 
     @pytest.fixture
     def two_pair_family(self):
         """Fixture for two qubit pairs."""
-        return QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        return MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
 
     def test_single_pair_duhamel(self, single_pair_family):
         """Test Duhamel ρ derivative for single pair."""
@@ -497,12 +497,12 @@ class TestFisherMetricNumerical:
     @pytest.fixture
     def single_pair_family(self):
         """Fixture for single qubit pair."""
-        return QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        return MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
 
     @pytest.fixture
     def two_pair_family(self):
         """Fixture for two qubit pairs."""
-        return QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        return MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
 
     def test_fisher_vs_finite_difference_single_pair(self, single_pair_family):
         """Test Fisher metric analytical vs finite difference for single pair."""
@@ -547,7 +547,7 @@ class TestConstraintHessianPairBasis:
     @pytest.fixture
     def single_pair_family(self):
         """Fixture for single qubit pair."""
-        return QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        return MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
 
     def test_constraint_hessian_single_pair(self, single_pair_family):
         """Test constraint Hessian analytical vs numerical for single pair."""
@@ -574,12 +574,12 @@ class TestConstraintGradient:
     @pytest.fixture
     def single_pair_family(self):
         """Fixture for single qubit pair."""
-        return QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        return MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
 
     @pytest.fixture
     def two_pair_family(self):
         """Fixture for two qubit pairs."""
-        return QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        return MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
 
     def test_constraint_gradient_single_pair(self, single_pair_family):
         """Test constraint gradient for single pair."""
@@ -639,7 +639,7 @@ class TestJacobianNumerical:
     @pytest.fixture
     def single_pair_family(self):
         """Fixture for single qubit pair."""
-        return QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        return MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
 
     def test_jacobian_vs_finite_difference(self, single_pair_family):
         """Test Jacobian analytical vs finite difference."""
@@ -694,11 +694,11 @@ class TestComparisonWithLocalBasis:
         # Create the same maximally mixed state using different operator bases
 
         # Local basis: separable 2-qubit system
-        exp_fam_local = QuantumExponentialFamily(n_sites=2, d=2, pair_basis=False)
+        exp_fam_local = MatrixExponentialFamily(n_sites=2, d=2, pair_basis=False)
         theta_local = np.zeros(exp_fam_local.n_params)  # Maximally mixed
 
         # Pair basis: entangled 1-pair system
-        exp_fam_pair = QuantumExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        exp_fam_pair = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
         theta_pair = np.zeros(exp_fam_pair.n_params)  # Also maximally mixed
 
         # Both should represent the same physical state (maximally mixed 2-qubit)
@@ -736,7 +736,7 @@ class TestBellStateParameters:
     @pytest.mark.parametrize("d", [2, 3, 4])
     def test_bell_state_different_dimensions(self, d):
         """Test Bell state parameters for different local dimensions."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
         epsilon = 1e-4
         
         # Get Bell state parameters
@@ -775,7 +775,7 @@ class TestBellStateParameters:
     
     def test_bell_state_epsilon_scaling(self):
         """Test that parameters grow as epsilon → 0 (approaching pure state)."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         
         # Test with decreasing epsilon
         epsilon_values = [1e-2, 1e-3, 1e-4, 1e-5]
@@ -797,7 +797,7 @@ class TestBellStateParameters:
     
     def test_bell_state_high_entanglement(self):
         """Test that Bell state parameters produce high mutual information."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         theta = exp_fam.get_bell_state_parameters(epsilon=1e-4)
         
         # Mutual information should be high (approaching log(d))
@@ -810,7 +810,7 @@ class TestBellStateParameters:
     
     def test_bell_state_low_entropy(self):
         """Test that regularized Bell state has low total entropy."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         epsilon = 1e-4
         theta = exp_fam.get_bell_state_parameters(epsilon=epsilon)
         
@@ -830,7 +830,7 @@ class TestBellStateParameters:
     def test_bell_state_log_epsilon_equivalence(self):
         """epsilon and log_epsilon paths should produce the same state and parameters."""
         for d in [2, 3]:
-            exp_fam = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+            exp_fam = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
             for epsilon in [1e-2, 1e-3, 1e-4]:
                 log_eps = np.log(epsilon)
                 
@@ -850,7 +850,7 @@ class TestBellStateParameters:
     
     def test_bell_state_log_epsilon_scaling(self):
         """Parameters should grow smoothly as log_epsilon decreases (logarithmic approach to boundary)."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         
         # Use log_epsilon values that are not so extreme as to hit machine underflow
         log_eps_values = [-2.0, -4.0, -6.0, -8.0]
@@ -867,14 +867,14 @@ class TestBellStateParameters:
     
     def test_bell_state_raises_for_zero_epsilon(self):
         """Test that pure Bell state (epsilon=0) raises ValueError."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         
         with pytest.raises(ValueError, match="epsilon must be > 0"):
             exp_fam.get_bell_state_parameters(epsilon=0.0)
     
     def test_bell_state_works_for_multiple_pairs(self):
         """Test that get_bell_state_parameters works for multiple pairs."""
-        exp_fam = QuantumExponentialFamily(n_pairs=2, d=2, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=2, d=2, pair_basis=True)
         
         # Should NOT raise - we support multiple pairs now
         theta = exp_fam.get_bell_state_parameters(epsilon=1e-4)
@@ -884,14 +884,14 @@ class TestBellStateParameters:
     
     def test_bell_state_raises_for_local_basis(self):
         """Test that Bell state only works for pair basis."""
-        exp_fam = QuantumExponentialFamily(n_sites=2, d=2, pair_basis=False)
+        exp_fam = MatrixExponentialFamily(n_sites=2, d=2, pair_basis=False)
         
         with pytest.raises(ValueError, match="pair_basis=True"):
             exp_fam.get_bell_state_parameters(epsilon=1e-4)
     
     def test_bell_state_hermitian_and_unit_trace(self):
         """Test that Bell state parameters produce valid density matrix."""
-        exp_fam = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
         theta = exp_fam.get_bell_state_parameters(epsilon=1e-4)
         
         rho = exp_fam.rho_from_theta(theta)

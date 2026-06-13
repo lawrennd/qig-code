@@ -57,10 +57,10 @@ The constraint gradient vanishes because any small perturbation that changes one
 ### Verification
 
 ```python
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 
 d = 3
-qef = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+qef = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
 theta_bell = qef.get_bell_state_parameters(log_epsilon=-10)
 
 C, a = qef.marginal_entropy_constraint(theta_bell)
@@ -123,10 +123,10 @@ $$\frac{\text{d}\theta}{\text{d}t} = \frac{-\Pi_\parallel G \theta}{\theta^\top 
 
 ```python
 import numpy as np
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 
 d = 3
-qef = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+qef = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
 
 for log_eps in [-5, -10, -15, -20]:
     theta = qef.get_bell_state_parameters(log_epsilon=log_eps)
@@ -192,10 +192,10 @@ The system has a huge dissipative tendency (toward higher entropy) but this is a
 
 ```python
 import numpy as np
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 
 d = 3
-qef = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+qef = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
 theta_bell = qef.get_bell_state_parameters(log_epsilon=-10)
 
 S = qef.symmetric_part(theta_bell)
@@ -257,11 +257,11 @@ The three Bell states ($k=0, 1, 2$) have:
 
 ```python
 import numpy as np
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 from scipy.linalg import logm
 
 d = 3
-qef = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+qef = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
 
 def make_bell_state(d, k):
     """Make Bell state |Φ_k⟩ = (1/√d) Σ_j |j,(j+k)mod d⟩"""
@@ -348,10 +348,10 @@ If pairs have different entropy production rates:
 
 ```python
 import numpy as np
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 
 d = 3
-qef = QuantumExponentialFamily(n_pairs=1, d=d, pair_basis=True)
+qef = MatrixExponentialFamily(n_pairs=1, d=d, pair_basis=True)
 theta_bell = qef.get_bell_state_parameters(log_epsilon=-10)
 G = qef.fisher_information(theta_bell)
 

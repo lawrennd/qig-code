@@ -3,19 +3,19 @@ Quick Start
 
 This quick start guide demonstrates the basic usage of **qig** for quantum information geometry.
 
-Creating a Quantum Exponential Family
+Creating a matrix exponential family
 --------------------------------------
 
-The core object is :class:`~qig.exponential_family.QuantumExponentialFamily`, which represents
+The core object is :class:`~qig.exponential_family.MatrixExponentialFamily`, which represents
 a quantum state as :math:`\rho(\theta) = \exp(\sum_a \theta_a F_a - \psi(\theta))`.
 
 .. code-block:: python
 
-   from qig.exponential_family import QuantumExponentialFamily
+   from qig.exponential_family import MatrixExponentialFamily
    import numpy as np
    
    # Create a qutrit (d=3) exponential family with Gell-Mann operators
-   exp_fam = QuantumExponentialFamily(d=3, basis_type='gell-mann')
+   exp_fam = MatrixExponentialFamily(d=3, basis_type='gell-mann')
    
    # Natural parameters (8 for a qutrit with traceless operators)
    theta = np.zeros(exp_fam.n_params)
@@ -72,7 +72,7 @@ For studying entanglement, use the pair operator basis:
 .. code-block:: python
 
    # Create exponential family with pair operators
-   exp_fam_pairs = QuantumExponentialFamily(
+   exp_fam_pairs = MatrixExponentialFamily(
        d=3,
        basis_type='gell-mann',
        include_pairs=True

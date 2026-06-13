@@ -12,7 +12,7 @@ import numpy as np
 from scipy.integrate import solve_ivp
 
 from qig.core import von_neumann_entropy, marginal_entropies
-from qig.exponential_family import QuantumExponentialFamily
+from qig.exponential_family import MatrixExponentialFamily
 
 
 class InaccessibleGameDynamics:
@@ -34,10 +34,10 @@ class InaccessibleGameDynamics:
     
     Example
     -------
-    >>> from qig.exponential_family import QuantumExponentialFamily
+    >>> from qig.exponential_family import MatrixExponentialFamily
     >>> from qig.dynamics import InaccessibleGameDynamics
     >>> 
-    >>> exp_family = QuantumExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+    >>> exp_family = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
     >>> theta_0 = exp_family.get_bell_state_parameters(epsilon=0.01)
     >>> 
     >>> dynamics = InaccessibleGameDynamics(exp_family)
@@ -47,13 +47,13 @@ class InaccessibleGameDynamics:
     >>> print(f"Constraint preserved: dC = {result['constraint_values'][-1] - result['C_init']:.2e}")
     """
 
-    def __init__(self, exp_family: QuantumExponentialFamily, method: str = 'duhamel'):
+    def __init__(self, exp_family: MatrixExponentialFamily, method: str = 'duhamel'):
         """
         Initialise dynamics for given exponential family.
         
         Parameters
         ----------
-        exp_family : QuantumExponentialFamily
+        exp_family : MatrixExponentialFamily
             The exponential family to integrate dynamics for
         method : str, optional
             Method for computing ∂ρ/∂θ: 'duhamel' (accurate, slow) or 'sld' (fast, ~5% error)
@@ -469,7 +469,7 @@ class GenericDynamics(InaccessibleGameDynamics):
     - GENERIC structure preservation
     """
     
-    def __init__(self, exp_family: QuantumExponentialFamily, 
+    def __init__(self, exp_family: MatrixExponentialFamily, 
                  structure_constants: np.ndarray = None,
                  method: str = 'duhamel'):
         """
@@ -477,7 +477,7 @@ class GenericDynamics(InaccessibleGameDynamics):
         
         Parameters
         ----------
-        exp_family : QuantumExponentialFamily
+        exp_family : MatrixExponentialFamily
             The exponential family
         structure_constants : np.ndarray, optional
             Lie algebra structure constants f_abc
