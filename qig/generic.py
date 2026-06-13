@@ -19,51 +19,59 @@ def effective_hamiltonian_coefficients(A: np.ndarray,
                                        regularization: float = 1e-10) -> Tuple[np.ndarray, dict]:
     """
     Extract effective Hamiltonian coefficients from antisymmetric flow.
-    
-    The antisymmetric part A encodes the reversible (Hamiltonian) dynamics
-    through the relation::
-    
-        A_ab θ_b = Σ_c f_abc η_c
-    
-    where η_c are the coefficients of the effective Hamiltonian::
-    
+
+    Solves for η such that the adjoint-action formula holds approximately::
+
+        (A⋅θ)_r  ≈  Σ_{b,c} f_{rbc} θ_b η_c  =  (F⋅η)_r
+
+    where ``F[r, c] = Σ_b f[r, b, c] θ_b`` is the adjoint action of θ on the
+    basis, and ``f_abc`` are the structure constants defined by
+    ``[F_a, F_b] = i Σ_c f_{abc} F_c``.
+
+    The extracted Hamiltonian is::
+
         H_eff = Σ_c η_c F_c
-    
-    This function solves the linear system F⋅η = v, where::
-    
-        F_rc = Σ_b f_rbc θ_b
-        v_r = (A⋅θ)_r
-    
+
+    **BCH approximation — known limitation** (see CIP-0009):
+    The formula ``(A⋅θ)_r = (F⋅η)_r`` holds only in the limit θ → 0.  For
+    finite θ the Kubo-Mori kernel ``K_ρ`` (which defines ∂ρ/∂θ and thus A)
+    differs from a pure commutator by the operator-ordered BCH integral
+    structure, contributing an irreducible residual of order O(‖θ‖²).
+
+    Because F is built from adjoint-action contractions, it is also typically
+    rank-deficient for small θ (the system has a three-dimensional null space
+    for the n_pairs=1, d=2 system), so the system F⋅η = v is inconsistent:
+    ``v = A⋅θ`` has a non-zero component outside col(F) of magnitude
+    ~0.1·‖θ‖².  No choice of η can reduce the residual below this floor.
+
     Parameters
     ----------
     A : np.ndarray, shape (n, n)
-        Antisymmetric part of flow Jacobian
+        Antisymmetric part of flow Jacobian.
     theta : np.ndarray, shape (n,)
-        Natural parameters
+        Natural parameters.
     f_abc : np.ndarray, shape (n, n, n)
-        Structure constants
+        Structure constants; ``f_abc[a, b, c] = f_{abc}``.
     regularization : float
-        Regularization parameter for nearly singular systems
-        
+        Tikhonov regularisation added to F^T F when the condition number of F
+        exceeds 1e12.
+
     Returns
     -------
     eta : np.ndarray, shape (n,)
-        Coefficients of effective Hamiltonian
+        Coefficients of effective Hamiltonian.
     diagnostics : dict
-        Diagnostic information:
-        - 'condition_number': Condition number of F matrix
-        - 'residual': ||F⋅η - v||
-        - 'method': 'linear_solver'
-        
+        - ``'condition_number'``: condition number of F.
+        - ``'residual'``: ``‖F⋅η − v‖``; bounded below by the BCH residual
+          ~0.1·‖θ‖² and above by the regularisation error.
+        - ``'method'``: ``'linear_solver'``.
+        - ``'regularization'``: value used.
+
     Notes
     -----
-    Method A: Direct linear solver approach
-    
-    The structure constants f_abc appear in the matrix F that relates
-    the Hamiltonian coefficients to the antisymmetric flow.
-    
-    For nearly singular systems (near degeneracies), regularization
-    helps stabilize the solution.
+    The extracted H_eff is always Hermitian and traceless regardless of the
+    residual magnitude — those properties follow from the operator basis, not
+    from the accuracy of the formula.
     """
     n = len(theta)
     

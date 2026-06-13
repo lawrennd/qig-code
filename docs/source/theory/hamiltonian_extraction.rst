@@ -141,16 +141,33 @@ must satisfy the linear system
 
 .. math::
 
-   (A \theta)_b = \sum_{a,c} f_{abc}\, \eta_c(\theta) \, \theta_a,
+   (A \theta)_r = \sum_{b,c} f_{rbc}\, \theta_b\, \eta_c(\theta),
 
 which can be written in matrix form as
 
 .. math::
 
-   A\,\theta = \mathbf{f} \cdot \eta(\theta),
+   F\,\eta(\theta) = A\,\theta,
 
-where :math:`\mathbf{f}_{bc} = \sum_a f_{abc}\, \theta_a` is determined by the
-structure constants and the current parameter point.
+where :math:`F_{rc} = \sum_b f_{rbc}\, \theta_b` is the adjoint-action matrix
+built from the structure constants and the current parameter point.
+
+.. note::
+
+   **BCH approximation — known limitation.**  The formula above is derived
+   under the assumption that the Kubo-Mori derivative
+   :math:`\partial\rho/\partial\theta_a` reduces analytically to the commutator
+   :math:`[F_a, \rho]` via Baker-Campbell-Hausdorff identities
+   (the *strong BCH identity*, see below).  This identity does **not** hold in
+   general; the full Kubo-Mori kernel introduces corrections of
+   :math:`O(\|\theta\|^2)`.  Consequently, the vector :math:`A\theta` has a
+   component outside the column space of :math:`F` of magnitude
+   :math:`\sim 0.1\,\|\theta\|^2`, so the system :math:`F\eta = A\theta` is
+   **inconsistent**: no choice of :math:`\eta` achieves a residual smaller than
+   this BCH floor.  For :math:`\|\theta\|\sim 0.05` the achievable residual is
+   :math:`\sim 10^{-3}`, not :math:`10^{-6}`.  The matrix :math:`F` is also
+   typically rank-deficient (rank 12 of 15 for the qubit-pair system), reflecting
+   the null directions of the adjoint action at finite :math:`\theta`.
 
 Extraction Algorithm
 ---------------------
@@ -160,9 +177,12 @@ Given a point :math:`\theta^*` on the constraint manifold:
 1. **Compute** the Jacobian :math:`M(\theta^*)` and extract
    :math:`A = \tfrac{1}{2}(M - M^T)`.
 
-2. **Solve** the linear system :math:`\mathbf{f} \cdot \eta = A\,\theta` for the
-   coefficient vector :math:`\eta \in \mathbb{R}^{\dim\mathfrak{g}}`.
-   For well-conditioned bases this is a standard least-squares problem.
+2. **Solve** the linear system :math:`F\,\eta = A\,\theta` for the
+   coefficient vector :math:`\eta \in \mathbb{R}^{\dim\mathfrak{g}}`,
+   where :math:`F_{rc} = \sum_b f_{rbc}\,\theta_b`.
+   Because :math:`F` is rank-deficient and the system is inconsistent
+   (BCH residual :math:`\sim 0.1\|\theta\|^2`), the solver uses Tikhonov
+   regularisation.
 
 3. **Build** the effective Hamiltonian:
 
@@ -195,7 +215,7 @@ The extraction is available in :mod:`qig.generic_decomposition`:
    # Extract structure constants for the chosen basis
    f_abc = structure_constants(operators)           # shape (n_ops, n_ops, n_ops)
 
-   # Solve A @ theta = f @ eta for eta
+   # Solve F @ eta = A @ theta for eta  (F[r,c] = sum_b f[r,b,c] * theta[b])
    eta = effective_hamiltonian_coefficients(A, theta_star, f_abc)
 
    # Build H_eff = sum_c eta_c F_c
@@ -215,8 +235,13 @@ Structural properties that hold exactly:
 
 - :math:`H_\text{eff}` is **Hermitian** (verified to machine precision).
 - :math:`H_\text{eff}` is **traceless** (by construction from :math:`\mathfrak{su}` basis).
-- The extraction identity :math:`A\,\theta = \mathbf{f} \cdot \eta` holds to
-  :math:`\sim 10^{-6}` relative error for qutrit-pair examples.
+- The extraction formula :math:`F\,\eta \approx A\,\theta` is
+  :math:`O(\|\theta\|^2)` accurate; the residual floor is
+  :math:`\sim 0.1\,\|\theta\|^2` (e.g. :math:`\sim 10^{-3}` for
+  :math:`\|\theta\| \sim 0.05`), not :math:`10^{-6}`.  This arises
+  because :math:`A\,\theta` lies partly outside :math:`\operatorname{col}(F)`;
+  the exact magnitude of the BCH correction is verified in
+  ``tests/test_generic_hamiltonian.py::test_extraction_consistency_multiple_points``.
 
 A subtlety about the Kubo-Mori kernel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

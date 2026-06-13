@@ -201,26 +201,35 @@ If $H_{\text{eff}} = \sum_c \eta_c F_c$, then by the chain rule
 $$
 \dot{\rho} = \sum_a \frac{\partial \rho}{\partial \theta_a} \dot{\theta}_a = \sum_a \frac{\partial \rho}{\partial \theta_a} (A_{ab} \theta_b).
 $$
-The commutator $[F_c, \rho]$ can be related to the parameter-space flow through the structure constants and Kubo-Mori derivatives. After careful calculation (involving the Kubo-Mori kernel structure), this yields
+For the formula to close in terms of structure constants, one would need the
+Kubo-Mori derivative $\partial \rho / \partial \theta_a$ to equal the commutator
+$[F_a, \rho]$.  That reduction requires the Baker-Campbell-Hausdorff identity
+$\sum_a \eta_a \partial_a \rho = -i[H_{\text{eff}}, \rho]$, which holds only at
+leading order in $\theta$ (see CIP-0009, *Discovered Limitation: BCH-Duhamel
+Discrepancy*).  At leading order this yields the adjoint-action formula:
 $$
-A_{ab} \theta_b = \sum_c f_{abc} \eta_c.
+(A \theta)_r \approx \sum_{b,c} f_{rbc}\, \theta_b\, \eta_c.
 $$
-This is a **linear system** for the Hamiltonian coefficients $\eta_c$!
+This is equivalent to the linear system $F \eta = v$ with
+$F_{rc} = \sum_b f_{rbc}\, \theta_b$ and $v_r = (A\theta)_r$.
+
+**Known limitation**: this formula is only O(‖θ‖²) accurate.  For finite θ
+the Kubo-Mori kernel introduces corrections that cause an irreducible residual
+$\|F\eta - v\| \sim 0.1\,\|\theta\|^2$ regardless of the solver used.  The
+matrix F is also typically rank-deficient (three null directions for the
+$n_\text{pairs}=1$, $d=2$ system), making the system inconsistent.
 
 ## 5. Solving for the Hamiltonian Coefficients
 
 ### 5.1 The Linear System
 
-The extraction formula $A_{ab} \theta_b = \sum_c f_{abc} \eta_c$ can be rewritten as
+The adjoint-action formula $(A\theta)_r \approx \sum_{b,c} f_{rbc}\,\theta_b\,\eta_c$ defines the linear system
 $$
-\text{lhs}_a = \text{rhs}_{ac} \cdot \eta_c
+F\,\eta = v, \qquad F_{rc} = \sum_b f_{rbc}\,\theta_b, \quad v_r = (A\theta)_r.
 $$
-where
 
-- $\text{lhs}_a = A_{ab} \theta_b$ (vector of length $n$)
-- $\text{rhs}_{ac} = f_{abc}$ (matrix of shape $n \times n$)
-
-This is typically an **overdetermined** system (more equations than unknowns for Lie algebras). We solve it using least squares.
+- $v$ has length $n$; $F$ has shape $n \times n$ but rank $< n$ in general.
+- The system is **inconsistent** (v has a component outside col(F) of size ~0.1‖θ‖²), so the best achievable residual is this BCH floor, not zero.
 
 ### 5.2 Code Implementation
 
@@ -229,20 +238,22 @@ This is typically an **overdetermined** system (more equations than unknowns for
 eta, diagnostics = effective_hamiltonian_coefficients(A, theta, f_abc)
 
 print(f"Hamiltonian coefficients η shape: {eta.shape}")
-print(f"Solution residual: {diagnostics['residual']:.2e}")
+print(f"Solution residual: {diagnostics['residual']:.2e}")  # ~0.1*||theta||^2
 print(f"Condition number: {diagnostics['condition_number']:.2e}")
 
-# Verify the extraction formula
-lhs = A @ theta  # Left-hand side
-rhs = np.einsum('abc,c->a', f_abc, eta)  # Right-hand side
+# Verify the extraction formula (correct: include theta in einsum)
+lhs = A @ theta                                      # (A @ theta)_r
+rhs = np.einsum('abc,b,c->a', f_abc, theta, eta)    # sum_{b,c} f[r,b,c]*theta[b]*eta[c]
 
 extraction_error = np.linalg.norm(lhs - rhs)
-print(f"\nExtraction formula error: {extraction_error:.2e}")
+print(f"\nExtraction formula error: {extraction_error:.2e}")  # bounded by ~0.1*||theta||^2
 print(f"  ||A @ θ||: {np.linalg.norm(lhs):.4e}")
-print(f"  ||f @ η||: {np.linalg.norm(rhs):.4e}")
+print(f"  ||F @ η||: {np.linalg.norm(rhs):.4e}")
 ```
 
-The extraction is *highly accurate* (residual ~1e-7).
+The residual is bounded by the BCH approximation error (~0.1·‖θ‖²), not by
+numerical precision.  For ‖θ‖ ~ 0.05 expect residual ~1e-3.  The extracted
+H_eff is nonetheless guaranteed to be Hermitian and traceless.
 
 ## 6. Building the Effective Hamiltonian Operator
 

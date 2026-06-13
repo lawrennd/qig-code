@@ -940,7 +940,7 @@ class QuantumExponentialFamily:
 
         return C, grad_C
 
-    def third_cumulant_contraction(self, theta: np.ndarray, method: str = 'fd') -> np.ndarray:
+    def third_cumulant_contraction(self, theta: np.ndarray, method: str = 'auto') -> np.ndarray:
         """
         Compute (∇G)[θ], the third cumulant tensor contracted with θ.
         
@@ -960,8 +960,9 @@ class QuantumExponentialFamily:
             Natural parameters
         method : str, optional
             Method for computing the third cumulant:
-            - 'block' (default): Block Fréchet derivatives (robust, small systems)
-            - 'fd': Finite differences of Fisher metric (fast, accurate)
+            - 'auto' (default): 'block' for n_params ≤ 20, 'fd' otherwise
+            - 'block': Block Fréchet derivatives (exact, limited to n_params ≤ 20)
+            - 'fd': Finite differences of Fisher metric (works for any system size)
             - 'analytic': Analytic perturbation theory (slow, approximate)
         
         Returns
@@ -978,9 +979,12 @@ class QuantumExponentialFamily:
         ✅ Respect Hilbert space structure: Works on full Hilbert space
         ✅ Question each derivative step: Uses perturbation theory
         
-        The finite difference method is much faster (~100-500×) and avoids
-        expensive ∂ρ/∂θ computations.
+        The 'auto' mode uses 'block' for small systems (n_params ≤ 20) where it
+        is exact and efficient, and falls back to 'fd' for larger systems where
+        'block' would be prohibitively expensive.
         """
+        if method == 'auto':
+            method = 'block' if self.n_params <= 20 else 'fd'
         if method == 'block':
             return self._third_cumulant_contraction_block(theta)
         elif method == 'fd':
@@ -988,7 +992,7 @@ class QuantumExponentialFamily:
         elif method == 'analytic':
             return self._third_cumulant_contraction_analytic(theta)
         else:
-            raise ValueError(f"Unknown method '{method}'. Use 'fd', 'analytic', or 'block'.")
+            raise ValueError(f"Unknown method '{method}'. Use 'auto', 'fd', 'analytic', or 'block'.")
 
     def psi_hessian_block(
         self, theta: np.ndarray, param_indices: Optional[List[int]] = None

@@ -26,6 +26,18 @@ Tolerance Categories
 **Category F: Physical Validation** (≤ 1e-4)
    Statistical significance for physical claims
 
+**Category G: BCH Approximation Residuals** (~0.1 · ‖θ‖²)
+   The Hamiltonian extraction formula
+   :math:`F\,\eta \approx A\,\theta`
+   (where :math:`F_{rc} = \sum_b f_{rbc}\,\theta_b`) is only leading-order
+   correct.  The Kubo-Mori kernel embedded in :math:`A` contributes
+   :math:`O(\|\theta\|^2)` corrections outside :math:`\operatorname{col}(F)`.
+   For :math:`\|\theta\|\sim 0.05` the irreducible residual is
+   :math:`\sim 10^{-3}`.  Tests that verify this residual use the bound
+   :math:`0.5\,\|\theta\|^2` rather than a fixed numerical tolerance.
+   See ``tests/test_generic_hamiltonian.py::test_extraction_consistency_multiple_points``
+   and CIP-0009 (*Correction note: extraction formula accuracy*).
+
 For complete documentation, see:
 
 * ``tests/tolerance_framework.py`` - Implementation
