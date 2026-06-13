@@ -11,6 +11,7 @@ Mathematical background for quantum information geometry and the inaccessible ga
    inaccessible_game
    origin_regularisation
    generic_structure
+   hamiltonian_extraction
    symbolic_computation
 
 Quantum Exponential Families
@@ -63,11 +64,19 @@ See :doc:`origin_regularisation` for full details.
 GENERIC Structure
 -----------------
 
-*Coming soon: General Equation for Non-Equilibrium Reversible-Irreversible Coupling*
+Decomposition of dynamics into reversible and irreversible parts:
+:math:`M = S + A`. Covers Lie closure cancellation, when Duhamel integrals
+are required, and the practical consequences for qig computations.
 
-Topics:
-- Decomposition of dynamics: :math:`\dot{\theta} = F(\theta) = F_{\text{rev}} + F_{\text{irr}}`
-- Jacobian structure: :math:`M = S + A`
-- Relationship to Hamiltonian and gradient flows
-- Entropy production
+See :doc:`generic_structure` for full details.
+
+Hamiltonian Extraction
+-----------------------
+
+How the antisymmetric sector :math:`A` of the GENERIC Jacobian is mapped to
+an explicit effective Hamiltonian :math:`H_\text{eff}(\theta) = \sum_c \eta_c F_c`
+via the Lie structure constants :math:`f_{abc}`. Explains the extraction
+algorithm, the Kubo-Mori kernel subtlety, and validated properties.
+
+See :doc:`hamiltonian_extraction` for full details.
 
