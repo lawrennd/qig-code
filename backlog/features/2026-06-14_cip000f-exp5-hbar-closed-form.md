@@ -44,7 +44,8 @@ Var_{ρ_0}(H_δ) = 2 δ² exp(-β0 δ) / Z²
 - [x] Exp 5 section added to `examples/qutrit_gibbs_lock_clock_experiments.ipynb`.
 - [x] `|hbar_num - hbar_analytic| < 1e-10` asserted at every (β0, δ) grid point.
 - [x] Divergence confirmed numerically at x → 0 and x → ∞.
-- [x] Minimum of hbar_analytic located near x ≈ 2.23 (verified numerically: x* = 2.2278).
+- [x] Minimum of hbar_analytic located near x ≈ 2.23 (verified numerically: x* = 2.2278;
+  analytical condition `2x - 4 = (x+2)*exp(-x)` confirmed — the backlog's "2.66" was incorrect).
 - [x] Plot of ℏ vs x included in notebook.
 
 ## Implementation Notes
