@@ -1,7 +1,7 @@
 ---
 id: "2026-06-14_cip000f-exp3-loewner-kernel"
 title: "CIP-000F Exp 3: Loewner kernel two-sector structure"
-status: "Proposed"
+status: "Completed"
 priority: "High"
 created: "2026-06-14"
 last_updated: "2026-06-14"
@@ -45,13 +45,13 @@ off-diagonal mode types:
 
 ## Acceptance Criteria
 
-- [ ] Notebook `examples/qutrit_gibbs_lock_clock_experiments.ipynb` created
+- [x] Notebook `examples/qutrit_gibbs_lock_clock_experiments.ipynb` created
   with a setup section and Exp 3 section.
-- [ ] Assertion `|C_numerical - C_analytical| < 1e-10` passes for all
+- [x] Assertion `|C_numerical - C_analytical| < 1e-10` passes for all
   (β0, δ) grid points for both in-block and cross-block entries.
-- [ ] δ→0 smooth limit verified: cross-block weight converges to in-block
+- [x] δ→0 smooth limit verified: cross-block weight converges to in-block
   weight to within 1e-10.
-- [ ] Plot of Loewner weights vs x = β0·δ included in notebook.
+- [x] Plot of Loewner weights vs x = β0·δ included in notebook.
 
 ## Implementation Notes
 
@@ -74,3 +74,7 @@ points). Use logspacing for δ to capture the δ→0 limit well.
 
 ### 2026-06-14
 Task created from CIP-000F (Accepted).
+Implemented in `examples/qutrit_gibbs_lock_clock_experiments.ipynb`.
+All assertions pass to machine precision (≤ 4.6×10⁻¹⁵).
+Notebook also contains the physical setup section used by subsequent experiments.
+Task completed.
