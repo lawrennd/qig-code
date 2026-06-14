@@ -998,6 +998,36 @@ def test_symbolic_verification_experiments_smoke():
         pytest.fail(f"Symbolic verification experiments notebook smoke test failed: {error_msg}")
 
 
+@integration_test
+def test_qutrit_gibbs_lock_clock_experiments_smoke():
+    """Smoke test for qutrit Gibbs-lock clock experiments notebook (CIP-000F).
+
+    This notebook verifies the Hamiltonian clock construction for the d=3
+    departed-qutrit frame: Loewner two-sector structure, uniform dephasing,
+    and ℏ(β₀,δ) closed form.
+
+    To run:
+      pytest -m integration tests/test_notebook.py::test_qutrit_gibbs_lock_clock_experiments_smoke -v
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+
+    if not HAS_EXECUTE_PREPROCESSOR:
+        pytest.skip("nbformat/ExecutePreprocessor not installed")
+
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "qutrit_gibbs_lock_clock_experiments.ipynb"
+
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+
+    success, error_msg = run_notebook_smoke_test(notebook_path, max_cells=8, timeout=120)
+
+    if not success:
+        pytest.fail(f"Qutrit Gibbs-lock clock experiments notebook smoke test failed: {error_msg}")
+
+
 if __name__ == "__main__":
     main()
 
