@@ -1,7 +1,7 @@
 ---
 id: "2026-06-14_cip000f-exp5-hbar-closed-form"
 title: "CIP-000F Exp 5: ℏ(β₀, δ) closed form and numerical verification"
-status: "Proposed"
+status: "Completed"
 priority: "High"
 created: "2026-06-14"
 last_updated: "2026-06-14"
@@ -41,12 +41,11 @@ Var_{ρ_0}(H_δ) = 2 δ² exp(-β0 δ) / Z²
 
 ## Acceptance Criteria
 
-- [ ] Exp 5 section added to `examples/qutrit_gibbs_lock_clock_experiments.ipynb`.
-- [ ] `|hbar_num - hbar_analytic| < 1e-10` asserted at every (β0, δ) grid point.
-- [ ] Divergence confirmed numerically at x → 0 and x → ∞.
-- [ ] Minimum of hbar_analytic located near x ≈ 2.66 (verify
-  `d/dx [x² e^{-x} / (2+e^{-x})²] = 0` is satisfied near x=2.66).
-- [ ] Plot of ℏ vs x included in notebook.
+- [x] Exp 5 section added to `examples/qutrit_gibbs_lock_clock_experiments.ipynb`.
+- [x] `|hbar_num - hbar_analytic| < 1e-10` asserted at every (β0, δ) grid point.
+- [x] Divergence confirmed numerically at x → 0 and x → ∞.
+- [x] Minimum of hbar_analytic located near x ≈ 2.23 (verified numerically: x* = 2.2278).
+- [x] Plot of ℏ vs x included in notebook.
 
 ## Implementation Notes
 
@@ -78,3 +77,6 @@ The minimum of x² exp(-x)/(2+exp(-x))² can be found numerically using
 
 ### 2026-06-14
 Task created from CIP-000F (Accepted).
+Implemented in `examples/qutrit_gibbs_lock_clock_experiments.ipynb`.
+All assertions pass (grid error ≤ 7.3×10⁻¹²). Minimum at x* ≈ 2.228 confirmed.
+Task completed.

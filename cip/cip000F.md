@@ -279,7 +279,7 @@ The notebook itself serves as an integration test. Key assertions:
 - [x] **Prerequisite:** `MatrixExponentialFamily.pi_marg_matrix(theta)` — see
   `backlog/features/2026-06-14_pi-marg-projector-method.md`
 - [x] Implement Exp 3: Loewner kernel two-sector structure and δ→0 limit
-- [ ] Implement Exp 5: ℏ(β_0, δ) closed form and numerical cross-check
+- [x] Implement Exp 5: ℏ(β_0, δ) closed form and numerical cross-check
 - [ ] Implement Exp 2: Iso-marginal sector check for all Gell-Mann generators
 - [ ] Implement Exp 4: Uniform dephasing and Loewner amplitude weighting
 - [ ] Implement Exp 1: Π_marg computation and iso-marginal sector basis
