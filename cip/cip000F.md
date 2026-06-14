@@ -1,7 +1,7 @@
 ---
 id: "000F"
 title: "Qutrit Gibbs-Lock Experiments: Pi_marg, Loewner Kernel, and Hamiltonian Clock"
-status: "Proposed"
+status: "Accepted"
 created: "2026-06-14"
 last_updated: "2026-06-14"
 compressed: false
@@ -15,7 +15,7 @@ tags: ["qutrit", "gibbs-lock", "hamiltonian-clock", "loewner-kernel", "pi-marg",
 
 ## Status
 - [x] Proposed
-- [ ] Accepted
+- [x] Accepted
 - [ ] Implemented
 - [ ] Closed
 
@@ -230,7 +230,7 @@ spectral separation.
 
 ## Implementation
 
-All experiments use existing `qig-code` machinery:
+Experiments 2–5 use only existing `qig-code` machinery:
 
 - `near_bell_gibbs_frame(d=3, delta=δ, beta=β_0)` — CIP-000E
 - `GibbsLockedFrame.loewner_kernel()` — CIP-000C
@@ -239,9 +239,29 @@ All experiments use existing `qig-code` machinery:
 - `infer_mu0()` — CIP-000C
 - `MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)` — existing
 
-No new library functions are required. The experiments are to be implemented
-as a notebook `examples/qutrit_gibbs_lock_clock_experiments.ipynb` that
-validates the theory in Lawrence-hamiltonian26.
+**Prerequisite for Exp 1 (Π_marg projector):**
+
+Exp 1 requires the explicit matrix form of Π_marg in natural-parameter
+coordinates:
+
+```
+Π_marg(θ*) = N (N^T G N)^{-1} N^T G
+```
+
+where N spans ker M(θ*) (null space of the constraint Jacobian) and G is the
+BKM/Fisher metric. `MatrixExponentialFamily` currently exposes the *sum*
+constraint gradient `marginal_entropy_constraint(theta)` but not the full
+per-subsystem Jacobian M or the assembled projector. A new method
+`pi_marg_matrix(theta)` must be added to `MatrixExponentialFamily` before
+Exp 1 can be implemented.
+
+This is tracked as a separate backlog task:
+`backlog/features/2026-06-14_pi-marg-projector-method.md`
+
+The experiments are implemented as a notebook
+`examples/qutrit_gibbs_lock_clock_experiments.ipynb` that validates the
+theory in Lawrence-hamiltonian26. Experiments 3, 5, 2, 4 can be implemented
+immediately; Exp 1 depends on the backlog task above.
 
 ## Backward Compatibility
 
@@ -256,11 +276,14 @@ The notebook itself serves as an integration test. Key assertions:
 - Π_marg acts as identity on all iso-marginal off-diagonal generators
 
 ## Implementation Status
-- [ ] Implement Exp 1: Π_marg computation and iso-marginal sector basis
-- [ ] Implement Exp 2: Iso-marginal sector check for all Gell-Mann generators
+- [ ] **Prerequisite:** `MatrixExponentialFamily.pi_marg_matrix(theta)` — see
+  `backlog/features/2026-06-14_pi-marg-projector-method.md`
 - [ ] Implement Exp 3: Loewner kernel two-sector structure and δ→0 limit
-- [ ] Implement Exp 4: Uniform dephasing and Loewner amplitude weighting
 - [ ] Implement Exp 5: ℏ(β_0, δ) closed form and numerical cross-check
+- [ ] Implement Exp 2: Iso-marginal sector check for all Gell-Mann generators
+- [ ] Implement Exp 4: Uniform dephasing and Loewner amplitude weighting
+- [ ] Implement Exp 1: Π_marg computation and iso-marginal sector basis
+  (depends on prerequisite above)
 - [ ] Notebook `examples/qutrit_gibbs_lock_clock_experiments.ipynb`
 
 ## References
@@ -273,3 +296,4 @@ The notebook itself serves as an integration test. Key assertions:
 - `cip/cip000C.md` — Gibbs-lock API
 - `cip/cip000D.md` — Hamiltonian paper end-to-end companion
 - `cip/cip000E.md` — near-Bell testbed constructors
+- `backlog/features/2026-06-14_pi-marg-projector-method.md` — prerequisite for Exp 1
