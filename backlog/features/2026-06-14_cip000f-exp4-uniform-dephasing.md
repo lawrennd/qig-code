@@ -1,7 +1,7 @@
 ---
 id: "2026-06-14_cip000f-exp4-uniform-dephasing"
 title: "CIP-000F Exp 4: Uniform dephasing and Loewner amplitude weighting"
-status: "Proposed"
+status: "Completed"
 priority: "High"
 created: "2026-06-14"
 last_updated: "2026-06-14"
@@ -44,13 +44,13 @@ forward to density-matrix coordinates.
 
 ## Acceptance Criteria
 
-- [ ] Exp 4 section added to `examples/qutrit_gibbs_lock_clock_experiments.ipynb`.
-- [ ] Uniform decay confirmed: both envelopes fit to exp(-mu0·t) with the
-  same mu0 (relative error < 1%).
-- [ ] Loewner amplitude ratio verified: initial amplitudes in δρ differ by
-  the Loewner weights from Exp 3 (tolerance 1e-10).
-- [ ] `infer_mu0` fitted rate matches input mu0 to within 1%.
-- [ ] Plot of decay envelopes for in-block and cross-block modes included.
+- [x] Exp 4 section added to `examples/qutrit_gibbs_lock_clock_experiments.ipynb`.
+- [x] Uniform decay confirmed: both envelopes fit to exp(-mu0·t) with the
+  same mu0 (relative error 0.00% — machine precision).
+- [x] Loewner amplitude ratio verified: initial amplitudes in δρ differ by
+  the Loewner weights from Exp 3 (error = 0 and 2.8e-17).
+- [x] `infer_mu0` fitted rate matches input mu0 to 0.0000% (< 1%).
+- [x] Plot of decay envelopes for in-block and cross-block modes included.
 
 ## Implementation Notes
 
@@ -75,3 +75,5 @@ R_od (divide by its Frobenius norm) so that the initial magnitude is 1.
 
 ### 2026-06-14
 Task created from CIP-000F (Accepted).
+Implemented in `examples/qutrit_gibbs_lock_clock_experiments.ipynb`.
+All assertions pass to machine precision. Task completed.

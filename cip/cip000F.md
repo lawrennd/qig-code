@@ -281,7 +281,7 @@ The notebook itself serves as an integration test. Key assertions:
 - [x] Implement Exp 3: Loewner kernel two-sector structure and δ→0 limit
 - [x] Implement Exp 5: ℏ(β_0, δ) closed form and numerical cross-check
 - [ ] Implement Exp 2: Iso-marginal sector check for all Gell-Mann generators
-- [ ] Implement Exp 4: Uniform dephasing and Loewner amplitude weighting
+- [x] Implement Exp 4: Uniform dephasing and Loewner amplitude weighting
 - [ ] Implement Exp 1: Π_marg computation and iso-marginal sector basis
   (depends on prerequisite above)
 - [ ] Notebook `examples/qutrit_gibbs_lock_clock_experiments.ipynb`
