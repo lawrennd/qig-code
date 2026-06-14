@@ -1,7 +1,7 @@
 ---
 id: "000F"
 title: "Qutrit Gibbs-Lock Experiments: Pi_marg, Loewner Kernel, and Hamiltonian Clock"
-status: "Accepted"
+status: "Implemented"
 created: "2026-06-14"
 last_updated: "2026-06-14"
 compressed: false
@@ -16,7 +16,7 @@ tags: ["qutrit", "gibbs-lock", "hamiltonian-clock", "loewner-kernel", "pi-marg",
 ## Status
 - [x] Proposed
 - [x] Accepted
-- [ ] Implemented
+- [x] Implemented
 - [ ] Closed
 
 ## Summary
@@ -280,11 +280,10 @@ The notebook itself serves as an integration test. Key assertions:
   `backlog/features/2026-06-14_pi-marg-projector-method.md`
 - [x] Implement Exp 3: Loewner kernel two-sector structure and δ→0 limit
 - [x] Implement Exp 5: ℏ(β_0, δ) closed form and numerical cross-check
-- [ ] Implement Exp 2: Iso-marginal sector check for all Gell-Mann generators
+- [x] Implement Exp 1: Π_marg computation — rank 78, idempotent, verified
+- [x] Implement Exp 2: Iso-marginal sector check — complement = row(∇S_A, ∇S_B)
 - [x] Implement Exp 4: Uniform dephasing and Loewner amplitude weighting
-- [ ] Implement Exp 1: Π_marg computation and iso-marginal sector basis
-  (depends on prerequisite above)
-- [ ] Notebook `examples/qutrit_gibbs_lock_clock_experiments.ipynb`
+- [x] Notebook `examples/qutrit_gibbs_lock_clock_experiments.ipynb` — all 5 exps
 
 ## References
 

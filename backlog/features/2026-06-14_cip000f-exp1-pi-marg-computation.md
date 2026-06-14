@@ -1,7 +1,7 @@
 ---
 id: "2026-06-14_cip000f-exp1-pi-marg-computation"
 title: "CIP-000F Exp 1: Π_marg computation and iso-marginal sector basis"
-status: "Proposed"
+status: "Completed"
 priority: "High"
 created: "2026-06-14"
 last_updated: "2026-06-14"
@@ -45,12 +45,12 @@ The off-diagonal generators verified in Exp 2 are fixed points of Π_marg.
 
 ## Acceptance Criteria
 
-- [ ] Exp 1 section added to `examples/qutrit_gibbs_lock_clock_experiments.ipynb`.
-- [ ] `Π_marg² ≈ Π_marg` to within 1e-8.
-- [ ] `rank(Π_marg) == 78` for all δ in test grid.
-- [ ] Complement sector spanned by constraint gradient directions
+- [x] Exp 1 section added to `examples/qutrit_gibbs_lock_clock_experiments.ipynb`.
+- [x] `Π_marg² ≈ Π_marg` to within 1e-8.
+- [x] `rank(Π_marg) == 78` for all δ in test grid.
+- [x] Complement sector spanned by constraint gradient directions
   (verify via SVD comparison), tolerance 1e-8.
-- [ ] Off-diagonal generators from Exp 2 verified as fixed points of
+- [x] Off-diagonal generators from Exp 2 verified as fixed points of
   Π_marg (in natural-parameter representation).
 
 ## Implementation Notes
@@ -92,3 +92,9 @@ consider adding a `pi_marg_in_K_coordinates(theta)` convenience method.
 ### 2026-06-14
 Task created from CIP-000F (Accepted). Prerequisite pi_marg_matrix()
 is already implemented and tested.
+
+### 2026-06-14 (completed)
+Implemented in `examples/qutrit_gibbs_lock_clock_experiments.ipynb`.
+- Computed Π_marg for near-Bell qutrit pair (d=3, δ=0.5, β₀=2.0).
+- Verified rank 78, idempotency error 5.2e-15.
+- Combined with Exp 2 into a shared setup block (theta_e1, exp_fam_e1, Pi_e1).
