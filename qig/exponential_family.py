@@ -940,6 +940,139 @@ class MatrixExponentialFamily:
 
         return C, grad_C
 
+    def _marginal_entropy_gradient_single(
+        self, theta: np.ndarray, site_idx: int
+    ) -> Tuple[float, np.ndarray]:
+        """
+        Gradient of the von Neumann entropy of one marginal subsystem.
+
+        Computes h_k(θ) = -tr(ρ_k log ρ_k) and its gradient ∂h_k/∂θ_a for
+        subsystem k using the BKM inner product:
+
+            ∂h_k/∂θ_a = -⟨F̃_a, B_k⟩_BKM
+
+        where B_k = (log ρ_k + I_k) ⊗ I_rest is the lifted log-marginal
+        operator for subsystem k, and the BKM inner product is evaluated at
+        ρ(θ).
+
+        This is the per-subsystem analogue of
+        ``marginal_entropy_constraint_theta_only``, which returns only the
+        gradient of the *sum* ∑_k h_k.
+
+        Parameters
+        ----------
+        theta : ndarray, shape (n_params,)
+            Natural parameters.
+        site_idx : int
+            Index of the subsystem (0-based).
+
+        Returns
+        -------
+        h_k : float
+            Marginal von Neumann entropy of subsystem site_idx.
+        grad_h_k : ndarray, shape (n_params,)
+            Gradient ∂h_k/∂θ_a.
+        """
+        rho = self.rho_from_theta(theta)
+        rho_k = partial_trace(rho, self.dims, keep=site_idx)
+
+        # Marginal entropy
+        eigvals_k, eigvecs_k = eigh(rho_k)
+        eigvals_k = np.maximum(eigvals_k.real, 1e-14)
+        h_k = float(-np.sum(eigvals_k * np.log(eigvals_k)))
+
+        # Lifted test operator B_k = (log ρ_k + I_k) ⊗ I_rest
+        log_rho_k = eigvecs_k @ np.diag(np.log(eigvals_k)) @ eigvecs_k.conj().T
+        B_k = log_rho_k + np.eye(self.dims[site_idx], dtype=complex)
+        B_full = self._lift_to_full_space(B_k, site_idx)
+
+        # BKM kernel at ρ(θ)
+        k_kern, _, U = self._bkm_kernel(rho)
+        B_tilde = U.conj().T @ B_full @ U
+
+        I_full = np.eye(self.D, dtype=complex)
+        grad_h_k = np.zeros(self.n_params)
+        for a, F_a in enumerate(self.operators):
+            mean_Fa = np.trace(rho @ F_a).real
+            F_tilde = U.conj().T @ (F_a - mean_Fa * I_full) @ U
+            grad_h_k[a] = -np.real(np.sum(k_kern * (F_tilde * np.conj(B_tilde))))
+
+        return h_k, grad_h_k
+
+    def _marginal_entropy_gradient_per_subsystem(
+        self, theta: np.ndarray
+    ) -> np.ndarray:
+        """
+        Full constraint Jacobian M(θ) for the marginal-entropy constraints.
+
+        Stacks the per-subsystem gradients into a matrix:
+
+            M[k, a] = ∂h_k/∂θ_a,   k = 0 … n_sites-1,  a = 0 … n_params-1
+
+        This is the constraint Jacobian needed to construct the marginal
+        projector Π_marg via ``pi_marg_matrix``.
+
+        Parameters
+        ----------
+        theta : ndarray, shape (n_params,)
+
+        Returns
+        -------
+        M : ndarray, shape (n_sites, n_params)
+        """
+        M = np.zeros((self.n_sites, self.n_params))
+        for k in range(self.n_sites):
+            _, grad_k = self._marginal_entropy_gradient_single(theta, k)
+            M[k] = grad_k
+        return M
+
+    def pi_marg_matrix(
+        self, theta: np.ndarray, tol: float = 1e-10
+    ) -> np.ndarray:
+        """
+        Marginal projector Π_marg(θ*) in natural-parameter coordinates.
+
+        Computes the orthogonal projector onto the iso-marginal subspace:
+
+            Π_marg = N (N^T G N)^{-1} N^T G
+
+        where:
+        - M = _marginal_entropy_gradient_per_subsystem(theta), shape (n_sites, n_params)
+        - N spans ker(M), computed via SVD of M
+        - G = fisher_information(theta), shape (n_params, n_params)
+
+        This implements the formula ``eq:second-order-projector`` from
+        Lawrence-origin26.  The result is the projector onto perturbation
+        directions that leave every marginal entropy unchanged to first order.
+
+        Parameters
+        ----------
+        theta : ndarray, shape (n_params,)
+            Natural parameters at the operating point θ*.
+        tol : float
+            Singular-value threshold for the null-space determination.
+            Singular values of M below ``tol * sigma_max`` are treated as zero.
+
+        Returns
+        -------
+        Pi : ndarray, shape (n_params, n_params)
+            Projector satisfying Pi @ Pi ≈ Pi (idempotent) and
+            Pi @ g ≈ 0 for every constraint-gradient direction g.
+        """
+        M = self._marginal_entropy_gradient_per_subsystem(theta)
+        G = self.fisher_information(theta)
+
+        # Null space of M via SVD: rows of Vt[rank:] span ker(M)
+        _, s, Vt = np.linalg.svd(M, full_matrices=True)
+        threshold = tol * s[0] if s.size > 0 else tol
+        rank = int(np.sum(s > threshold))
+        # Columns of N span ker(M)
+        N = Vt[rank:].T  # shape (n_params, n_params - rank)
+
+        NtGN = N.T @ G @ N
+        Pi = N @ np.linalg.solve(NtGN, N.T @ G)
+        return Pi
+
     def third_cumulant_contraction(self, theta: np.ndarray, method: str = 'auto') -> np.ndarray:
         """
         Compute (∇G)[θ], the third cumulant tensor contracted with θ.

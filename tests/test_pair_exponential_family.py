@@ -1001,3 +1001,146 @@ class TestBellStateIndices:
         """Test that bell_indices out of range raises error."""
         with pytest.raises(ValueError, match="out of range"):
             product_of_bell_states(n_pairs=2, d=2, bell_indices=[0, 2])
+
+
+class TestPiMargMatrix:
+    """Tests for MatrixExponentialFamily.pi_marg_matrix and helpers.
+
+    Verifies the marginal projector Π_marg = N (N^T G N)^{-1} N^T G
+    implementing eq:second-order-projector from Lawrence-origin26.
+    Required by CIP-000F Exp 1.
+    """
+
+    # ------------------------------------------------------------------
+    # Fixtures: a qutrit pair at the near-Bell Gibbs point
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _near_bell_theta(d: int, delta: float, beta: float) -> np.ndarray:
+        """Return θ* for the near-Bell Gibbs state in the pair basis.
+
+        The Gibbs state is ρ_0 = exp(-β H) / Z where H is the near-Bell
+        Hamiltonian.  Since ρ_0 = exp(K) / Z with K = ∑_a θ_a F_a, we
+        have K = log(ρ_0) + log(Z) I = -β H (up to a scalar shift that
+        vanishes in the traceless projection).  Thus:
+
+            θ_a = tr(F_a (-β H)) / tr(F_a F_a)
+        """
+        from qig.pair_operators import near_bell_hamiltonian, pair_basis_generators
+        H = near_bell_hamiltonian(d, delta)
+        operators = pair_basis_generators(d)
+        K = -beta * H
+        theta = np.array([
+            np.real(np.trace(F @ K)) / np.real(np.trace(F @ F))
+            for F in operators
+        ])
+        return theta
+
+    def test_gradient_single_sums_to_total(self):
+        """Per-subsystem gradients sum to the total constraint gradient."""
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        rng = np.random.default_rng(42)
+        theta = rng.standard_normal(exp_fam.n_params) * 0.1
+
+        _, grad_total = exp_fam.marginal_entropy_constraint(theta)
+        M = exp_fam._marginal_entropy_gradient_per_subsystem(theta)
+
+        assert M.shape == (exp_fam.n_sites, exp_fam.n_params)
+        # Sum of per-subsystem gradients should equal total gradient
+        np.testing.assert_allclose(M.sum(axis=0), grad_total, atol=1e-8,
+                                   err_msg="Sum of per-subsystem gradients != total gradient")
+
+    def test_gradient_single_finite_difference(self):
+        """_marginal_entropy_gradient_single matches finite differences."""
+        from qig.core import marginal_entropies
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        rng = np.random.default_rng(7)
+        theta = rng.standard_normal(exp_fam.n_params) * 0.1
+        eps = 1e-5
+
+        for site in range(exp_fam.n_sites):
+            _, grad_analytic = exp_fam._marginal_entropy_gradient_single(theta, site)
+
+            grad_fd = np.zeros(exp_fam.n_params)
+            for a in range(exp_fam.n_params):
+                tp = theta.copy(); tp[a] += eps
+                tm = theta.copy(); tm[a] -= eps
+                rho_p = exp_fam.rho_from_theta(tp)
+                rho_m = exp_fam.rho_from_theta(tm)
+                h_p = marginal_entropies(rho_p, exp_fam.dims)[site]
+                h_m = marginal_entropies(rho_m, exp_fam.dims)[site]
+                grad_fd[a] = (h_p - h_m) / (2 * eps)
+
+            np.testing.assert_allclose(
+                grad_analytic, grad_fd, atol=1e-5,
+                err_msg=f"Analytic gradient for site {site} differs from FD"
+            )
+
+    def test_pi_marg_idempotent_qubit(self):
+        """Π_marg is idempotent for a qubit pair."""
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        rng = np.random.default_rng(13)
+        theta = rng.standard_normal(exp_fam.n_params) * 0.1
+
+        Pi = exp_fam.pi_marg_matrix(theta)
+        Pi2 = Pi @ Pi
+        np.testing.assert_allclose(Pi2, Pi, atol=1e-8,
+                                   err_msg="Π_marg is not idempotent")
+
+    def test_pi_marg_rank_qubit(self):
+        """Π_marg has rank n_params - n_sites for a qubit pair."""
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        rng = np.random.default_rng(17)
+        theta = rng.standard_normal(exp_fam.n_params) * 0.1
+
+        Pi = exp_fam.pi_marg_matrix(theta)
+        expected_rank = exp_fam.n_params - exp_fam.n_sites  # 15 - 2 = 13
+        actual_rank = np.linalg.matrix_rank(Pi, tol=1e-8)
+        assert actual_rank == expected_rank, (
+            f"Expected rank {expected_rank}, got {actual_rank}"
+        )
+
+    def test_pi_marg_kills_constraint_directions_qubit(self):
+        """Π_marg annihilates the constraint gradient directions (M @ Pi ≈ 0)."""
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=2, pair_basis=True)
+        rng = np.random.default_rng(31)
+        theta = rng.standard_normal(exp_fam.n_params) * 0.1
+
+        Pi = exp_fam.pi_marg_matrix(theta)
+        M = exp_fam._marginal_entropy_gradient_per_subsystem(theta)
+        MPi = M @ Pi
+        np.testing.assert_allclose(MPi, np.zeros_like(MPi), atol=1e-7,
+                                   err_msg="Constraint directions not killed by Π_marg")
+
+    def test_pi_marg_idempotent_qutrit(self):
+        """Π_marg is idempotent for a qutrit pair at the near-Bell Gibbs point."""
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        theta = self._near_bell_theta(d=3, delta=0.5, beta=2.0)
+
+        Pi = exp_fam.pi_marg_matrix(theta)
+        Pi2 = Pi @ Pi
+        np.testing.assert_allclose(Pi2, Pi, atol=1e-8,
+                                   err_msg="Π_marg is not idempotent at near-Bell Gibbs point")
+
+    def test_pi_marg_rank_qutrit(self):
+        """Π_marg has rank 78 (= 80 - 2) for the qutrit pair."""
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        theta = self._near_bell_theta(d=3, delta=0.5, beta=2.0)
+
+        Pi = exp_fam.pi_marg_matrix(theta)
+        expected_rank = exp_fam.n_params - exp_fam.n_sites  # 80 - 2 = 78
+        actual_rank = np.linalg.matrix_rank(Pi, tol=1e-7)
+        assert actual_rank == expected_rank, (
+            f"Expected rank {expected_rank}, got {actual_rank}"
+        )
+
+    def test_pi_marg_kills_constraint_directions_qutrit(self):
+        """Π_marg annihilates the constraint gradient directions for the qutrit pair."""
+        exp_fam = MatrixExponentialFamily(n_pairs=1, d=3, pair_basis=True)
+        theta = self._near_bell_theta(d=3, delta=0.5, beta=2.0)
+
+        Pi = exp_fam.pi_marg_matrix(theta)
+        M = exp_fam._marginal_entropy_gradient_per_subsystem(theta)
+        MPi = M @ Pi
+        np.testing.assert_allclose(MPi, np.zeros_like(MPi), atol=1e-7,
+                                   err_msg="Constraint directions not killed by Π_marg (qutrit)")
