@@ -2,8 +2,8 @@
 
 [![Tests](https://github.com/lawrennd/qig-code/actions/workflows/tests.yml/badge.svg)](https://github.com/lawrennd/qig-code/actions/workflows/tests.yml)
 [![Notebook Tests](https://github.com/lawrennd/qig-code/actions/workflows/notebook-tests.yml/badge.svg)](https://github.com/lawrennd/qig-code/actions/workflows/notebook-tests.yml)
-[![Documentation](https://github.com/lawrennd/qig-code/actions/workflows/docs.yml/badge.svg)](https://github.com/lawrennd/qig-code/actions/workflows/docs.yml)
-[![Documentation Status](https://readthedocs.org/projects/qig/badge/?version=latest)](https://qig.readthedocs.io/en/latest/?badge=latest)
+[![Docs Build](https://github.com/lawrennd/qig-code/actions/workflows/docs.yml/badge.svg)](https://github.com/lawrennd/qig-code/actions/workflows/docs.yml)
+[![Docs Site](https://readthedocs.org/projects/qig/badge/?version=latest)](https://qig.readthedocs.io/en/latest/?badge=latest)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
