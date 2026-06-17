@@ -1028,6 +1028,84 @@ def test_qutrit_gibbs_lock_clock_experiments_smoke():
         pytest.fail(f"Qutrit Gibbs-lock clock experiments notebook smoke test failed: {error_msg}")
 
 
+@integration_test
+def test_geometry_compatibility_experiments_smoke():
+    """Smoke test for geometry compatibility experiments notebook.
+
+    This notebook verifies the key claims of
+    *Marginal Entropy Exchangeability and the Compatibility Geometry of
+    Hamiltonian Clocks*:
+
+    - Exp 1: Hamiltonian clock calibration — G_H closed form, lapse N minimum
+      at x≈1.311, Var(K) maximum at x≈2.228.
+    - Exp 2: Fisher-orthogonal projector P_marg — idempotent; enforces the
+      knitting constraint exactly.
+    - Exp 3: Pair origin and disentanglement ladder — Var(K)→0 at maximal
+      entanglement; switches on at the U(2)×U(1) rung.
+    - Exp 4: Exchangeable marginal entropy two-site constraint.
+    - Exp 5: Conjugate triad SU(2) isotropy — E_ij = (a/2)η_ij,
+      η = diag(+1,−1,+1).
+    - Exp 6: Matter/geometry split — in-block Δ²s=0; cross-block Δ²s=S(x);
+      Loewner bridge identity.
+    - Exp 7: Poisson source and Tolman sign — S(x)>0, δβ<0 near matter.
+
+    To run:
+      pytest -m integration tests/test_notebook.py::test_geometry_compatibility_experiments_smoke -v
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+
+    if not HAS_EXECUTE_PREPROCESSOR:
+        pytest.skip("nbformat/ExecutePreprocessor not installed")
+
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "geometry_compatibility_experiments.ipynb"
+
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+
+    # First 6 cells cover: auto-install, imports, physical setup, Exp 1 code
+    success, error_msg = run_notebook_smoke_test(notebook_path, max_cells=6, timeout=120)
+
+    if not success:
+        pytest.fail(f"Geometry compatibility experiments notebook smoke test failed: {error_msg}")
+
+
+@full_notebook_test
+def test_geometry_compatibility_experiments_full():
+    """Full execution test for geometry compatibility experiments notebook.
+
+    Executes all seven experiments end-to-end and verifies there are no
+    cell execution errors.  Each experiment prints a PASS statement and
+    raises AssertionError on failure, so any regression is caught immediately.
+
+    To run:
+      pytest -m "integration and slow" tests/test_notebook.py::test_geometry_compatibility_experiments_full -v
+
+    Or via the standalone script:
+      python tests/test_notebook.py examples/geometry_compatibility_experiments.ipynb
+    """
+    if not HAS_PYTEST:
+        raise ImportError("pytest is required to run this test")
+
+    if not HAS_NBCONVERT:
+        pytest.skip("jupyter nbconvert not installed")
+
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    notebook_path = project_root / "examples" / "geometry_compatibility_experiments.ipynb"
+
+    if not notebook_path.exists():
+        pytest.skip(f"Notebook not found: {notebook_path}")
+
+    success, output_path = run_notebook(notebook_path)
+    assert success, f"Geometry compatibility experiments notebook execution failed: {notebook_path.name}"
+
+    assert check_notebook_outputs(output_path, require_pass_markers=False), \
+        f"Geometry compatibility experiments notebook validation failed: {notebook_path.name}"
+
+
 if __name__ == "__main__":
     main()
 
